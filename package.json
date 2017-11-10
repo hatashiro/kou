@@ -1,0 +1,19 @@
+{
+  "name": "kou",
+  "version": "0.0.0",
+  "description": "A minimal language compiled into wasm bytecode",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo no test yet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/utatti/kou.git"
+  },
+  "author": "Hyunje Jun <me@noraesae.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/utatti/kou/issues"
+  },
+  "homepage": "https://github.com/utatti/kou"
+}
