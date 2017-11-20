@@ -4,6 +4,8 @@
   "description": "A minimal language compiled into wasm bytecode",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
     "test": "echo no test yet"
   },
   "repository": {
@@ -15,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/utatti/kou/issues"
   },
-  "homepage": "https://github.com/utatti/kou"
+  "homepage": "https://github.com/utatti/kou",
+  "devDependencies": {
+    "typescript": "^2.6.1"
+  }
 }
