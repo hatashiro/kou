@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "A minimal language compiled into wasm bytecode",
   "main": "index.js",
+  "bin": {
+    "kou": "bin/kou"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
