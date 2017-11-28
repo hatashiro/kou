@@ -2,9 +2,38 @@
 
 ## Introduction
 
-This document is a language specification (yet informal) of the Kou programming language.
+This document is a language specification (yet informal) of the Kou programming
+language.
+
+## Notation
+
+The syntax is specified using Extended Backus-Naur Form (EBNF).
+
+```
+|   alternation
+()  grouping
+[]  option (0 or 1 times)
+{}  repetition (0 to n times)
+```
+
+Lower-case production names are used to identify lexical tokens. Non-terminals
+are in CamelCase. Lexical tokens are enclosed in double quotes "".
 
 ## Lexical elements
+
+### Literals
+
+*TBD*
+
+### Identifier
+
+*TBD*
+
+### Keywords
+
+*TBD*
+
+### Operators and punctuation
 
 *TBD*
 
@@ -12,45 +41,73 @@ This document is a language specification (yet informal) of the Kou programming 
 
 *TBD*
 
-## Statements
+## Program
 
-### DeclStmt
+```
+Program = { Import } { Declaration } .
+```
 
-*TBD*
+`{ Declaration }` must contain a main function, `main = \ () int { ... }`.
 
-### ExprStmt
+### Import
 
-*TBD*
+```
+Import = "import" ImportPath
+         "(" ImportElem { "," ImportElem } ")" .
+ImportPath = string_lit .
+ImportElem = ident [ "as" ident ] .
+```
 
-### Statements for modules
+### Declaration
 
-*TBD*
+```
+Declaration = ident "=" Expr .
+```
 
 ## Expressions
 
+```
+Expr = UnaryExpr | Expr binary_op Expr
+UnaryExpr = PrimaryExpr | unary_op UnaryExpr .
+PrimaryExpr = LitExpr
+            | IdentExpr
+            | LambdaExpr
+            | CallExpr
+            | "(" Expr ")".
+```
+
+`Expr` stands for *Expression*.
+
 ### LitExpr
 
-*TBD*
+The name stands for *Literal Expression*.
+
+```
+LitExpr = bool_lit | int_lit | float_lit | string_lit | bool_lit .
+```
 
 ### IdentExpr
 
-*TBD*
+The name stands for *Identifier Expression*.
 
-### UnaryExpr
+```
+IdentExpr = ident .
+```
 
-*TBD*
+### LambdaExpr
 
-### BinaryExpr
-
-*TBD*
-
-### FuncExpr
-
-*TBD*
+```
+LambdaExpr = "\" "(" [ Local { "," Local } ] ")" Type "{" { Expr } "}" .
+Local = Parameter | Binding .
+Parameter = ident [ ":" Type ]
+Binding = Parameter "=" Expr
+```
 
 ### CallExpr
 
-*TBD*
+```
+CallExpr = PrimaryExpr "(" Expr { "," Expr } ")" .
+```
 
 ## Operators
 
