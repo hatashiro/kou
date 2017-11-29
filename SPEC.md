@@ -21,33 +21,133 @@ are in CamelCase. Lexical tokens are enclosed in double quotes "".
 
 ## Lexical elements
 
-### Literals
+### Punctuation
 
-*TBD*
+```
+-> , ( ) [ ] { } : = \
+```
 
-### Identifier
+### Operators
 
-*TBD*
+Unary:
+
+```
+unary_op = "+" | "-" | "!" .
+```
+
+Binary:
+
+```
+binary_op = rel_op | add_op | mul_op | bool_op .
+rel_op = "==" | "!=" | "<" | "<=" | ">" | ">=" .
+add_op = "+" | "-" | "|" | "^" .
+mul_op = "*" | "/" | "%" | "&" .
+bool_op = "||" | "&&" .
+```
 
 ### Keywords
 
-*TBD*
+```
+import as let if then else for in true false
+```
 
-### Operators and punctuation
+### Literals
 
-*TBD*
+Integer:
+
+```
+decimal_digit = "0" … "9" .
+int_lit = ( "1" … "9" ) { decimal_digit } .
+```
+
+Float:
+
+```
+decimals  = decimal_digit { decimal_digit } .
+float_lit = decimals "." [ decimals ]
+          | "." decimals
+```
+
+Char:
+
+```
+escaped_char = "\" ( "n" | "r" | "t" | "\" | "'" | """ ) .
+char = unicode_char | escaped_char .
+char_lit = "'" ( char ) "'"
+```
+
+String:
+
+```
+string_lit = """ { char } """ .
+```
+
+Boolean:
+
+```
+bool_lit = "true" | "false"
+```
+
+### Identifier
+
+```
+lower_letter = "a" … "z" .
+letter = lower_letter | "_" .
+ident = letter { letter | decimal_digit } .
+```
 
 ## Types
 
-*TBD*
+```
+Type = PrimType | FuncType | TupleType | ListType .
+```
+
+### Primary types
+
+```
+PrimType = "int" | "float" | "string" | "boolean" | "char" .
+```
+
+### Function type
+
+```
+FuncType = Type "->" Type .
+```
+
+### Tuple type
+
+```
+TupleType = "(" Type { "," Type } ")" .
+```
+
+Semantically, 1-tuple is the same with its inner type, or 1-tuple is desugared
+into its inner type.
+
+Related: [TupleExpr](#tupleexpr)
+
+### List type
+
+```
+ListType = "[" Type "]" .
+```
+
+Related: [ListExpr](#listexpr)
 
 ## Program
 
 ```
-Program = { Import } { Declaration } .
+Program = { Import } { Decl } .
 ```
 
-`{ Declaration }` must contain a main function, `main = \ () int { ... }`.
+`{ Decl }` must contain a main function.
+
+```
+let main = \ () int {
+  ...
+}
+```
+
+## Module
 
 ### Import
 
@@ -58,22 +158,26 @@ ImportPath = string_lit .
 ImportElem = ident [ "as" ident ] .
 ```
 
-### Declaration
+## Declaration
 
 ```
-Declaration = ident "=" Expr .
+Decl = "let" ident [ ":" Type ] "=" Expr .
 ```
 
 ## Expressions
 
 ```
 Expr = UnaryExpr | Expr binary_op Expr
-UnaryExpr = PrimaryExpr | unary_op UnaryExpr .
-PrimaryExpr = LitExpr
-            | IdentExpr
-            | LambdaExpr
-            | CallExpr
-            | "(" Expr ")".
+UnaryExpr = PrimExpr | unary_op UnaryExpr .
+PrimExpr = LitExpr
+         | IdentExpr
+         | TupleExpr
+         | ListExpr
+         | BlockExpr
+         | FuncExpr
+         | CallExpr
+         | CondExpr
+         | LoopExpr .
 ```
 
 `Expr` stands for *Expression*.
@@ -83,7 +187,7 @@ PrimaryExpr = LitExpr
 The name stands for *Literal Expression*.
 
 ```
-LitExpr = bool_lit | int_lit | float_lit | string_lit | bool_lit .
+LitExpr = int_lit | float_lit | string_lit | bool_lit | char_lit .
 ```
 
 ### IdentExpr
@@ -94,21 +198,55 @@ The name stands for *Identifier Expression*.
 IdentExpr = ident .
 ```
 
-### LambdaExpr
+### TupleExpr
 
 ```
-LambdaExpr = "\" "(" [ Local { "," Local } ] ")" Type "{" { Expr } "}" .
-Local = Parameter | Binding .
-Parameter = ident [ ":" Type ]
-Binding = Parameter "=" Expr
+TupleExpr = "(" Expr { "," Expr } ")" .
+```
+
+Semantically, 1-tuple is the same with its inner value, or 1-tuple is desugared
+into its inner value.
+
+Related: [Tuple type](#tuple-type)
+
+### ListExpr
+
+```
+ListExpr = "[" Expr { "," Expr } "]"
+```
+
+Related: [List type](#list-type)
+
+### BlockExpr
+
+```
+BlockExpr = "{" { Expr | Decl } Expr "}" .
+```
+
+### FuncExpr
+
+```
+FuncExpr = "\" ParamTuple Type Expr .
+ParamTuple = "(" [ Param { "," Param } ] ")" .
+Param = ident Type .
 ```
 
 ### CallExpr
 
 ```
-CallExpr = PrimaryExpr "(" Expr { "," Expr } ")" .
+CallExpr = PrimExpr TupleExpr .
 ```
 
-## Operators
+Related: [TupleExpr](#tupleexpr)
 
-*TBD*
+### CondExpr
+
+```
+CondExpr = "if" Expr "then" Expr "else" Expr
+```
+
+### LoopExpr
+
+```
+LoopExpr = "for" ident "in" Expr Expr
+```
