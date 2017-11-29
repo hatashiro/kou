@@ -24,7 +24,7 @@ are in CamelCase. Lexical tokens are enclosed in double quotes "".
 ### Punctuation
 
 ```
--> , ( ) [ ] { } : = \
+-> , ( ) [ ] { } : = \ ;
 ```
 
 ### Operators
@@ -220,7 +220,7 @@ Related: [List type](#list-type)
 ### BlockExpr
 
 ```
-BlockExpr = "{" { Expr | Decl } Expr "}" .
+BlockExpr = "{" { ( Expr | Decl ) ";" } Expr "}" .
 ```
 
 ### FuncExpr
