@@ -1,5 +1,34 @@
 # Kou Language Specification
 
+* [Introduction](#introduction)
+* [Notation](#notation)
+* [Lexical elements](#lexical-elements)
+  + [Punctuation](#punctuation)
+  + [Operators](#operators)
+  + [Keywords](#keywords)
+  + [Literals](#literals)
+  + [Identifier](#identifier)
+* [Types](#types)
+  + [Primary types](#primary-types)
+  + [Function type](#function-type)
+  + [Tuple type](#tuple-type)
+  + [List type](#list-type)
+  + [Void type](#void-type)
+* [Program](#program)
+* [Module](#module)
+  + [Import](#import)
+* [Declaration](#declaration)
+* [Expressions](#expressions)
+  + [LitExpr](#litexpr)
+  + [IdentExpr](#identexpr)
+  + [TupleExpr](#tupleexpr)
+  + [ListExpr](#listexpr)
+  + [FuncExpr](#funcexpr)
+  + [CallExpr](#callexpr)
+  + [CondExpr](#condexpr)
+  + [LoopExpr](#loopexpr)
+* [Block](#block)
+
 ## Introduction
 
 This document is a language specification (yet informal) of the Kou programming
