@@ -77,7 +77,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let fn if then else for in true false
+import as let fn if then else for in
 ```
 
 ### Literals
