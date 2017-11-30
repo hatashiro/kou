@@ -24,7 +24,7 @@ are in CamelCase. Lexical tokens are enclosed in double quotes "".
 ### Punctuation
 
 ```
--> , ( ) [ ] { } : = \ ;
+-> , ( ) [ ] { } : = ;
 ```
 
 ### Operators
@@ -48,7 +48,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let if then else for in true false
+import as let fn if then else for in true false
 ```
 
 ### Literals
@@ -99,7 +99,7 @@ ident = letter { letter | decimal_digit } .
 ## Types
 
 ```
-Type = PrimType | FuncType | TupleType | ListType .
+Type = PrimType | FuncType | TupleType | ListType | VoidType .
 ```
 
 ### Primary types
@@ -117,7 +117,7 @@ FuncType = Type "->" Type .
 ### Tuple type
 
 ```
-TupleType = "(" Type { "," Type } ")" .
+TupleType = "(" [ Type { "," Type } ] ")" .
 ```
 
 Semantically, 1-tuple is the same with its inner type, or 1-tuple is desugared
@@ -133,6 +133,15 @@ ListType = "[" Type "]" .
 
 Related: [ListExpr](#listexpr)
 
+### Void type
+
+```
+VoidType = "void" .
+```
+
+Void type does not have a value. Any actual value in the type of `"void"`
+should result in a semantic error.
+
 ## Program
 
 ```
@@ -142,7 +151,7 @@ Program = { Import } { Decl } .
 `{ Decl }` must contain a main function.
 
 ```
-let main = \ () int {
+let main = fn () void {
   ...
 }
 ```
@@ -173,7 +182,6 @@ PrimExpr = LitExpr
          | IdentExpr
          | TupleExpr
          | ListExpr
-         | BlockExpr
          | FuncExpr
          | CallExpr
          | CondExpr
@@ -201,7 +209,7 @@ IdentExpr = ident .
 ### TupleExpr
 
 ```
-TupleExpr = "(" Expr { "," Expr } ")" .
+TupleExpr = "(" [ Expr { "," Expr } ] ")" .
 ```
 
 Semantically, 1-tuple is the same with its inner value, or 1-tuple is desugared
@@ -217,19 +225,15 @@ ListExpr = "[" Expr { "," Expr } "]"
 
 Related: [List type](#list-type)
 
-### BlockExpr
-
-```
-BlockExpr = "{" { ( Expr | Decl ) ";" } Expr "}" .
-```
-
 ### FuncExpr
 
 ```
-FuncExpr = "\" ParamTuple Type Expr .
+FuncExpr = "fn" ParamTuple Type ( Expr | Block ) .
 ParamTuple = "(" [ Param { "," Param } ] ")" .
 Param = ident Type .
 ```
+
+Related: [Block](#block)
 
 ### CallExpr
 
@@ -242,11 +246,26 @@ Related: [TupleExpr](#tupleexpr)
 ### CondExpr
 
 ```
-CondExpr = "if" Expr "then" Expr "else" Expr
+CondExpr = "if" Expr "then" ( Expr | Block ) "else" ( Expr | Block )
 ```
+
+Related: [Block](#block)
 
 ### LoopExpr
 
 ```
-LoopExpr = "for" ident "in" Expr Expr
+LoopExpr = "for" ident "in" Expr ( Expr | Block )
 ```
+
+Related: [Block](#block)
+
+## Block
+
+```
+Block = "{" { ( Expr | Decl ) ";" } [ Expr ] "}" .
+```
+
+A block ending without `Expr` (no `";"`) has its return type as `void`, and it
+is the only way to express `void` type in Kou.
+
+Related: [Void type](#void-type)
