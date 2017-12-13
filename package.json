@@ -13,7 +13,9 @@
     "format": "npm run prettier -- --write",
     "check-format": "npm run prettier -- -l",
     "test": "npm run check-format && npm run build",
-    "release": "npm run build && npm publish"
+    "release": "npm run build && npm publish",
+    "precommit": "npm run check-format",
+    "prepush": "npm run test"
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,7 @@
   },
   "homepage": "https://github.com/utatti/kou",
   "devDependencies": {
+    "husky": "^0.14.3",
     "prettier": "^1.8.2",
     "sane": "^2.2.0",
     "typescript": "^2.6.1"
