@@ -1,7 +1,4 @@
-import {
-  Token,
-  Punctuation,
-} from './token';
+import { Token, Punctuation } from './token';
 
 export function tokenize(input: string): Array<Token<any>> {
   // FIXME
