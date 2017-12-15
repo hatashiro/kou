@@ -1,14 +1,18 @@
-import { previewable } from 'previewable-iterator';
-import { Token, Punctuation } from './token';
+import { previewable, PreviewableIterable } from 'previewable-iterator';
+import { Token, Ident } from './token';
 
-export function* tokenize(input: Iterable<string>): Iterable<Token<any>> {
+export function* tokenize(raw: Iterable<string>): Iterable<Token<any>> {
   // make input previewable
-  const charIter = previewable(input);
+  const input = previewable(raw);
 
-  for (const char of charIter) {
-    console.log('current: ', char);
-    console.log('next: ', charIter.preview().value);
+  while (!input.preview().done) {
+    yield parseToken(input);
   }
+}
 
-  return [new Punctuation(0, 0, '->')];
+function parseToken(input: PreviewableIterable<string>): Token<any> {
+  const { value } = input.next();
+
+  // FIXME
+  return new Ident(0, 0, value);
 }

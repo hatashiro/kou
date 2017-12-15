@@ -9,10 +9,10 @@
   "scripts": {
     "build": "tsc",
     "dev": "sane 'npm run format && npm run build' src",
-    "prettier": "prettier --parser typescript --single-quote --trailing-comma all 'src/**/*.ts'",
+    "prettier": "prettier --parser typescript --single-quote --trailing-comma all '{src,test}/**/*.ts'",
     "format": "npm run prettier -- --write",
     "check-format": "npm run prettier -- -l",
-    "test": "npm run check-format && npm run build",
+    "test": "npm run check-format && npm run build && ts-node --no-cache test",
     "release": "npm run build && npm publish",
     "precommit": "npm run check-format",
     "prepush": "npm run test"
@@ -31,6 +31,7 @@
     "husky": "^0.14.3",
     "prettier": "^1.8.2",
     "sane": "^2.2.0",
+    "ts-node": "^4.0.1",
     "typescript": "^2.6.1"
   },
   "dependencies": {
