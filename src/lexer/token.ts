@@ -6,37 +6,25 @@ export class Punctuation extends Token<
   '->' | ',' | '(' | ')' | '[' | ']' | '{' | '}' | ':' | '=' | ';'
 > {}
 
-export abstract class Operator<K extends string, T> extends Token<T> {
-  abstract kind: K;
-}
-
-export class UnaryOp extends Operator<'unary', '+' | '-' | '!'> {
-  kind: 'unary' = 'unary';
-}
-
-export abstract class BinaryOp<P extends number, T> extends Operator<
-  'binary',
-  T
-> {
-  kind: 'binary' = 'binary';
-  abstract precedence: P;
-}
-
-export class RelOp extends BinaryOp<0, '==' | '!=' | '<' | '<=' | '>' | '>='> {
-  precedence: 0 = 0;
-}
-
-export class AddOp extends BinaryOp<1, '+' | '-' | '|' | '^'> {
-  precedence: 1 = 1;
-}
-
-export class MulOp extends BinaryOp<2, '*' | '/' | '%' | '&'> {
-  precedence: 2 = 2;
-}
-
-export class BoolOp extends BinaryOp<3, '||' | '&&'> {
-  precedence: 3 = 3;
-}
+export class Operator extends Token<
+  | '+'
+  | '-'
+  | '!'
+  | '=='
+  | '!='
+  | '<'
+  | '<='
+  | '>'
+  | '>='
+  | '|'
+  | '^'
+  | '*'
+  | '/'
+  | '%'
+  | '&'
+  | '||'
+  | '&&'
+> {}
 
 export class Keyword extends Token<
   'import' | 'as' | 'let' | 'fn' | 'if' | 'then' | 'else' | 'for' | 'in'
