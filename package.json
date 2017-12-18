@@ -35,6 +35,7 @@
     "typescript": "^2.6.1"
   },
   "dependencies": {
+    "chalk": "^2.3.0",
     "previewable-iterator": "^0.1.1"
   }
 }
