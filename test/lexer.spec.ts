@@ -32,13 +32,36 @@ function tokenizeTest(input: string, expectations: Array<TokenExpectation>) {
   }
 }
 
-// FIXME
-tokenizeTest('hello', [
-  [t.Ident, 'h'],
-  [t.Ident, 'e'],
-  [t.Ident, 'l'],
-  [t.Ident, 'l'],
-  [t.Ident, 'o'],
-]);
+// Single token tests
+
+tokenizeTest('->', [[t.Punctuation, '->']]);
+tokenizeTest(',', [[t.Punctuation, ',']]);
+tokenizeTest('(', [[t.Punctuation, '(']]);
+tokenizeTest(')', [[t.Punctuation, ')']]);
+tokenizeTest('[', [[t.Punctuation, '[']]);
+tokenizeTest(']', [[t.Punctuation, ']']]);
+tokenizeTest('{', [[t.Punctuation, '{']]);
+tokenizeTest('}', [[t.Punctuation, '}']]);
+tokenizeTest(':', [[t.Punctuation, ':']]);
+tokenizeTest('=', [[t.Punctuation, '=']]);
+tokenizeTest(';', [[t.Punctuation, ';']]);
+
+tokenizeTest('+', [[t.Operator, '+']]);
+tokenizeTest('-', [[t.Operator, '-']]);
+tokenizeTest('!', [[t.Operator, '!']]);
+tokenizeTest('==', [[t.Operator, '==']]);
+tokenizeTest('!=', [[t.Operator, '!=']]);
+tokenizeTest('<', [[t.Operator, '<']]);
+tokenizeTest('<=', [[t.Operator, '<=']]);
+tokenizeTest('>', [[t.Operator, '>']]);
+tokenizeTest('>=', [[t.Operator, '>=']]);
+tokenizeTest('|', [[t.Operator, '|']]);
+tokenizeTest('^', [[t.Operator, '^']]);
+tokenizeTest('*', [[t.Operator, '*']]);
+tokenizeTest('/', [[t.Operator, '/']]);
+tokenizeTest('%', [[t.Operator, '%']]);
+tokenizeTest('&', [[t.Operator, '&']]);
+tokenizeTest('||', [[t.Operator, '||']]);
+tokenizeTest('&&', [[t.Operator, '&&']]);
 
 console.log(chalk.green.bold('Lexer tests passed'));
