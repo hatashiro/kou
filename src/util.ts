@@ -20,3 +20,7 @@ export function match<V, T>(
   }
   return fallback();
 }
+
+export function isDigit(c: string): boolean {
+  return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(c);
+}

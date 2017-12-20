@@ -64,4 +64,12 @@ tokenizeTest('&', [[t.Operator, '&']]);
 tokenizeTest('||', [[t.Operator, '||']]);
 tokenizeTest('&&', [[t.Operator, '&&']]);
 
+tokenizeTest('1', [[t.IntLit, '1']]);
+tokenizeTest('123', [[t.IntLit, '123']]);
+tokenizeTest('1234567890', [[t.IntLit, '1234567890']]);
+tokenizeTest('1010101010', [[t.IntLit, '1010101010']]);
+tokenizeTest('01234', [[t.IntLit, '01234']]);
+tokenizeTest('00000', [[t.IntLit, '00000']]);
+tokenizeTest('00100', [[t.IntLit, '00100']]);
+
 console.log(chalk.green.bold('Lexer tests passed'));
