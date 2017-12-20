@@ -2,13 +2,15 @@ import { previewable, PreviewableIterable } from 'previewable-iterator';
 import {
   Token,
   TokenConstructor,
-  Ident,
   Punctuation,
   Operator,
+  Keyword,
   IntLit,
   FloatLit,
+  BoolLit,
+  Ident,
 } from './token';
-import { match, isDigit } from '../util';
+import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
 
 class LexerInput extends PreviewableIterable<string> {
   public row: number = 1;
@@ -119,6 +121,37 @@ function parseToken(input: LexerInput): Token<any> {
         },
       ],
       ['.', () => input.token(FloatLit, '.' + digits())],
+
+      // keyword, bool literal, or identifier
+      [
+        c => c === '_' || isAlphabet(c),
+        () => {
+          let rep = value;
+          while (
+            input.preview().value === '_' ||
+            isAlphanumeric(input.preview().value)
+          ) {
+            rep += input.next().value;
+          }
+          switch (rep) {
+            case 'import':
+            case 'as':
+            case 'let':
+            case 'fn':
+            case 'if':
+            case 'then':
+            case 'else':
+            case 'for':
+            case 'in':
+              return input.token(Keyword, rep);
+            case 'true':
+            case 'false':
+              return input.token(BoolLit, rep);
+            default:
+              return input.token(Ident, rep);
+          }
+        },
+      ],
     ],
     () => {
       throw new Error(`Unexpected '${value}' at ${input.row}:${input.column}`);

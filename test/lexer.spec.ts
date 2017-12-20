@@ -81,4 +81,26 @@ tokenizeTest('.1234', [[t.FloatLit, '.1234']]);
 tokenizeTest('.00000', [[t.FloatLit, '.00000']]);
 tokenizeTest('.10000', [[t.FloatLit, '.10000']]);
 
+tokenizeTest('true', [[t.BoolLit, 'true']]);
+tokenizeTest('false', [[t.BoolLit, 'false']]);
+
+tokenizeTest('import', [[t.Keyword, 'import']]);
+tokenizeTest('as', [[t.Keyword, 'as']]);
+tokenizeTest('let', [[t.Keyword, 'let']]);
+tokenizeTest('fn', [[t.Keyword, 'fn']]);
+tokenizeTest('if', [[t.Keyword, 'if']]);
+tokenizeTest('then', [[t.Keyword, 'then']]);
+tokenizeTest('else', [[t.Keyword, 'else']]);
+tokenizeTest('for', [[t.Keyword, 'for']]);
+tokenizeTest('in', [[t.Keyword, 'in']]);
+
+tokenizeTest('hello', [[t.Ident, 'hello']]);
+tokenizeTest('hello1', [[t.Ident, 'hello1']]);
+tokenizeTest('_hello', [[t.Ident, '_hello']]);
+tokenizeTest('_1he2ll3o', [[t.Ident, '_1he2ll3o']]);
+tokenizeTest('___', [[t.Ident, '___']]);
+
+// multiple token tests
+tokenizeTest('123hello', [[t.IntLit, '123'], [t.Ident, 'hello']]);
+
 console.log(chalk.green.bold('Lexer tests passed'));

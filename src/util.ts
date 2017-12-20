@@ -22,5 +22,13 @@ export function match<V, T>(
 }
 
 export function isDigit(c: string): boolean {
-  return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(c);
+  return /^[0-9]$/.test(c);
+}
+
+export function isAlphabet(c: string): boolean {
+  return /^[a-zA-Z]$/.test(c);
+}
+
+export function isAlphanumeric(c: string): boolean {
+  return isDigit(c) || isAlphabet(c);
 }
