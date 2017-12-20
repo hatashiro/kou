@@ -86,7 +86,7 @@ Integer:
 
 ```
 decimal_digit = "0" … "9" .
-int_lit = ( "1" … "9" ) { decimal_digit } .
+int_lit = decimal_digit { decimal_digit } .
 ```
 
 Float:
