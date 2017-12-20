@@ -34,10 +34,6 @@ class LexerInput extends PreviewableIterable<string> {
     }
     return { done, value };
   }
-
-  token(Con: TokenConstructor, rep: string): Token<any> {
-    return new Con(this.row, this.column, rep);
-  }
 }
 
 export function* tokenize(raw: Iterable<string>): Iterable<Token<any>> {
@@ -55,17 +51,33 @@ function parseToken(input: LexerInput): Token<any> {
     throw new Error(`Unexpected end of input at ${input.row}:${input.column}`);
   }
 
+  let pos: [number, number] | null = null;
+
+  function savePos() {
+    pos = [input.row, input.column];
+  }
+
+  function token(Con: TokenConstructor, rep: string): Token<any> {
+    if (pos) {
+      const t = new Con(pos[0], pos[1], rep);
+      pos = null;
+      return t;
+    } else {
+      return new Con(input.row, input.column, rep);
+    }
+  }
+
   function withPreview(
     rep: string,
     A: TokenConstructor,
     B: TokenConstructor = A,
   ): Token<any> {
+    savePos();
     if (input.preview().value === rep[1]) {
-      const t = input.token(A, rep);
       input.next();
-      return t;
+      return token(A, rep);
     } else {
-      return input.token(B, rep[0]);
+      return token(B, rep[0]);
     }
   }
 
@@ -81,22 +93,22 @@ function parseToken(input: LexerInput): Token<any> {
     value,
     [
       // single char punctuation
-      [',', () => input.token(Punctuation, ',')],
-      ['(', () => input.token(Punctuation, '(')],
-      [')', () => input.token(Punctuation, ')')],
-      ['[', () => input.token(Punctuation, '[')],
-      [']', () => input.token(Punctuation, ']')],
-      ['{', () => input.token(Punctuation, '{')],
-      ['}', () => input.token(Punctuation, '}')],
-      [':', () => input.token(Punctuation, ':')],
-      [';', () => input.token(Punctuation, ';')],
+      [',', () => token(Punctuation, ',')],
+      ['(', () => token(Punctuation, '(')],
+      [')', () => token(Punctuation, ')')],
+      ['[', () => token(Punctuation, '[')],
+      [']', () => token(Punctuation, ']')],
+      ['{', () => token(Punctuation, '{')],
+      ['}', () => token(Punctuation, '}')],
+      [':', () => token(Punctuation, ':')],
+      [';', () => token(Punctuation, ';')],
 
       // single char operator
-      ['+', () => input.token(Operator, '+')],
-      ['^', () => input.token(Operator, '^')],
-      ['*', () => input.token(Operator, '*')],
-      ['/', () => input.token(Operator, '/')],
-      ['%', () => input.token(Operator, '%')],
+      ['+', () => token(Operator, '+')],
+      ['^', () => token(Operator, '^')],
+      ['*', () => token(Operator, '*')],
+      ['/', () => token(Operator, '/')],
+      ['%', () => token(Operator, '%')],
 
       // punctuation or operator
       ['-', () => withPreview('->', Punctuation, Operator)],
@@ -111,21 +123,29 @@ function parseToken(input: LexerInput): Token<any> {
       [
         isDigit,
         () => {
+          savePos();
           let lit = value + digits();
           if (input.preview().value === '.') {
             lit += input.next().value + digits();
-            return input.token(FloatLit, lit);
+            return token(FloatLit, lit);
           } else {
-            return input.token(IntLit, lit);
+            return token(IntLit, lit);
           }
         },
       ],
-      ['.', () => input.token(FloatLit, '.' + digits())],
+      [
+        '.',
+        () => {
+          savePos();
+          return token(FloatLit, '.' + digits());
+        },
+      ],
 
       // keyword, bool literal, or identifier
       [
         c => c === '_' || isAlphabet(c),
         () => {
+          savePos();
           let rep = value;
           while (
             input.preview().value === '_' ||
@@ -143,12 +163,12 @@ function parseToken(input: LexerInput): Token<any> {
             case 'else':
             case 'for':
             case 'in':
-              return input.token(Keyword, rep);
+              return token(Keyword, rep);
             case 'true':
             case 'false':
-              return input.token(BoolLit, rep);
+              return token(BoolLit, rep);
             default:
-              return input.token(Ident, rep);
+              return token(Ident, rep);
           }
         },
       ],
