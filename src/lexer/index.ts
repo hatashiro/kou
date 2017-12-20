@@ -6,6 +6,7 @@ import {
   Punctuation,
   Operator,
   IntLit,
+  FloatLit,
 } from './token';
 import { match, isDigit } from '../util';
 
@@ -56,7 +57,7 @@ function parseToken(input: LexerInput): Token<any> {
     rep: string,
     A: TokenConstructor,
     B: TokenConstructor = A,
-  ) {
+  ): Token<any> {
     if (input.preview().value === rep[1]) {
       const t = input.token(A, rep);
       input.next();
@@ -64,6 +65,14 @@ function parseToken(input: LexerInput): Token<any> {
     } else {
       return input.token(B, rep[0]);
     }
+  }
+
+  function digits(): string {
+    let lit = '';
+    while (isDigit(input.preview().value)) {
+      lit += input.next().value;
+    }
+    return lit;
   }
 
   return match(
@@ -100,13 +109,16 @@ function parseToken(input: LexerInput): Token<any> {
       [
         isDigit,
         () => {
-          let lit = value;
-          while (isDigit(input.preview().value)) {
-            lit += input.next().value;
+          let lit = value + digits();
+          if (input.preview().value === '.') {
+            lit += input.next().value + digits();
+            return input.token(FloatLit, lit);
+          } else {
+            return input.token(IntLit, lit);
           }
-          return input.token(IntLit, lit);
         },
       ],
+      ['.', () => input.token(FloatLit, '.' + digits())],
     ],
     () => {
       throw new Error(`Unexpected '${value}' at ${input.row}:${input.column}`);

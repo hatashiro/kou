@@ -72,4 +72,13 @@ tokenizeTest('01234', [[t.IntLit, '01234']]);
 tokenizeTest('00000', [[t.IntLit, '00000']]);
 tokenizeTest('00100', [[t.IntLit, '00100']]);
 
+tokenizeTest('1.123', [[t.FloatLit, '1.123']]);
+tokenizeTest('123.1', [[t.FloatLit, '123.1']]);
+tokenizeTest('01234.1234', [[t.FloatLit, '01234.1234']]);
+tokenizeTest('00000.00000', [[t.FloatLit, '00000.00000']]);
+tokenizeTest('00100.10000', [[t.FloatLit, '00100.10000']]);
+tokenizeTest('.1234', [[t.FloatLit, '.1234']]);
+tokenizeTest('.00000', [[t.FloatLit, '.00000']]);
+tokenizeTest('.10000', [[t.FloatLit, '.10000']]);
+
 console.log(chalk.green.bold('Lexer tests passed'));
