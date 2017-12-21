@@ -9,11 +9,14 @@ type TokenExpectation = [
   number | undefined
 ];
 
-function tokenEqual(
-  token: t.Token<any>,
-  [Con, rep, row, column]: TokenExpectation,
-) {
+function tokenEqual(token: t.Token<any>, expected?: TokenExpectation) {
+  let Con, rep, row, column;
+  if (expected) {
+    [Con, rep, row, column] = expected;
+  }
+
   if (
+    expected &&
     token instanceof Con &&
     token.rep === rep &&
     (typeof row === 'undefined' || token.row === row) &&
@@ -24,9 +27,11 @@ function tokenEqual(
   }
 
   throw new Error(
-    `Expected ${Con['name']}(${row}, ${column}, ${rep}), found ${
-      token.constructor['name']
-    }(${token.row}, ${token.column}, ${token.rep})`,
+    `Expected ${
+      expected ? `${Con['name']}(${row}, ${column}, ${rep})` : 'undefined'
+    }, found ${token.constructor['name']}(${token.row}, ${token.column}, ${
+      token.rep
+    })`,
   );
 }
 
@@ -45,8 +50,7 @@ function tokenizeTest(input: string, expectations: Array<TokenExpectation>) {
   }
 }
 
-// Single token tests
-
+// single token test
 tokenizeTest('->', [[t.Punctuation, '->', 1, 1]]);
 tokenizeTest(',', [[t.Punctuation, ',', 1, 1]]);
 tokenizeTest('(', [[t.Punctuation, '(', 1, 1]]);
@@ -132,7 +136,175 @@ tokenizeTest('"hello,\\\\world!"', [[t.StrLit, '"hello,\\\\world!"', 1, 1]]);
 tokenizeTest('"hello,\\"world!"', [[t.StrLit, '"hello,\\"world!"', 1, 1]]);
 tokenizeTest('"hello,\\\'rworld!"', [[t.StrLit, '"hello,\\\'rworld!"', 1, 1]]);
 
-// multiple token tests
+// token position test
 tokenizeTest('123hello', [[t.IntLit, '123', 1, 1], [t.Ident, 'hello', 1, 4]]);
+tokenizeTest('123     hello', [
+  [t.IntLit, '123', 1, 1],
+  [t.Ident, 'hello', 1, 9],
+]);
+tokenizeTest('123\n\nhello', [
+  [t.IntLit, '123', 1, 1],
+  [t.Ident, 'hello', 3, 1],
+]);
+tokenizeTest('123\n\n   hello', [
+  [t.IntLit, '123', 1, 1],
+  [t.Ident, 'hello', 3, 4],
+]);
+
+// empty program test
+tokenizeTest('', []);
+
+// actual program test
+tokenizeTest(
+  `
+import "/some/x.kou" (x)
+import "/some/xy.kou" (x, y)
+import "/some/as.kou" (orig_one as new_one)
+import "/some/asas.kou" (orig_one2 as new_one2, orig3 as new3)
+
+let main: () -> void = fn () void {
+  let x: (int, string, char) = (123, "hello, world", '\\n');
+  let y: [float] = [1.3, .0, 0.4, .12345];
+  if fst(x) == 123 {
+    println(add(1, 2));
+  } else {
+    let z = y[1] - .1;
+  }
+}
+
+let add = fn (x: int, y: int) int x + y
+`,
+  [
+    [t.Keyword, 'import'],
+    [t.StrLit, '"/some/x.kou"'],
+    [t.Punctuation, '('],
+    [t.Ident, 'x'],
+    [t.Punctuation, ')'],
+    [t.Keyword, 'import'],
+    [t.StrLit, '"/some/xy.kou"'],
+    [t.Punctuation, '('],
+    [t.Ident, 'x'],
+    [t.Punctuation, ','],
+    [t.Ident, 'y'],
+    [t.Punctuation, ')'],
+    [t.Keyword, 'import'],
+    [t.StrLit, '"/some/as.kou"'],
+    [t.Punctuation, '('],
+    [t.Ident, 'orig_one'],
+    [t.Keyword, 'as'],
+    [t.Ident, 'new_one'],
+    [t.Punctuation, ')'],
+    [t.Keyword, 'import'],
+    [t.StrLit, '"/some/asas.kou"'],
+    [t.Punctuation, '('],
+    [t.Ident, 'orig_one2'],
+    [t.Keyword, 'as'],
+    [t.Ident, 'new_one2'],
+    [t.Punctuation, ','],
+    [t.Ident, 'orig3'],
+    [t.Keyword, 'as'],
+    [t.Ident, 'new3'],
+    [t.Punctuation, ')'],
+    [t.Keyword, 'let'],
+    [t.Ident, 'main'],
+    [t.Punctuation, ':'],
+    [t.Punctuation, '('],
+    [t.Punctuation, ')'],
+    [t.Punctuation, '->'],
+    [t.Ident, 'void'],
+    [t.Punctuation, '='],
+    [t.Keyword, 'fn'],
+    [t.Punctuation, '('],
+    [t.Punctuation, ')'],
+    [t.Ident, 'void'],
+    [t.Punctuation, '{'],
+    [t.Keyword, 'let'],
+    [t.Ident, 'x'],
+    [t.Punctuation, ':'],
+    [t.Punctuation, '('],
+    [t.Ident, 'int'],
+    [t.Punctuation, ','],
+    [t.Ident, 'string'],
+    [t.Punctuation, ','],
+    [t.Ident, 'char'],
+    [t.Punctuation, ')'],
+    [t.Punctuation, '='],
+    [t.Punctuation, '('],
+    [t.IntLit, '123'],
+    [t.Punctuation, ','],
+    [t.StrLit, '"hello, world"'],
+    [t.Punctuation, ','],
+    [t.CharLit, "'\\n'"],
+    [t.Punctuation, ')'],
+    [t.Punctuation, ';'],
+    [t.Keyword, 'let'],
+    [t.Ident, 'y'],
+    [t.Punctuation, ':'],
+    [t.Punctuation, '['],
+    [t.Ident, 'float'],
+    [t.Punctuation, ']'],
+    [t.Punctuation, '='],
+    [t.Punctuation, '['],
+    [t.FloatLit, '1.3'],
+    [t.Punctuation, ','],
+    [t.FloatLit, '.0'],
+    [t.Punctuation, ','],
+    [t.FloatLit, '0.4'],
+    [t.Punctuation, ','],
+    [t.FloatLit, '.12345'],
+    [t.Punctuation, ']'],
+    [t.Punctuation, ';'],
+    [t.Keyword, 'if'],
+    [t.Ident, 'fst'],
+    [t.Punctuation, '('],
+    [t.Ident, 'x'],
+    [t.Punctuation, ')'],
+    [t.Operator, '=='],
+    [t.IntLit, '123'],
+    [t.Punctuation, '{'],
+    [t.Ident, 'println'],
+    [t.Punctuation, '('],
+    [t.Ident, 'add'],
+    [t.Punctuation, '('],
+    [t.IntLit, '1'],
+    [t.Punctuation, ','],
+    [t.IntLit, '2'],
+    [t.Punctuation, ')'],
+    [t.Punctuation, ')'],
+    [t.Punctuation, ';'],
+    [t.Punctuation, '}'],
+    [t.Keyword, 'else'],
+    [t.Punctuation, '{'],
+    [t.Keyword, 'let'],
+    [t.Ident, 'z'],
+    [t.Punctuation, '='],
+    [t.Ident, 'y'],
+    [t.Punctuation, '['],
+    [t.IntLit, '1'],
+    [t.Punctuation, ']'],
+    [t.Operator, '-'],
+    [t.FloatLit, '.1'],
+    [t.Punctuation, ';'],
+    [t.Punctuation, '}'],
+    [t.Punctuation, '}'],
+    [t.Keyword, 'let'],
+    [t.Ident, 'add'],
+    [t.Punctuation, '='],
+    [t.Keyword, 'fn'],
+    [t.Punctuation, '('],
+    [t.Ident, 'x'],
+    [t.Punctuation, ':'],
+    [t.Ident, 'int'],
+    [t.Punctuation, ','],
+    [t.Ident, 'y'],
+    [t.Punctuation, ':'],
+    [t.Ident, 'int'],
+    [t.Punctuation, ')'],
+    [t.Ident, 'int'],
+    [t.Ident, 'x'],
+    [t.Operator, '+'],
+    [t.Ident, 'y'],
+  ],
+);
 
 console.log(chalk.green.bold('Lexer tests passed'));
