@@ -14,9 +14,10 @@ Please refer to [SPEC.md](SPEC.md).
 
 :construction: :construction: :construction:
 
-- [ ] Tokenizer and parser
-- [ ] Code generator for wasm
+- [x] Tokenizer
+- [ ] Parser
 - [ ] Type system
+- [ ] Code generator for wasm
 - [ ] Module system
 - [ ] IO
 - [ ] Bootstrapping
