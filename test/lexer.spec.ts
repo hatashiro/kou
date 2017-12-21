@@ -113,6 +113,16 @@ tokenizeTest('_hello', [[t.Ident, '_hello', 1, 1]]);
 tokenizeTest('_1he2ll3o', [[t.Ident, '_1he2ll3o', 1, 1]]);
 tokenizeTest('___', [[t.Ident, '___', 1, 1]]);
 
+tokenizeTest("'a'", [[t.CharLit, "'a'", 1, 1]]);
+tokenizeTest("'1'", [[t.CharLit, "'1'", 1, 1]]);
+tokenizeTest("'*'", [[t.CharLit, "'*'", 1, 1]]);
+tokenizeTest("'\\n'", [[t.CharLit, "'\\n'", 1, 1]]);
+tokenizeTest("'\\r'", [[t.CharLit, "'\\r'", 1, 1]]);
+tokenizeTest("'\\t'", [[t.CharLit, "'\\t'", 1, 1]]);
+tokenizeTest("'\\\\'", [[t.CharLit, "'\\\\'", 1, 1]]);
+tokenizeTest("'\\\"'", [[t.CharLit, "'\\\"'", 1, 1]]);
+tokenizeTest("'\\''", [[t.CharLit, "'\\''", 1, 1]]);
+
 // multiple token tests
 tokenizeTest('123hello', [[t.IntLit, '123', 1, 1], [t.Ident, 'hello', 1, 4]]);
 

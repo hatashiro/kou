@@ -8,6 +8,7 @@ import {
   IntLit,
   FloatLit,
   BoolLit,
+  CharLit,
   Ident,
 } from './token';
 import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
@@ -84,6 +85,17 @@ function parseToken(input: LexerInput): Token<any> {
   function digits(): string {
     let lit = '';
     while (isDigit(input.preview().value)) {
+      lit += input.next().value;
+    }
+    return lit;
+  }
+
+  function char(): string {
+    let lit = input.next().value;
+    if (
+      lit === '\\' &&
+      ['n', 'r', 't', '\\', "'", '"'].includes(input.preview().value)
+    ) {
       lit += input.next().value;
     }
     return lit;
@@ -170,6 +182,24 @@ function parseToken(input: LexerInput): Token<any> {
             default:
               return token(Ident, rep);
           }
+        },
+      ],
+
+      // char literal
+      [
+        "'",
+        () => {
+          savePos();
+          let rep = value;
+          rep += char();
+          const closing = input.next().value;
+          if (closing !== "'") {
+            throw new Error(
+              `Unexpected '${closing}' at ${input.row}:${input.column}`,
+            );
+          }
+          rep += closing;
+          return token(CharLit, rep);
         },
       ],
     ],
