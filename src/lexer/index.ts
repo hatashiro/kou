@@ -42,8 +42,16 @@ export function* tokenize(raw: Iterable<string>): Iterable<Token<any>> {
   // make input previewable
   const input = new LexerInput(raw);
 
+  skipSpaces(input);
   while (!input.preview().done) {
     yield parseToken(input);
+    skipSpaces(input);
+  }
+}
+
+function skipSpaces(input: LexerInput) {
+  while (/^\s$/.test(input.preview().value)) {
+    input.next();
   }
 }
 
