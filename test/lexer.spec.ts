@@ -123,6 +123,15 @@ tokenizeTest("'\\\\'", [[t.CharLit, "'\\\\'", 1, 1]]);
 tokenizeTest("'\\\"'", [[t.CharLit, "'\\\"'", 1, 1]]);
 tokenizeTest("'\\''", [[t.CharLit, "'\\''", 1, 1]]);
 
+tokenizeTest('"hello, world 123!"', [[t.StrLit, '"hello, world 123!"', 1, 1]]);
+tokenizeTest('"!@#$\'%^&*()"', [[t.StrLit, '"!@#$\'%^&*()"', 1, 1]]);
+tokenizeTest('"hello,\\nworld!"', [[t.StrLit, '"hello,\\nworld!"', 1, 1]]);
+tokenizeTest('"hello,\\rworld!"', [[t.StrLit, '"hello,\\rworld!"', 1, 1]]);
+tokenizeTest('"hello,\\tworld!"', [[t.StrLit, '"hello,\\tworld!"', 1, 1]]);
+tokenizeTest('"hello,\\\\world!"', [[t.StrLit, '"hello,\\\\world!"', 1, 1]]);
+tokenizeTest('"hello,\\"world!"', [[t.StrLit, '"hello,\\"world!"', 1, 1]]);
+tokenizeTest('"hello,\\\'rworld!"', [[t.StrLit, '"hello,\\\'rworld!"', 1, 1]]);
+
 // multiple token tests
 tokenizeTest('123hello', [[t.IntLit, '123', 1, 1], [t.Ident, 'hello', 1, 4]]);
 

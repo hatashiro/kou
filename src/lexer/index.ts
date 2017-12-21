@@ -9,6 +9,7 @@ import {
   FloatLit,
   BoolLit,
   CharLit,
+  StrLit,
   Ident,
 } from './token';
 import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
@@ -91,7 +92,17 @@ function parseToken(input: LexerInput): Token<any> {
   }
 
   function char(): string {
-    let lit = input.next().value;
+    let { done, value: lit } = input.next();
+
+    if (done) {
+      throw new Error(
+        `Unexpected end of input at ${input.row}:${input.column}`,
+      );
+    }
+    if (lit === '\n') {
+      throw new Error(`Unexpected newline at ${input.row}:${input.column}`);
+    }
+
     if (
       lit === '\\' &&
       ['n', 'r', 't', '\\', "'", '"'].includes(input.preview().value)
@@ -200,6 +211,23 @@ function parseToken(input: LexerInput): Token<any> {
           }
           rep += closing;
           return token(CharLit, rep);
+        },
+      ],
+
+      // string literal
+      [
+        '"',
+        () => {
+          savePos();
+          let rep = value;
+          while (true) {
+            const c = char();
+            rep += c;
+            if (c === '"') {
+              break;
+            }
+          }
+          return token(StrLit, rep);
         },
       ],
     ],
