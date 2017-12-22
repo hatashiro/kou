@@ -34,28 +34,16 @@ export class Keyword extends Token<
   'import' | 'as' | 'let' | 'fn' | 'if' | 'then' | 'else' | 'for' | 'in'
 > {}
 
-export abstract class Literal<K extends string, T> extends Token<T> {
-  abstract kind: K;
-}
+export abstract class Literal<T> extends Token<T> {}
 
-export class IntLit extends Literal<'int', string> {
-  kind: 'int' = 'int';
-}
+export class IntLit extends Literal<string> {}
 
-export class FloatLit extends Literal<'float', string> {
-  kind: 'float' = 'float';
-}
+export class FloatLit extends Literal<string> {}
 
-export class CharLit extends Literal<'char', string> {
-  kind: 'char' = 'char';
-}
+export class CharLit extends Literal<string> {}
 
-export class StrLit extends Literal<'str', string> {
-  kind: 'str' = 'str';
-}
+export class StrLit extends Literal<string> {}
 
-export class BoolLit extends Literal<'bool', 'true' | 'false'> {
-  kind: 'bool' = 'bool';
-}
+export class BoolLit extends Literal<'true' | 'false'> {}
 
 export class Ident extends Token<string> {}
