@@ -1,4 +1,4 @@
-import { previewable, PreviewableIterable } from 'previewable-iterator';
+import { PreviewableIterable } from 'previewable-iterator';
 import {
   Token,
   TokenConstructor,
