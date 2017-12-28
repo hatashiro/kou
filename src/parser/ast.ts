@@ -1,6 +1,3 @@
-import { Type } from './type';
-import { Tuple } from './common';
-
 export abstract class Node<T> {
   constructor(public value: T, public row: number, public column: number) {}
 }
@@ -52,7 +49,7 @@ export class Import extends Node<{ path: StrLit; name: Ident; alias: Ident }> {}
 
 export class Decl extends Node<{
   name: Ident;
-  type?: Type;
+  type?: Type<any>;
   expr: Expr<any>;
 }> {}
 
@@ -82,13 +79,15 @@ export class LitExpr extends PrimExpr<Literal<any>> {}
 
 export class IdentExpr extends PrimExpr<Ident> {}
 
+export type Tuple<T> = { size: number; items: Array<T> };
+
 export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 
 export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
 export class FuncExpr extends PrimExpr<{ params: Tuple<Param>; body: Body }> {}
 
-export type Param = { name: Ident; type: Type };
+export type Param = { name: Ident; type: Type<any> };
 
 export type Body = Expr<any> | Block;
 
@@ -108,3 +107,32 @@ export class LoopExpr extends PrimExpr<{
   in: Expr<any>;
   body: Body;
 }> {}
+
+export abstract class Type<T> extends Node<T> {}
+
+// type without nested type
+export abstract class SimpleType extends Type<null> {
+  constructor(row: number, column: number) {
+    super(null, row, column);
+  }
+}
+
+export abstract class PrimType extends SimpleType {}
+
+export class IntType extends PrimType {}
+
+export class FloatType extends PrimType {}
+
+export class StrType extends PrimType {}
+
+export class BoolType extends PrimType {}
+
+export class CharType extends PrimType {}
+
+export class FuncType extends Type<{ param: Type<any>; return: Type<any> }> {}
+
+export class TupleType extends Type<Tuple<Type<any>>> {}
+
+export class ListType extends Type<Type<any>> {}
+
+export class VoidType extends SimpleType {}
