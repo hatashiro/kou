@@ -45,7 +45,9 @@ export class Program extends Node<{
   decls: Array<Decl>;
 }> {}
 
-export class Import extends Node<{ path: StrLit; name: Ident; alias: Ident }> {}
+export class Import extends Node<{ path: StrLit; elems: Array<ImportElem> }> {}
+
+export type ImportElem = { name: Ident; as?: Ident };
 
 export class Decl extends Node<{
   name: Ident;
