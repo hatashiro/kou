@@ -1,3 +1,5 @@
+import { unescape } from '../util';
+
 export abstract class Node<T> {
   constructor(public value: T, public row: number, public column: number) {}
 }
@@ -6,17 +8,45 @@ export interface NodeConstructor<T> {
   new (value: T, row: number, column: number): Node<T>;
 }
 
-export abstract class Literal extends Node<string> {}
+export abstract class Literal<T> extends Node<string> {
+  parsedValue: T;
+  abstract parse(rep: string): T;
 
-export class IntLit extends Literal {}
+  constructor(value: string, row: number, column: number) {
+    super(value, row, column);
+    this.parsedValue = this.parse(value);
+  }
+}
 
-export class FloatLit extends Literal {}
+export class IntLit extends Literal<number> {
+  parse(rep: string): number {
+    return parseInt(rep, 10);
+  }
+}
 
-export class CharLit extends Literal {}
+export class FloatLit extends Literal<number> {
+  parse(rep: string): number {
+    return parseFloat(rep);
+  }
+}
 
-export class StrLit extends Literal {}
+export class CharLit extends Literal<string> {
+  parse(rep: string): string {
+    return unescape(rep.slice(1, -1));
+  }
+}
 
-export class BoolLit extends Literal {}
+export class StrLit extends Literal<string> {
+  parse(rep: string): string {
+    return unescape(rep.slice(1, -1));
+  }
+}
+
+export class BoolLit extends Literal<boolean> {
+  parse(rep: string): boolean {
+    return rep === 'true';
+  }
+}
 
 export class Ident extends Node<string> {}
 

@@ -32,3 +32,8 @@ export function isAlphabet(c: string): boolean {
 export function isAlphanumeric(c: string): boolean {
   return isDigit(c) || isAlphabet(c);
 }
+
+export function unescape(str: string): string {
+  // FIXME
+  return str;
+}
