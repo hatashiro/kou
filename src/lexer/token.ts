@@ -1,5 +1,11 @@
 export class Token<T> {
   constructor(public row: number, public column: number, public rep: T) {}
+
+  is(Con: TokenConstructor<T>, rep?: T): boolean {
+    return (
+      this instanceof Con && (typeof rep !== 'undefined' || this.rep === rep)
+    );
+  }
 }
 
 export interface TokenConstructor<T> {
