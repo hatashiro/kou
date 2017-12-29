@@ -6,17 +6,17 @@ export interface NodeConstructor<T> {
   new (value: T, row: number, column: number): Node<T>;
 }
 
-export abstract class Literal<T> extends Node<T> {}
+export abstract class Literal extends Node<string> {}
 
-export class IntLit extends Literal<number> {}
+export class IntLit extends Literal {}
 
-export class FloatLit extends Literal<number> {}
+export class FloatLit extends Literal {}
 
-export class CharLit extends Literal<string> {}
+export class CharLit extends Literal {}
 
-export class StrLit extends Literal<string> {}
+export class StrLit extends Literal {}
 
-export class BoolLit extends Literal<boolean> {}
+export class BoolLit extends Literal {}
 
 export class Ident extends Node<string> {}
 
