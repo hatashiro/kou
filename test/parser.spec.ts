@@ -56,41 +56,118 @@ function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
   );
 }
 
-// FIXME: test
-astEqual(
-  new a.Program(
-    {
-      imports: [
-        new a.Import(
-          {
-            path: new a.StrLit('test.kou', 1, 1),
-            name: new a.Ident('test_name', 1, 1),
-            alias: new a.Ident('test_alias', 1, 1),
-          },
-          1,
-          1,
-        ),
-      ],
-      decls: [],
-    },
-    1,
-    1,
-  ),
+function programTest(
+  input: string,
+  expected: any,
+  sourceToShow: string = input,
+) {
+  try {
+    astEqual(parse(tokenize(input)), [a.Program, expected]);
+  } catch (err) {
+    console.error(chalk.blue.bold('Source:'));
+    console.error(sourceToShow);
+    console.error();
+    console.error(chalk.red.bold('Error:'));
+    console.error(err);
+    process.exit(1);
+  }
+}
+
+function importTest(source: string, expected: Array<NodeExpectation>) {
+  programTest(source, { imports: expected, decls: [] });
+}
+
+importTest('import "test.kou" (test_name)', [
   [
-    a.Program,
+    a.Import,
     {
-      imports: [
-        [
-          a.Import,
+      path: [a.StrLit, '"test.kou"'],
+      elems: [
+        {
+          name: [a.Ident, 'test_name'],
+          as: null,
+        },
+      ],
+    },
+  ],
+]);
+
+importTest('import "test.kou" (test_name as test_alias)', [
+  [
+    a.Import,
+    {
+      path: [a.StrLit, '"test.kou"'],
+      elems: [
+        {
+          name: [a.Ident, 'test_name'],
+          as: [a.Ident, 'test_alias'],
+        },
+      ],
+    },
+  ],
+]);
+
+importTest('import "test.kou" (test_name as test_alias, hoge, foo as bar)', [
+  [
+    a.Import,
+    {
+      path: [a.StrLit, '"test.kou"'],
+      elems: [
+        {
+          name: [a.Ident, 'test_name'],
+          as: [a.Ident, 'test_alias'],
+        },
+        {
+          name: [a.Ident, 'hoge'],
+          as: null,
+        },
+        {
+          name: [a.Ident, 'foo'],
+          as: [a.Ident, 'bar'],
+        },
+      ],
+    },
+  ],
+]);
+
+importTest(
+  `
+import "file1.kou" (test_name as test_alias)
+import "file2.kou" (test_name as test_alias, hoge, foo as bar)
+`,
+  [
+    [
+      a.Import,
+      {
+        path: [a.StrLit, '"file1.kou"'],
+        elems: [
           {
-            path: [a.StrLit, 'test.kou'],
             name: [a.Ident, 'test_name'],
-            alias: [a.Ident, 'test_alias'],
+            as: [a.Ident, 'test_alias'],
           },
         ],
-      ],
-      decls: [],
-    },
+      },
+    ],
+    [
+      a.Import,
+      {
+        path: [a.StrLit, '"file2.kou"'],
+        elems: [
+          {
+            name: [a.Ident, 'test_name'],
+            as: [a.Ident, 'test_alias'],
+          },
+          {
+            name: [a.Ident, 'hoge'],
+            as: null,
+          },
+          {
+            name: [a.Ident, 'foo'],
+            as: [a.Ident, 'bar'],
+          },
+        ],
+      },
+    ],
   ],
 );
 
