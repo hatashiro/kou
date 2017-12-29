@@ -36,6 +36,7 @@ function tokenEqual(token: t.Token<any>, expected?: TokenExpectation) {
 }
 
 function tokenizeTest(input: string, expectations: Array<TokenExpectation>) {
+  expectations.push([t.EOF, null]);
   try {
     for (const token of tokenize(input)) {
       tokenEqual(token, expectations.shift());

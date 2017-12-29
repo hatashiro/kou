@@ -47,3 +47,5 @@ export class StrLit extends Literal<string> {}
 export class BoolLit extends Literal<'true' | 'false'> {}
 
 export class Ident extends Token<string> {}
+
+export class EOF extends Token<null> {}

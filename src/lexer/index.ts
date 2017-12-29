@@ -11,6 +11,7 @@ import {
   CharLit,
   StrLit,
   Ident,
+  EOF,
 } from './token';
 import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
 
@@ -47,6 +48,8 @@ export function* tokenize(raw: Iterable<string>): Iterable<Token<any>> {
     yield parseToken(input);
     skipSpaces(input);
   }
+
+  return new EOF(input.row, input.column, null);
 }
 
 function skipSpaces(input: LexerInput) {
