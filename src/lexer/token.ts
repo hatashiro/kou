@@ -2,8 +2,8 @@ export class Token<T> {
   constructor(public row: number, public column: number, public rep: T) {}
 }
 
-export interface TokenConstructor {
-  new (row: number, column: number, rep: any): Token<any>;
+export interface TokenConstructor<T> {
+  new (row: number, column: number, rep: T): Token<T>;
 }
 
 export class Punctuation extends Token<

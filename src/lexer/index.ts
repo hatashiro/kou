@@ -70,7 +70,7 @@ function parseToken(input: LexerInput): Token<any> {
     pos = [input.row, input.column];
   }
 
-  function token(Con: TokenConstructor, rep: string): Token<any> {
+  function token<T>(Con: TokenConstructor<T>, rep: T): Token<any> {
     if (pos) {
       const t = new Con(pos[0], pos[1], rep);
       pos = null;
@@ -82,8 +82,8 @@ function parseToken(input: LexerInput): Token<any> {
 
   function withPreview(
     rep: string,
-    A: TokenConstructor,
-    B: TokenConstructor = A,
+    A: TokenConstructor<any>,
+    B: TokenConstructor<any> = A,
   ): Token<any> {
     savePos();
     if (input.preview().value === rep[1]) {
