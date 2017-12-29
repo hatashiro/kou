@@ -2,6 +2,10 @@ export abstract class Node<T> {
   constructor(public value: T, public row: number, public column: number) {}
 }
 
+export interface NodeConstructor<T> {
+  new (value: T, row: number, column: number): Node<T>;
+}
+
 export abstract class Literal<T> extends Node<T> {}
 
 export class IntLit extends Literal<number> {}
