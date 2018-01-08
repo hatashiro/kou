@@ -20,20 +20,11 @@ export function parse(tokens: Iterable<t.Token<any>>): Program {
   return parseProgram(input);
 }
 
-function getNextToken(
-  input: ParserInput,
-  shouldConsume: boolean,
-): t.Token<any> {
-  if (input.preview().done) {
-    throw new Error(`Unexpected end of token stream`);
-  }
-
-  const token = input.preview().value;
-  if (token instanceof t.EOF) {
+function nextToken(input: ParserInput, consume: boolean = false): t.Token<any> {
+  if (!input.preview().value) {
     throw new Error(`Unexpected end of input at ${token.row}:${token.column}`);
   }
-
-  return shouldConsume ? input.next().value : token;
+  return consume ? input.next().value : input.preview().value;
 }
 
 function parseNode<T>(
@@ -41,7 +32,7 @@ function parseNode<T>(
   parser: Parser<T>,
 ): Parser<Node<T>> {
   return (input: ParserInput) => {
-    const { row, column } = getNextToken(input, false);
+    const { row, column } = nextToken(input);
     return new Cons(parser(input), row, column);
   };
 }
@@ -51,7 +42,7 @@ function consume<T>(
   TokenCon: t.TokenConstructor<T>,
   rep?: T,
 ): t.Token<T> {
-  const token = getNextToken(input, true);
+  const token = nextToken(input, true);
 
   if (token.is(TokenCon, rep)) {
     return token;
@@ -70,7 +61,7 @@ function manyWhile<T>(
   whilst: (token: t.Token<any>) => boolean,
 ): Array<T> {
   const results: Array<T> = [];
-  while (!input.preview().done && whilst(input.preview().value)) {
+  while (whilst(nextToken(input))) {
     results.push(parser(input));
   }
   return results;
@@ -94,6 +85,9 @@ const parseProgram: Parser<Program> = parseNode(Program, input => {
   // FIXME
   const decls: Array<Decl> = [];
 
+  // should be the end
+  consume(input, t.EOF);
+
   return { imports, decls };
 });
 
@@ -107,7 +101,7 @@ const parseImport: Parser<Import> = parseNode(Import, input => {
   const elems: Array<ImportElem> = commaSeparated(input, input => {
     const ident = parseIdent(input);
     let alias: Ident | null = null;
-    if (!input.preview().done && input.preview().value.is(t.Keyword, 'as')) {
+    if (nextToken(input).is(t.Keyword, 'as')) {
       consume(input, t.Keyword, 'as');
       alias = parseIdent(input);
     }
