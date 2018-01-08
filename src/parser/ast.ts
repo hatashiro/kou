@@ -1,3 +1,4 @@
+import * as t from '../lexer/token';
 import { unescape } from '../util';
 
 export abstract class Node<T> {
@@ -22,11 +23,19 @@ export class IntLit extends Literal<number> {
   parse(rep: string): number {
     return parseInt(rep, 10);
   }
+
+  static from(token: t.IntLit): IntLit {
+    return new IntLit(token.rep, token.row, token.column);
+  }
 }
 
 export class FloatLit extends Literal<number> {
   parse(rep: string): number {
     return parseFloat(rep);
+  }
+
+  static from(token: t.FloatLit): FloatLit {
+    return new FloatLit(token.rep, token.row, token.column);
   }
 }
 
@@ -34,17 +43,29 @@ export class CharLit extends Literal<string> {
   parse(rep: string): string {
     return unescape(rep.slice(1, -1));
   }
+
+  static from(token: t.CharLit): CharLit {
+    return new CharLit(token.rep, token.row, token.column);
+  }
 }
 
 export class StrLit extends Literal<string> {
   parse(rep: string): string {
     return unescape(rep.slice(1, -1));
   }
+
+  static from(token: t.StrLit): StrLit {
+    return new StrLit(token.rep, token.row, token.column);
+  }
 }
 
 export class BoolLit extends Literal<boolean> {
   parse(rep: string): boolean {
     return rep === 'true';
+  }
+
+  static from(token: t.BoolLit): BoolLit {
+    return new BoolLit(token.rep, token.row, token.column);
   }
 }
 
