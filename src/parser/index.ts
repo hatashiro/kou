@@ -15,6 +15,28 @@ import {
 type ParserInput = PreviewableIterable<t.Token<any>>;
 type Parser<T> = (input: ParserInput) => T;
 
+export class ParseError extends Error {
+  name: string = 'ParseError';
+
+  constructor(
+    public row: number,
+    public column: number,
+    public unexpected: { name: string; rep?: string },
+    public expected?: { name: string; rep?: string },
+  ) {
+    super();
+
+    const str = ({ name, rep }: { name: string; rep?: string }) =>
+      name + (rep ? ` ${rep}` : '');
+
+    let message = `Unexpected ${str(unexpected)} at ${row}:${column}`;
+    if (expected) {
+      message += `, expected ${str(expected)}`;
+    }
+    this.message = message;
+  }
+}
+
 export function parse(tokens: Iterable<t.Token<any>>): Program {
   const input = previewable(tokens);
   return parseProgram(input);
@@ -22,7 +44,7 @@ export function parse(tokens: Iterable<t.Token<any>>): Program {
 
 function nextToken(input: ParserInput, consume: boolean = false): t.Token<any> {
   if (!input.preview().value) {
-    throw new Error(`Unexpected end of input at ${token.row}:${token.column}`);
+    throw new ParseError(-1, -1, { name: 'end of token stream' });
   }
   return consume ? input.next().value : input.preview().value;
 }
@@ -48,10 +70,11 @@ function consume<T>(
     return token;
   }
 
-  throw new Error(
-    `Expected ${TokenCon.name}(${rep || ''}), but found ${
-      token.constructor.name
-    }(${token.rep}) at ${token.row}:${token.column}`,
+  throw new ParseError(
+    token.row,
+    token.column,
+    { name: token.constructor.name, rep: token.rep },
+    { name: TokenCon.name, rep: rep as any },
   );
 }
 

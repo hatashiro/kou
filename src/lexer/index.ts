@@ -39,6 +39,18 @@ class LexerInput extends PreviewableIterable<string> {
   }
 }
 
+export class LexError extends Error {
+  name: string = 'LexError';
+
+  constructor(
+    public row: number,
+    public column: number,
+    public unexpected: string,
+  ) {
+    super(`Unexpected ${unexpected} at ${row}:${column}`);
+  }
+}
+
 export function* tokenize(raw: Iterable<string>): Iterable<Token<any>> {
   // make input previewable
   const input = new LexerInput(raw);
@@ -61,7 +73,7 @@ function skipSpaces(input: LexerInput) {
 function parseToken(input: LexerInput): Token<any> {
   const { done, value } = input.next();
   if (done) {
-    throw new Error(`Unexpected end of input at ${input.row}:${input.column}`);
+    throw new LexError(input.row, input.column, 'end of input');
   }
 
   let pos: [number, number] | null = null;
@@ -106,12 +118,10 @@ function parseToken(input: LexerInput): Token<any> {
     let { done, value: lit } = input.next();
 
     if (done) {
-      throw new Error(
-        `Unexpected end of input at ${input.row}:${input.column}`,
-      );
+      throw new LexError(input.row, input.column, 'end of input');
     }
     if (lit === '\n') {
-      throw new Error(`Unexpected newline at ${input.row}:${input.column}`);
+      throw new LexError(input.row, input.column, 'newline');
     }
 
     if (
@@ -216,9 +226,7 @@ function parseToken(input: LexerInput): Token<any> {
           rep += char();
           const closing = input.next().value;
           if (closing !== "'") {
-            throw new Error(
-              `Unexpected '${closing}' at ${input.row}:${input.column}`,
-            );
+            throw new LexError(input.row, input.column, closing);
           }
           rep += closing;
           return token(CharLit, rep);
@@ -243,7 +251,7 @@ function parseToken(input: LexerInput): Token<any> {
       ],
     ],
     () => {
-      throw new Error(`Unexpected '${value}' at ${input.row}:${input.column}`);
+      throw new LexError(input.row, input.column, value);
     },
   );
 }
