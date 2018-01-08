@@ -102,11 +102,11 @@ export class Program extends Node<{
 
 export class Import extends Node<{ path: StrLit; elems: Array<ImportElem> }> {}
 
-export type ImportElem = { name: Ident; as?: Ident };
+export type ImportElem = { name: Ident; as: Ident | null };
 
 export class Decl extends Node<{
   name: Ident;
-  type?: Type<any>;
+  type: Type<any> | null;
   expr: Expr<any>;
 }> {}
 
