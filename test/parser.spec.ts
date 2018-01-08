@@ -15,8 +15,8 @@ function valueEqual(actual: any, expected: any): boolean {
       actual.every((el, idx) => valueEqual(el, expected[idx]))
     );
   } else if (actual instanceof Object && expected instanceof Object) {
-    return Object.entries(actual).every(([key, val]) =>
-      valueEqual(val, expected[key]),
+    return Object.entries(expected).every(([key, val]) =>
+      valueEqual(actual[key], val),
     );
   } else {
     return actual === expected;
