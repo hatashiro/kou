@@ -3,7 +3,7 @@ export class Token<T> {
 
   is(Con: TokenConstructor<T>, rep?: T): boolean {
     return (
-      this instanceof Con && (typeof rep !== 'undefined' || this.rep === rep)
+      this instanceof Con && (typeof rep === 'undefined' || this.rep === rep)
     );
   }
 }
