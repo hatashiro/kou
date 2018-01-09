@@ -77,6 +77,10 @@ function importTest(source: string, expected: Array<NodeExpectation>) {
   programTest(source, { imports: expected, decls: [] });
 }
 
+function declTest(source: string, expected: Array<NodeExpectation>) {
+  programTest(source, { imports: [], decls: expected });
+}
+
 importTest('import "test.kou" (test_name)', [
   [
     a.Import,
@@ -166,6 +170,31 @@ import "file2.kou" (test_name as test_alias, hoge, foo as bar)
             as: [a.Ident, 'bar'],
           },
         ],
+      },
+    ],
+  ],
+);
+
+declTest(
+  `
+let simple = 10
+let typed: string = "hello, world"
+`,
+  [
+    [
+      a.Decl,
+      {
+        name: [a.Ident, 'simple'],
+        type: null,
+        expr: [a.LitExpr, [a.IntLit, '10']],
+      },
+    ],
+    [
+      a.Decl,
+      {
+        name: [a.Ident, 'typed'],
+        type: [a.StrType, null],
+        expr: [a.LitExpr, [a.StrLit, '"hello, world"']],
       },
     ],
   ],
