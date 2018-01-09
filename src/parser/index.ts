@@ -1,15 +1,30 @@
 import { previewable, PreviewableIterable } from 'previewable-iterator';
+import { match } from '../util';
 import * as t from '../lexer/token';
 import {
   Node,
   NodeConstructor,
   Literal,
+  IntLit,
+  FloatLit,
   StrLit,
+  BoolLit,
+  CharLit,
   Program,
   Import,
   Ident,
   Decl,
   ImportElem,
+  Type,
+  SimpleType,
+  IntType,
+  FloatType,
+  StrType,
+  BoolType,
+  CharType,
+  VoidType,
+  Expr,
+  LitExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -105,8 +120,9 @@ const parseProgram: Parser<Program> = parseNode(Program, input => {
     token.is(t.Keyword, 'import'),
   );
 
-  // FIXME
-  const decls: Array<Decl> = [];
+  const decls = manyWhile(input, parseDecl, token =>
+    token.is(t.Keyword, 'let'),
+  );
 
   // should be the end
   consume(input, t.EOF);
@@ -122,13 +138,13 @@ const parseImport: Parser<Import> = parseNode(Import, input => {
   consume(input, t.Punctuation, '(');
 
   const elems: Array<ImportElem> = commaSeparated(input, input => {
-    const ident = parseIdent(input);
-    let alias: Ident | null = null;
+    const name = parseIdent(input);
+    let as_: Ident | null = null;
     if (nextToken(input).is(t.Keyword, 'as')) {
       consume(input, t.Keyword, 'as');
-      alias = parseIdent(input);
+      as_ = parseIdent(input);
     }
-    return { name: ident, as: alias };
+    return { name, as: as_ };
   });
 
   consume(input, t.Punctuation, ')');
@@ -139,4 +155,84 @@ const parseImport: Parser<Import> = parseNode(Import, input => {
 const parseIdent: Parser<Ident> = parseNode(
   Ident,
   input => consume(input, t.Ident).rep,
+);
+
+const parseDecl: Parser<Decl> = parseNode(Decl, input => {
+  consume(input, t.Keyword, 'let');
+
+  const name = parseIdent(input);
+
+  let type_: Type<any> | null = null;
+  if (nextToken(input).is(t.Punctuation, ':')) {
+    consume(input, t.Punctuation, ':');
+    type_ = parseType(input);
+  }
+
+  consume(input, t.Punctuation, '=');
+
+  const expr = parseExpr(input);
+
+  return { name, type: type_, expr };
+});
+
+function parseType(input: ParserInput): Type<any> {
+  // FIXME
+  return parseSimpleType(input);
+}
+
+function parseSimpleType(input: ParserInput): SimpleType {
+  const ident = consume(input, t.Ident);
+  return match(
+    ident.rep,
+    [
+      ['int', () => new IntType(ident.row, ident.column)],
+      ['float', () => new FloatType(ident.row, ident.column)],
+      ['string', () => new StrType(ident.row, ident.column)],
+      ['boolean', () => new BoolType(ident.row, ident.column)],
+      ['char', () => new CharType(ident.row, ident.column)],
+      ['void', () => new VoidType(ident.row, ident.column)],
+    ],
+    () => {
+      throw new ParseError(ident.row, ident.column, {
+        name: 'unknown type',
+        rep: ident.rep,
+      });
+    },
+  );
+}
+
+function parseLiteral(input: ParserInput): Literal<any> {
+  const token = nextToken(input, true);
+  return match<t.Literal<any>, Literal<any>>(
+    token,
+    [
+      [token => token.is(t.IntLit), () => IntLit.from(token)],
+      [token => token.is(t.FloatLit), () => FloatLit.from(token)],
+      [token => token.is(t.StrLit), () => StrLit.from(token)],
+      [token => token.is(t.BoolLit), () => BoolLit.from(token)],
+      [token => token.is(t.CharLit), () => CharLit.from(token)],
+    ],
+    () => {
+      throw new ParseError(
+        token.row,
+        token.column,
+        {
+          name: token.constructor.name,
+          rep: token.rep,
+        },
+        {
+          name: 'Literal',
+        },
+      );
+    },
+  );
+}
+
+function parseExpr(input: ParserInput): Expr<any> {
+  // FIXME
+  return parseLitExpr(input);
+}
+
+const parseLitExpr: Parser<LitExpr> = parseNode(LitExpr, input =>
+  parseLiteral(input),
 );
