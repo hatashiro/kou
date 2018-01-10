@@ -275,5 +275,64 @@ typeTest('(int, [float], (string, boolean, char))', [
 ]);
 typeTest('(int)', [a.TupleType, { size: 1, items: [[a.IntType, null]] }]);
 typeTest('()', [a.TupleType, { size: 0, items: [] }]);
+typeTest('int -> boolean', [
+  a.FuncType,
+  { param: [a.IntType, null], return: [a.BoolType, null] },
+]);
+typeTest('(string, char) -> (string, int, (char))', [
+  a.FuncType,
+  {
+    param: [
+      a.TupleType,
+      {
+        size: 2,
+        items: [[a.StrType, null], [a.CharType, null]],
+      },
+    ],
+    return: [
+      a.TupleType,
+      {
+        size: 3,
+        items: [
+          [a.StrType, null],
+          [a.IntType, null],
+          [a.TupleType, { size: 1, items: [[a.CharType, null]] }],
+        ],
+      },
+    ],
+  },
+]);
+typeTest('boolean -> [string] -> string', [
+  a.FuncType,
+  {
+    param: [a.BoolType, null],
+    return: [
+      a.FuncType,
+      {
+        param: [a.ListType, [a.StrType, null]],
+        return: [a.StrType, null],
+      },
+    ],
+  },
+]);
+typeTest('string -> string -> string -> string', [
+  a.FuncType,
+  {
+    param: [a.StrType, null],
+    return: [
+      a.FuncType,
+      {
+        param: [a.StrType, null],
+        return: [
+          a.FuncType,
+          {
+            param: [a.StrType, null],
+            return: [a.StrType, null],
+          },
+        ],
+      },
+    ],
+  },
+]);
 
 console.log(chalk.green.bold('Parser tests passed'));

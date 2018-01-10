@@ -27,6 +27,7 @@ import {
   LitExpr,
   ListType,
   TupleType,
+  FuncType,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -178,13 +179,42 @@ const parseDecl: Parser<Decl> = parseNode(Decl, input => {
 });
 
 function parseType(input: ParserInput): Type<any> {
+  let type_: Type<any>;
+
   const token = nextToken(input);
   if (token.is(t.Punctuation, '[')) {
-    return parseListType(input);
+    type_ = parseListType(input);
   } else if (token.is(t.Punctuation, '(')) {
-    return parseTupleType(input);
+    type_ = parseTupleType(input);
+  } else if (token.is(t.Ident)) {
+    type_ = parseSimpleType(input);
+  } else {
+    throw new ParseError(
+      token.row,
+      token.column,
+      {
+        name: token.constructor.name,
+        rep: token.rep,
+      },
+      {
+        name: 'Type',
+      },
+    );
   }
-  return parseSimpleType(input);
+
+  if (nextToken(input).is(t.Punctuation, '->')) {
+    consume(input, t.Punctuation, '->');
+    return new FuncType(
+      {
+        param: type_,
+        return: parseType(input),
+      },
+      type_.row,
+      type_.column,
+    );
+  } else {
+    return type_;
+  }
 }
 
 const parseListType: Parser<ListType> = parseNode(ListType, input => {
