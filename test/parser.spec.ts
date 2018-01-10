@@ -81,6 +81,26 @@ function declTest(source: string, expected: Array<NodeExpectation>) {
   programTest(source, { imports: [], decls: expected });
 }
 
+function typeTest(source: string, expected: Array<NodeExpectation>) {
+  programTest(
+    `let x: ${source} = true`,
+    {
+      imports: [],
+      decls: [
+        [
+          a.Decl,
+          {
+            name: [a.Ident, 'x'],
+            type: expected,
+            expr: [a.LitExpr, [a.BoolLit, 'true']],
+          },
+        ],
+      ],
+    },
+    source,
+  );
+}
+
 importTest('import "test.kou" (test_name)', [
   [
     a.Import,
@@ -199,5 +219,12 @@ let typed: string = "hello, world"
     ],
   ],
 );
+
+typeTest('int', [a.IntType, null]);
+typeTest('float', [a.FloatType, null]);
+typeTest('string', [a.StrType, null]);
+typeTest('boolean', [a.BoolType, null]);
+typeTest('char', [a.CharType, null]);
+typeTest('void', [a.VoidType, null]);
 
 console.log(chalk.green.bold('Parser tests passed'));
