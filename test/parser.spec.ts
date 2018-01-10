@@ -334,5 +334,12 @@ typeTest('string -> string -> string -> string', [
     ],
   },
 ]);
+typeTest('() -> void', [
+  a.FuncType,
+  {
+    param: [a.TupleType, { size: 0, items: [] }],
+    return: [a.VoidType, null],
+  },
+]);
 
 console.log(chalk.green.bold('Parser tests passed'));
