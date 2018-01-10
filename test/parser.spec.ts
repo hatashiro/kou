@@ -232,5 +232,48 @@ typeTest('[[[boolean]]]', [
   a.ListType,
   [a.ListType, [a.ListType, [a.BoolType, null]]],
 ]);
+typeTest('(int, float)', [
+  a.TupleType,
+  {
+    size: 2,
+    items: [[a.IntType, null], [a.FloatType, null]],
+  },
+]);
+typeTest('(int, float, string)', [
+  a.TupleType,
+  {
+    size: 3,
+    items: [[a.IntType, null], [a.FloatType, null], [a.StrType, null]],
+  },
+]);
+typeTest('[(int, string)]', [
+  a.ListType,
+  [
+    a.TupleType,
+    {
+      size: 2,
+      items: [[a.IntType, null], [a.StrType, null]],
+    },
+  ],
+]);
+typeTest('(int, [float], (string, boolean, char))', [
+  a.TupleType,
+  {
+    size: 3,
+    items: [
+      [a.IntType, null],
+      [a.ListType, [a.FloatType, null]],
+      [
+        a.TupleType,
+        {
+          size: 3,
+          items: [[a.StrType, null], [a.BoolType, null], [a.CharType, null]],
+        },
+      ],
+    ],
+  },
+]);
+typeTest('(int)', [a.TupleType, { size: 1, items: [[a.IntType, null]] }]);
+typeTest('()', [a.TupleType, { size: 0, items: [] }]);
 
 console.log(chalk.green.bold('Parser tests passed'));

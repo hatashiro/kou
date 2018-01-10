@@ -26,6 +26,7 @@ import {
   Expr,
   LitExpr,
   ListType,
+  TupleType,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -180,8 +181,9 @@ function parseType(input: ParserInput): Type<any> {
   const token = nextToken(input);
   if (token.is(t.Punctuation, '[')) {
     return parseListType(input);
+  } else if (token.is(t.Punctuation, '(')) {
+    return parseTupleType(input);
   }
-  // FIXME
   return parseSimpleType(input);
 }
 
@@ -190,6 +192,19 @@ const parseListType: Parser<ListType> = parseNode(ListType, input => {
   const elementType = parseType(input);
   consume(input, t.Punctuation, ']');
   return elementType;
+});
+
+const parseTupleType: Parser<TupleType> = parseNode(TupleType, input => {
+  consume(input, t.Punctuation, '(');
+
+  let items: Array<Type<any>> = [];
+  if (!nextToken(input).is(t.Punctuation, ')')) {
+    items = commaSeparated(input, parseType);
+  }
+
+  consume(input, t.Punctuation, ')');
+
+  return { size: items.length, items };
 });
 
 function parseSimpleType(input: ParserInput): SimpleType {
