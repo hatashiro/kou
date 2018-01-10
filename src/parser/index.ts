@@ -25,6 +25,7 @@ import {
   VoidType,
   Expr,
   LitExpr,
+  ListType,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -176,9 +177,20 @@ const parseDecl: Parser<Decl> = parseNode(Decl, input => {
 });
 
 function parseType(input: ParserInput): Type<any> {
+  const token = nextToken(input);
+  if (token.is(t.Punctuation, '[')) {
+    return parseListType(input);
+  }
   // FIXME
   return parseSimpleType(input);
 }
+
+const parseListType: Parser<ListType> = parseNode(ListType, input => {
+  consume(input, t.Punctuation, '[');
+  const elementType = parseType(input);
+  consume(input, t.Punctuation, ']');
+  return elementType;
+});
 
 function parseSimpleType(input: ParserInput): SimpleType {
   const ident = consume(input, t.Ident);

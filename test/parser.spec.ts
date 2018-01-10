@@ -226,5 +226,11 @@ typeTest('string', [a.StrType, null]);
 typeTest('boolean', [a.BoolType, null]);
 typeTest('char', [a.CharType, null]);
 typeTest('void', [a.VoidType, null]);
+typeTest('[int]', [a.ListType, [a.IntType, null]]);
+typeTest('[[string]]', [a.ListType, [a.ListType, [a.StrType, null]]]);
+typeTest('[[[boolean]]]', [
+  a.ListType,
+  [a.ListType, [a.ListType, [a.BoolType, null]]],
+]);
 
 console.log(chalk.green.bold('Parser tests passed'));
