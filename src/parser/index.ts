@@ -203,15 +203,7 @@ function parseType(input: ParserInput): Type<any> {
   }
 
   if (nextToken(input).is(t.Punctuation, '->')) {
-    consume(input, t.Punctuation, '->');
-    return new FuncType(
-      {
-        param: type_,
-        return: parseType(input),
-      },
-      type_.row,
-      type_.column,
-    );
+    return parseFuncType(input, type_);
   } else {
     return type_;
   }
@@ -236,6 +228,18 @@ const parseTupleType: Parser<TupleType> = parseNode(TupleType, input => {
 
   return { size: items.length, items };
 });
+
+function parseFuncType(input: ParserInput, lho: Type<any>): FuncType {
+  consume(input, t.Punctuation, '->');
+  return new FuncType(
+    {
+      param: lho,
+      return: parseType(input),
+    },
+    lho.row,
+    lho.column,
+  );
+}
 
 function parseSimpleType(input: ParserInput): SimpleType {
   const ident = consume(input, t.Ident);
