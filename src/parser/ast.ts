@@ -127,7 +127,7 @@ export abstract class PrimUnaryExpr<T> extends Expr<T> {}
 
 export class UnaryExpr extends PrimUnaryExpr<{
   op: UnaryOp;
-  right: UnaryExpr;
+  right: PrimUnaryExpr<any>;
 }> {}
 
 export abstract class PrimExpr<T> extends PrimUnaryExpr<T> {}
