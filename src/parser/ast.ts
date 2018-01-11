@@ -73,7 +73,11 @@ export class Ident extends Node<string> {}
 
 export abstract class Operator<T extends string> extends Node<T> {}
 
-export class UnaryOp extends Operator<'+' | '-' | '!'> {}
+export class UnaryOp extends Operator<'+' | '-' | '!'> {
+  static isUnaryOp(token: t.Token<any>) {
+    return token.is(t.Operator) && ['+', '-', '!'].includes(token.rep);
+  }
+}
 
 export abstract class BinaryOp<T extends string> extends Operator<T> {
   abstract precedence: number;

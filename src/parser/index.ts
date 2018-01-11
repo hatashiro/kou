@@ -28,6 +28,10 @@ import {
   ListType,
   TupleType,
   FuncType,
+  PrimUnaryExpr,
+  UnaryOp,
+  PrimExpr,
+  UnaryExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -290,6 +294,42 @@ function parseLiteral(input: ParserInput): Literal<any> {
 }
 
 function parseExpr(input: ParserInput): Expr<any> {
+  // FIXME
+  return parsePrimUnaryExpr(input);
+}
+
+function parsePrimUnaryExpr(input: ParserInput): PrimUnaryExpr<any> {
+  if (UnaryOp.isUnaryOp(nextToken(input))) {
+    return parseUnaryExpr(input);
+  } else {
+    return parsePrimExpr(input);
+  }
+}
+
+const parseUnaryExpr: Parser<UnaryExpr> = parseNode(UnaryExpr, input => {
+  const op = parseUnaryOp(input);
+  const right = parsePrimUnaryExpr(input);
+  return { op, right };
+});
+
+const parseUnaryOp: Parser<UnaryOp> = parseNode(UnaryOp, input => {
+  const op = consume(input, t.Operator);
+  if (op.rep === '+' || op.rep === '-' || op.rep === '!') {
+    return op.rep;
+  } else {
+    throw new ParseError(
+      op.row,
+      op.column,
+      {
+        name: 'non-unary operator',
+        rep: op.rep,
+      },
+      { name: 'unary operator' },
+    );
+  }
+});
+
+function parsePrimExpr(input: ParserInput): PrimExpr<any> {
   // FIXME
   return parseLitExpr(input);
 }

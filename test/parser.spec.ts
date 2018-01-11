@@ -369,4 +369,52 @@ exprTest('true', [a.LitExpr, [a.BoolLit, 'true']]);
 exprTest('false', [a.LitExpr, [a.BoolLit, 'false']]);
 exprTest("'c'", [a.LitExpr, [a.CharLit, "'c'"]]);
 
+exprTest('-1234', [
+  a.UnaryExpr,
+  { op: [a.UnaryOp, '-'], right: [a.LitExpr, [a.IntLit, '1234']] },
+]);
+exprTest('+1234', [
+  a.UnaryExpr,
+  { op: [a.UnaryOp, '+'], right: [a.LitExpr, [a.IntLit, '1234']] },
+]);
+exprTest('-+1234', [
+  a.UnaryExpr,
+  {
+    op: [a.UnaryOp, '-'],
+    right: [
+      a.UnaryExpr,
+      { op: [a.UnaryOp, '+'], right: [a.LitExpr, [a.IntLit, '1234']] },
+    ],
+  },
+]);
+exprTest('!true', [
+  a.UnaryExpr,
+  { op: [a.UnaryOp, '!'], right: [a.LitExpr, [a.BoolLit, 'true']] },
+]);
+exprTest('!!!!false', [
+  a.UnaryExpr,
+  {
+    op: [a.UnaryOp, '!'],
+    right: [
+      a.UnaryExpr,
+      {
+        op: [a.UnaryOp, '!'],
+        right: [
+          a.UnaryExpr,
+          {
+            op: [a.UnaryOp, '!'],
+            right: [
+              a.UnaryExpr,
+              {
+                op: [a.UnaryOp, '!'],
+                right: [a.LitExpr, [a.BoolLit, 'false']],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+]);
+
 console.log(chalk.green.bold('Parser tests passed'));
