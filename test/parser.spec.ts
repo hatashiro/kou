@@ -81,7 +81,7 @@ function declTest(source: string, expected: Array<NodeExpectation>) {
   programTest(source, { imports: [], decls: expected });
 }
 
-function typeTest(source: string, expected: Array<NodeExpectation>) {
+function typeTest(source: string, expected: NodeExpectation) {
   programTest(
     `let x: ${source} = true`,
     {
@@ -93,6 +93,26 @@ function typeTest(source: string, expected: Array<NodeExpectation>) {
             name: [a.Ident, 'x'],
             type: expected,
             expr: [a.LitExpr, [a.BoolLit, 'true']],
+          },
+        ],
+      ],
+    },
+    source,
+  );
+}
+
+function exprTest(source: string, expected: NodeExpectation) {
+  programTest(
+    `let x = ${source}`,
+    {
+      imports: [],
+      decls: [
+        [
+          a.Decl,
+          {
+            name: [a.Ident, 'x'],
+            type: null,
+            expr: expected,
           },
         ],
       ],
@@ -341,5 +361,12 @@ typeTest('() -> void', [
     return: [a.VoidType, null],
   },
 ]);
+
+exprTest('1234', [a.LitExpr, [a.IntLit, '1234']]);
+exprTest('1.234', [a.LitExpr, [a.FloatLit, '1.234']]);
+exprTest('"hello, world"', [a.LitExpr, [a.StrLit, '"hello, world"']]);
+exprTest('true', [a.LitExpr, [a.BoolLit, 'true']]);
+exprTest('false', [a.LitExpr, [a.BoolLit, 'false']]);
+exprTest("'c'", [a.LitExpr, [a.CharLit, "'c'"]]);
 
 console.log(chalk.green.bold('Parser tests passed'));
