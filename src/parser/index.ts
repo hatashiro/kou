@@ -32,6 +32,7 @@ import {
   UnaryOp,
   PrimExpr,
   UnaryExpr,
+  IdentExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -330,10 +331,24 @@ const parseUnaryOp: Parser<UnaryOp> = parseNode(UnaryOp, input => {
 });
 
 function parsePrimExpr(input: ParserInput): PrimExpr<any> {
-  // FIXME
-  return parseLitExpr(input);
+  const token = nextToken(input);
+  return match<t.Token<any>, PrimExpr<any>>(
+    token,
+    [
+      [token => token instanceof t.Literal, () => parseLitExpr(input)],
+      [token => token.is(t.Ident), () => parseIdentExpr(input)],
+    ],
+    () => {
+      throw new ParseError(token.row, token.column, {
+        name: token.constructor.name,
+        rep: token.rep,
+      });
+    },
+  );
 }
 
 const parseLitExpr: Parser<LitExpr> = parseNode(LitExpr, input =>
   parseLiteral(input),
 );
+
+const parseIdentExpr: Parser<IdentExpr> = parseNode(IdentExpr, parseIdent);

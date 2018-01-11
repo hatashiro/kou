@@ -369,6 +369,8 @@ exprTest('true', [a.LitExpr, [a.BoolLit, 'true']]);
 exprTest('false', [a.LitExpr, [a.BoolLit, 'false']]);
 exprTest("'c'", [a.LitExpr, [a.CharLit, "'c'"]]);
 
+exprTest('some_var', [a.IdentExpr, [a.Ident, 'some_var']]);
+
 exprTest('-1234', [
   a.UnaryExpr,
   { op: [a.UnaryOp, '-'], right: [a.LitExpr, [a.IntLit, '1234']] },
@@ -415,6 +417,10 @@ exprTest('!!!!false', [
       },
     ],
   },
+]);
+exprTest('+some_int', [
+  a.UnaryExpr,
+  { op: [a.UnaryOp, '+'], right: [a.IdentExpr, [a.Ident, 'some_int']] },
 ]);
 
 console.log(chalk.green.bold('Parser tests passed'));
