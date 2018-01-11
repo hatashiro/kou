@@ -347,8 +347,6 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
   );
 }
 
-const parseLitExpr: Parser<LitExpr> = parseNode(LitExpr, input =>
-  parseLiteral(input),
-);
+const parseLitExpr: Parser<LitExpr> = parseNode(LitExpr, parseLiteral);
 
 const parseIdentExpr: Parser<IdentExpr> = parseNode(IdentExpr, parseIdent);
