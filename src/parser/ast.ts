@@ -83,7 +83,11 @@ export abstract class BinaryOp<T extends string> extends Operator<T> {
   abstract precedence: number;
 }
 
-export class RelOp extends BinaryOp<'==' | '!=' | '<' | '<=' | '>' | '>='> {
+export class EqOp extends BinaryOp<'==' | '!='> {
+  precedence = 0;
+}
+
+export class CompOp extends BinaryOp<'<' | '<=' | '>' | '>='> {
   precedence = 0;
 }
 
