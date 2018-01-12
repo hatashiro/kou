@@ -146,7 +146,11 @@ export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 
 export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
-export class FuncExpr extends PrimExpr<{ params: Tuple<Param>; body: Body }> {}
+export class FuncExpr extends PrimExpr<{
+  params: Tuple<Param>;
+  returnType: Type<any>;
+  body: Body;
+}> {}
 
 export type Param = { name: Ident; type: Type<any> };
 
