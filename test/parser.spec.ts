@@ -479,4 +479,71 @@ exprTest('[a, b, c]', [
   ],
 ]);
 
+exprTest('fn () void {}', [
+  a.FuncExpr,
+  {
+    params: {
+      size: 0,
+      items: [],
+    },
+    returnType: [a.VoidType, null],
+    body: [a.Block, []],
+  },
+]);
+exprTest('fn (ignored [boolean], negated int) int -negated', [
+  a.FuncExpr,
+  {
+    params: {
+      size: 2,
+      items: [
+        { name: [a.Ident, 'ignored'], type: [a.ListType, [a.BoolType, null]] },
+        { name: [a.Ident, 'negated'], type: [a.IntType, null] },
+      ],
+    },
+    returnType: [a.IntType, null],
+    body: [
+      a.UnaryExpr,
+      { op: [a.UnaryOp, '-'], right: [a.IdentExpr, [a.Ident, 'negated']] },
+    ],
+  },
+]);
+exprTest(
+  `
+fn (i int) () -> int
+  fn () int i`,
+  [
+    a.FuncExpr,
+    {
+      params: {
+        size: 1,
+        items: [{ name: [a.Ident, 'i'], type: [a.IntType, null] }],
+      },
+      returnType: [
+        a.FuncType,
+        {
+          param: [
+            a.TupleType,
+            {
+              size: 0,
+              items: [],
+            },
+          ],
+          return: [a.IntType, null],
+        },
+      ],
+      body: [
+        a.FuncExpr,
+        {
+          params: {
+            size: 0,
+            items: [],
+          },
+          returnType: [a.IntType, null],
+          body: [a.IdentExpr, [a.Ident, 'i']],
+        },
+      ],
+    },
+  ],
+);
+
 console.log(chalk.green.bold('Parser tests passed'));

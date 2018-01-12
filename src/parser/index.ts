@@ -35,6 +35,10 @@ import {
   IdentExpr,
   TupleExpr,
   ListExpr,
+  FuncExpr,
+  Param,
+  Body,
+  Block,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -341,6 +345,7 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token.is(t.Ident), () => parseIdentExpr(input)],
       [token => token.is(t.Punctuation, '('), () => parseTupleExpr(input)],
       [token => token.is(t.Punctuation, '['), () => parseListExpr(input)],
+      [token => token.is(t.Keyword, 'fn'), () => parseFuncExpr(input)],
     ],
     () => {
       throw new ParseError(token.row, token.column, {
@@ -373,4 +378,47 @@ const parseListExpr: Parser<ListExpr> = parseNode(ListExpr, input => {
   }
   consume(input, t.Punctuation, ']');
   return elems;
+});
+
+const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
+  consume(input, t.Keyword, 'fn');
+
+  consume(input, t.Punctuation, '(');
+  let params: Array<Param> = [];
+  if (!nextToken(input).is(t.Punctuation, ')')) {
+    params = commaSeparated(input, input => {
+      const name = parseIdent(input);
+      const type_ = parseType(input);
+      return { name, type: type_ };
+    });
+  }
+  consume(input, t.Punctuation, ')');
+
+  const returnType = parseType(input);
+
+  let body: Body;
+  if (nextToken(input).is(t.Punctuation, '{')) {
+    body = parseBlock(input);
+  } else {
+    body = parseExpr(input);
+  }
+
+  return {
+    params: {
+      size: params.length,
+      items: params,
+    },
+    returnType,
+    body,
+  };
+});
+
+const parseBlock: Parser<Block> = parseNode(Block, input => {
+  // FIXME
+  consume(input, t.Punctuation, '{');
+  consume(input, t.Punctuation, '}');
+  return {
+    bodies: [],
+    returnVoid: true,
+  };
 });
