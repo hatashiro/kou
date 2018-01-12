@@ -34,6 +34,7 @@ import {
   UnaryExpr,
   IdentExpr,
   TupleExpr,
+  ListExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -339,6 +340,7 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token instanceof t.Literal, () => parseLitExpr(input)],
       [token => token.is(t.Ident), () => parseIdentExpr(input)],
       [token => token.is(t.Punctuation, '('), () => parseTupleExpr(input)],
+      [token => token.is(t.Punctuation, '['), () => parseListExpr(input)],
     ],
     () => {
       throw new ParseError(token.row, token.column, {
@@ -361,4 +363,14 @@ const parseTupleExpr: Parser<TupleExpr> = parseNode(TupleExpr, input => {
   }
   consume(input, t.Punctuation, ')');
   return { size: items.length, items };
+});
+
+const parseListExpr: Parser<ListExpr> = parseNode(ListExpr, input => {
+  consume(input, t.Punctuation, '[');
+  let elems: Array<Expr<any>> = [];
+  if (!nextToken(input).is(t.Punctuation, ']')) {
+    elems = commaSeparated(input, parseExpr);
+  }
+  consume(input, t.Punctuation, ']');
+  return elems;
 });

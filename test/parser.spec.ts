@@ -461,4 +461,22 @@ exprTest('(-1234, !!x, ("hello", true))', [
   },
 ]);
 
+exprTest('[]', [a.ListExpr, []]);
+exprTest('[1, 2, 3]', [
+  a.ListExpr,
+  [
+    [a.LitExpr, [a.IntLit, '1']],
+    [a.LitExpr, [a.IntLit, '2']],
+    [a.LitExpr, [a.IntLit, '3']],
+  ],
+]);
+exprTest('[a, b, c]', [
+  a.ListExpr,
+  [
+    [a.IdentExpr, [a.Ident, 'a']],
+    [a.IdentExpr, [a.Ident, 'b']],
+    [a.IdentExpr, [a.Ident, 'c']],
+  ],
+]);
+
 console.log(chalk.green.bold('Parser tests passed'));
