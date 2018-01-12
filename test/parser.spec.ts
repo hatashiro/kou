@@ -423,4 +423,42 @@ exprTest('+some_int', [
   { op: [a.UnaryOp, '+'], right: [a.IdentExpr, [a.Ident, 'some_int']] },
 ]);
 
+exprTest('()', [a.TupleExpr, { size: 0, items: [] }]);
+exprTest('(1)', [
+  a.TupleExpr,
+  { size: 1, items: [[a.LitExpr, [a.IntLit, '1']]] },
+]);
+exprTest('(-1234, !!x, ("hello", true))', [
+  a.TupleExpr,
+  {
+    size: 3,
+    items: [
+      [
+        a.UnaryExpr,
+        { op: [a.UnaryOp, '-'], right: [a.LitExpr, [a.IntLit, '1234']] },
+      ],
+      [
+        a.UnaryExpr,
+        {
+          op: [a.UnaryOp, '!'],
+          right: [
+            a.UnaryExpr,
+            { op: [a.UnaryOp, '!'], right: [a.IdentExpr, [a.Ident, 'x']] },
+          ],
+        },
+      ],
+      [
+        a.TupleExpr,
+        {
+          size: 2,
+          items: [
+            [a.LitExpr, [a.StrLit, '"hello"']],
+            [a.LitExpr, [a.BoolLit, 'true']],
+          ],
+        },
+      ],
+    ],
+  },
+]);
+
 console.log(chalk.green.bold('Parser tests passed'));
