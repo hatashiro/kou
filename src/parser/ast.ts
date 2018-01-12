@@ -115,8 +115,8 @@ export class Decl extends Node<{
 }> {}
 
 export class Block extends Node<{
-  exprOrDecl: Array<Expr<any> | Decl>;
-  isVoid: boolean;
+  bodies: Array<Expr<any> | Decl>;
+  returnVoid: boolean;
 }> {}
 
 export abstract class Expr<T> extends Node<T> {}
