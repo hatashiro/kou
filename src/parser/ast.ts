@@ -81,6 +81,30 @@ export class UnaryOp extends Operator<'+' | '-' | '!'> {
 
 export abstract class BinaryOp<T extends string> extends Operator<T> {
   abstract precedence: number;
+
+  static isBinaryOp(token: t.Token<any>) {
+    return (
+      token.is(t.Operator) &&
+      [
+        '+',
+        '-',
+        '==',
+        '!=',
+        '<',
+        '<=',
+        '>',
+        '>=',
+        '|',
+        '^',
+        '*',
+        '/',
+        '%',
+        '&',
+        '||',
+        '&&',
+      ].includes(token.rep)
+    );
+  }
 }
 
 export class EqOp extends BinaryOp<'==' | '!='> {
