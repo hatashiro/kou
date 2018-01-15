@@ -423,6 +423,164 @@ exprTest('+some_int', [
   { op: [a.UnaryOp, '+'], right: [a.IdentExpr, [a.Ident, 'some_int']] },
 ]);
 
+exprTest('1 + 2', [
+  a.BinaryExpr,
+  {
+    op: [a.AddOp, '+'],
+    left: [a.LitExpr, [a.IntLit, '1']],
+    right: [a.LitExpr, [a.IntLit, '2']],
+  },
+]);
+exprTest('1 + 2 * 3', [
+  a.BinaryExpr,
+  {
+    op: [a.AddOp, '+'],
+    left: [a.LitExpr, [a.IntLit, '1']],
+    right: [
+      a.BinaryExpr,
+      {
+        op: [a.MulOp, '*'],
+        left: [a.LitExpr, [a.IntLit, '2']],
+        right: [a.LitExpr, [a.IntLit, '3']],
+      },
+    ],
+  },
+]);
+exprTest('1 * 2 + 3', [
+  a.BinaryExpr,
+  {
+    op: [a.AddOp, '+'],
+    left: [
+      a.BinaryExpr,
+      {
+        op: [a.MulOp, '*'],
+        left: [a.LitExpr, [a.IntLit, '1']],
+        right: [a.LitExpr, [a.IntLit, '2']],
+      },
+    ],
+    right: [a.LitExpr, [a.IntLit, '3']],
+  },
+]);
+exprTest('(1 + 2) * 3', [
+  a.BinaryExpr,
+  {
+    op: [a.MulOp, '*'],
+    left: [
+      a.TupleExpr,
+      {
+        size: 1,
+        items: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '1']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+        ],
+      },
+    ],
+    right: [a.LitExpr, [a.IntLit, '3']],
+  },
+]);
+exprTest('1 * (2 + 3)', [
+  a.BinaryExpr,
+  {
+    op: [a.MulOp, '*'],
+    left: [a.LitExpr, [a.IntLit, '1']],
+    right: [
+      a.TupleExpr,
+      {
+        size: 1,
+        items: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '2']],
+              right: [a.LitExpr, [a.IntLit, '3']],
+            },
+          ],
+        ],
+      },
+    ],
+  },
+]);
+exprTest('(1 + 2 * 3 + 4 > 5) || (true && false == false || true)', [
+  a.BinaryExpr,
+  {
+    op: [a.BoolOp, '||'],
+    left: [
+      a.TupleExpr,
+      {
+        size: 1,
+        items: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.CompOp, '>'],
+              left: [
+                a.BinaryExpr,
+                {
+                  op: [a.AddOp, '+'],
+                  left: [
+                    a.BinaryExpr,
+                    {
+                      op: [a.AddOp, '+'],
+                      left: [a.LitExpr, [a.IntLit, '1']],
+                      right: [
+                        a.BinaryExpr,
+                        {
+                          op: [a.MulOp, '*'],
+                          left: [a.LitExpr, [a.IntLit, '2']],
+                          right: [a.LitExpr, [a.IntLit, '3']],
+                        },
+                      ],
+                    },
+                  ],
+                  right: [a.LitExpr, [a.IntLit, '4']],
+                },
+              ],
+              right: [a.LitExpr, [a.IntLit, '5']],
+            },
+          ],
+        ],
+      },
+    ],
+    right: [
+      a.TupleExpr,
+      {
+        size: 1,
+        items: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.EqOp, '=='],
+              left: [
+                a.BinaryExpr,
+                {
+                  op: [a.BoolOp, '&&'],
+                  left: [a.LitExpr, [a.BoolLit, 'true']],
+                  right: [a.LitExpr, [a.BoolLit, 'false']],
+                },
+              ],
+              right: [
+                a.BinaryExpr,
+                {
+                  op: [a.BoolOp, '||'],
+                  left: [a.LitExpr, [a.BoolLit, 'false']],
+                  right: [a.LitExpr, [a.BoolLit, 'true']],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    ],
+  },
+]);
+
 exprTest('()', [a.TupleExpr, { size: 0, items: [] }]);
 exprTest('(1)', [
   a.TupleExpr,

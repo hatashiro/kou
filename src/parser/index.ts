@@ -39,6 +39,13 @@ import {
   Param,
   Body,
   Block,
+  BinaryOp,
+  BinaryExpr,
+  EqOp,
+  CompOp,
+  AddOp,
+  MulOp,
+  BoolOp,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -300,9 +307,17 @@ function parseLiteral(input: ParserInput): Literal<any> {
   );
 }
 
-function parseExpr(input: ParserInput): Expr<any> {
-  // FIXME
-  return parsePrimUnaryExpr(input);
+function parseExpr(input: ParserInput, precedence: number = -1): Expr<any> {
+  let left = parsePrimUnaryExpr(input);
+
+  while (
+    BinaryOp.isBinaryOp(nextToken(input)) &&
+    tokenToBinaryOp(nextToken(input)).precedence > precedence
+  ) {
+    left = parseBinaryExpr(input, left, precedence);
+  }
+
+  return left;
 }
 
 function parsePrimUnaryExpr(input: ParserInput): PrimUnaryExpr<any> {
@@ -310,6 +325,59 @@ function parsePrimUnaryExpr(input: ParserInput): PrimUnaryExpr<any> {
     return parseUnaryExpr(input);
   } else {
     return parsePrimExpr(input);
+  }
+}
+
+function parseBinaryExpr(
+  input: ParserInput,
+  left: Expr<any>,
+  precedence: number = -1,
+): BinaryExpr {
+  const op = parseBinaryOp(input);
+  const right = parseExpr(input, op.precedence);
+  return new BinaryExpr({ op, left, right }, left.row, left.column);
+}
+
+function parseBinaryOp(input: ParserInput): BinaryOp<any> {
+  const op = consume(input, t.Operator);
+  return tokenToBinaryOp(op);
+}
+
+function tokenToBinaryOp(op: t.Operator): BinaryOp<any> {
+  switch (op.rep) {
+    case '==':
+    case '!=':
+      return new EqOp(op.rep, op.row, op.column);
+    case '<':
+    case '<=':
+    case '>':
+    case '>=':
+      return new CompOp(op.rep, op.row, op.column);
+    case '+':
+    case '-':
+    case '|':
+    case '^':
+      return new AddOp(op.rep, op.row, op.column);
+    case '*':
+    case '/':
+    case '%':
+    case '&':
+      return new MulOp(op.rep, op.row, op.column);
+    case '||':
+    case '&&':
+      return new BoolOp(op.rep, op.row, op.column);
+    default:
+      throw new ParseError(
+        op.row,
+        op.column,
+        {
+          name: 'non-binary operator',
+          rep: op.rep,
+        },
+        {
+          name: 'binary operator',
+        },
+      );
   }
 }
 
