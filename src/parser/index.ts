@@ -47,6 +47,7 @@ import {
   MulOp,
   BoolOp,
   KeywordExpr,
+  CallExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -420,7 +421,7 @@ function parseKeywordExpr(input: ParserInput): KeywordExpr<any> {
 
 function parsePrimExpr(input: ParserInput): PrimExpr<any> {
   const token = nextToken(input);
-  return match<t.Token<any>, PrimExpr<any>>(
+  let expr = match<t.Token<any>, PrimExpr<any>>(
     token,
     [
       [token => token instanceof t.Literal, () => parseLitExpr(input)],
@@ -435,6 +436,12 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       });
     },
   );
+
+  while (nextToken(input).is(t.Punctuation, '(')) {
+    expr = parseCallExpr(input, expr);
+  }
+
+  return expr;
 }
 
 const parseLitExpr: Parser<LitExpr> = parseNode(LitExpr, parseLiteral);
@@ -460,6 +467,11 @@ const parseListExpr: Parser<ListExpr> = parseNode(ListExpr, input => {
   consume(input, t.Punctuation, ']');
   return elems;
 });
+
+function parseCallExpr(input: ParserInput, func: Expr<any>): CallExpr {
+  const args = parseTupleExpr(input);
+  return new CallExpr({ func, args }, func.row, func.column);
+}
 
 const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
   consume(input, t.Keyword, 'fn');

@@ -704,4 +704,124 @@ fn (i int) () -> int
   ],
 );
 
+exprTest('func()', [
+  a.CallExpr,
+  {
+    func: [a.IdentExpr, [a.Ident, 'func']],
+    args: [
+      a.TupleExpr,
+      {
+        size: 0,
+        items: [],
+      },
+    ],
+  },
+]);
+exprTest('func2("hello", 1 + 2, true)', [
+  a.CallExpr,
+  {
+    func: [a.IdentExpr, [a.Ident, 'func2']],
+    args: [
+      a.TupleExpr,
+      {
+        size: 3,
+        items: [
+          [a.LitExpr, [a.StrLit, '"hello"']],
+          [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '1']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+          [a.LitExpr, [a.BoolLit, 'true']],
+        ],
+      },
+    ],
+  },
+]);
+exprTest('func3("hello")(1 + 2, true)', [
+  a.CallExpr,
+  {
+    func: [
+      a.CallExpr,
+      {
+        func: [a.IdentExpr, [a.Ident, 'func3']],
+        args: [
+          a.TupleExpr,
+          {
+            size: 1,
+            items: [[a.LitExpr, [a.StrLit, '"hello"']]],
+          },
+        ],
+      },
+    ],
+    args: [
+      a.TupleExpr,
+      {
+        size: 2,
+        items: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '1']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+          [a.LitExpr, [a.BoolLit, 'true']],
+        ],
+      },
+    ],
+  },
+]);
+exprTest('(fn (x int, y int) int x + y)(10, 20)', [
+  a.CallExpr,
+  {
+    func: [
+      a.TupleExpr,
+      {
+        size: 1,
+        items: [
+          [
+            a.FuncExpr,
+            {
+              params: {
+                size: 2,
+                items: [
+                  {
+                    name: [a.Ident, 'x'],
+                    type: [a.IntType, null],
+                  },
+                  {
+                    name: [a.Ident, 'y'],
+                    type: [a.IntType, null],
+                  },
+                ],
+              },
+              returnType: [a.IntType, null],
+              body: [
+                a.BinaryExpr,
+                {
+                  op: [a.AddOp, '+'],
+                  left: [a.IdentExpr, [a.Ident, 'x']],
+                  right: [a.IdentExpr, [a.Ident, 'y']],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    ],
+    args: [
+      a.TupleExpr,
+      {
+        size: 2,
+        items: [[a.LitExpr, [a.IntLit, '10']], [a.LitExpr, [a.IntLit, '20']]],
+      },
+    ],
+  },
+]);
+
 console.log(chalk.green.bold('Parser tests passed'));
