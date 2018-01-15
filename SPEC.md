@@ -205,19 +205,47 @@ Decl = "let" ident [ ":" Type ] "=" Expr .
 ## Expressions
 
 ```
-Expr = UnaryExpr | Expr binary_op Expr
-UnaryExpr = PrimExpr | unary_op UnaryExpr .
+Expr = NonBinaryExpr | BinaryExpr .
+BinaryExpr = Expr binary_op Expr .
+NonBinaryExpr = KeywordExprExpr | PrimExpr | UnaryExpr .
+UnaryExpr = unary_op NonBinaryExpr
+KeywordExpr = FuncExpr
+            | CondExpr
+            | LoopExpr .
 PrimExpr = LitExpr
          | IdentExpr
          | TupleExpr
          | ListExpr
-         | FuncExpr
-         | CallExpr
-         | CondExpr
-         | LoopExpr .
+         | CallExpr .
 ```
 
 `Expr` stands for *Expression*.
+
+### FuncExpr
+
+```
+FuncExpr = "fn" ParamTuple Type ( Expr | Block ) .
+ParamTuple = "(" [ Param { "," Param } ] ")" .
+Param = ident Type .
+```
+
+Related: [Block](#block)
+
+### CondExpr
+
+```
+CondExpr = "if" Expr "then" ( Expr | Block ) "else" ( Expr | Block )
+```
+
+Related: [Block](#block)
+
+### LoopExpr
+
+```
+LoopExpr = "for" ident "in" Expr ( Expr | Block )
+```
+
+Related: [Block](#block)
 
 ### LitExpr
 
@@ -254,16 +282,6 @@ ListExpr = "[" Expr { "," Expr } "]"
 
 Related: [List type](#list-type)
 
-### FuncExpr
-
-```
-FuncExpr = "fn" ParamTuple Type ( Expr | Block ) .
-ParamTuple = "(" [ Param { "," Param } ] ")" .
-Param = ident Type .
-```
-
-Related: [Block](#block)
-
 ### CallExpr
 
 ```
@@ -271,22 +289,6 @@ CallExpr = PrimExpr TupleExpr .
 ```
 
 Related: [TupleExpr](#tupleexpr)
-
-### CondExpr
-
-```
-CondExpr = "if" Expr "then" ( Expr | Block ) "else" ( Expr | Block )
-```
-
-Related: [Block](#block)
-
-### LoopExpr
-
-```
-LoopExpr = "for" ident "in" Expr ( Expr | Block )
-```
-
-Related: [Block](#block)
 
 ## Block
 

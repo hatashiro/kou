@@ -28,7 +28,7 @@ import {
   ListType,
   TupleType,
   FuncType,
-  PrimUnaryExpr,
+  NonBinaryExpr,
   UnaryOp,
   PrimExpr,
   UnaryExpr,
@@ -46,6 +46,7 @@ import {
   AddOp,
   MulOp,
   BoolOp,
+  KeywordExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -308,7 +309,7 @@ function parseLiteral(input: ParserInput): Literal<any> {
 }
 
 function parseExpr(input: ParserInput, precedence: number = -1): Expr<any> {
-  let left = parsePrimUnaryExpr(input);
+  let left = parseNonBinaryExpr(input);
 
   while (
     BinaryOp.isBinaryOp(nextToken(input)) &&
@@ -320,9 +321,12 @@ function parseExpr(input: ParserInput, precedence: number = -1): Expr<any> {
   return left;
 }
 
-function parsePrimUnaryExpr(input: ParserInput): PrimUnaryExpr<any> {
-  if (UnaryOp.isUnaryOp(nextToken(input))) {
+function parseNonBinaryExpr(input: ParserInput): NonBinaryExpr<any> {
+  const next = nextToken(input);
+  if (UnaryOp.isUnaryOp(next)) {
     return parseUnaryExpr(input);
+  } else if (next.is(t.Keyword)) {
+    return parseKeywordExpr(input);
   } else {
     return parsePrimExpr(input);
   }
@@ -383,7 +387,7 @@ function tokenToBinaryOp(op: t.Operator): BinaryOp<any> {
 
 const parseUnaryExpr: Parser<UnaryExpr> = parseNode(UnaryExpr, input => {
   const op = parseUnaryOp(input);
-  const right = parsePrimUnaryExpr(input);
+  const right = parseNonBinaryExpr(input);
   return { op, right };
 });
 
@@ -404,6 +408,16 @@ const parseUnaryOp: Parser<UnaryOp> = parseNode(UnaryOp, input => {
   }
 });
 
+function parseKeywordExpr(input: ParserInput): KeywordExpr<any> {
+  const keyword = nextToken(input) as t.Keyword;
+  return match(keyword.rep, [['fn', () => parseFuncExpr(input)]], () => {
+    throw new ParseError(keyword.row, keyword.column, {
+      name: 'unexpected keyword',
+      rep: keyword.rep,
+    });
+  });
+}
+
 function parsePrimExpr(input: ParserInput): PrimExpr<any> {
   const token = nextToken(input);
   return match<t.Token<any>, PrimExpr<any>>(
@@ -413,7 +427,6 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token.is(t.Ident), () => parseIdentExpr(input)],
       [token => token.is(t.Punctuation, '('), () => parseTupleExpr(input)],
       [token => token.is(t.Punctuation, '['), () => parseListExpr(input)],
-      [token => token.is(t.Keyword, 'fn'), () => parseFuncExpr(input)],
     ],
     () => {
       throw new ParseError(token.row, token.column, {

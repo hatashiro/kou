@@ -155,14 +155,14 @@ export class BinaryExpr extends Expr<{
   right: Expr<any>;
 }> {}
 
-export abstract class PrimUnaryExpr<T> extends Expr<T> {}
+export abstract class NonBinaryExpr<T> extends Expr<T> {}
 
-export class UnaryExpr extends PrimUnaryExpr<{
+export class UnaryExpr extends NonBinaryExpr<{
   op: UnaryOp;
-  right: PrimUnaryExpr<any>;
+  right: NonBinaryExpr<any>;
 }> {}
 
-export abstract class PrimExpr<T> extends PrimUnaryExpr<T> {}
+export abstract class PrimExpr<T> extends NonBinaryExpr<T> {}
 
 export class LitExpr extends PrimExpr<Literal<any>> {}
 
@@ -174,7 +174,14 @@ export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 
 export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
-export class FuncExpr extends PrimExpr<{
+export class CallExpr extends PrimExpr<{
+  func: Expr<any>; // syntactically PrimExpr, but Expr for 1-tuple desugaring
+  args: TupleExpr;
+}> {}
+
+export class KeywordExpr<T> extends NonBinaryExpr<T> {}
+
+export class FuncExpr extends KeywordExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;
   body: Body;
@@ -184,18 +191,13 @@ export type Param = { name: Ident; type: Type<any> };
 
 export type Body = Expr<any> | Block;
 
-export class CallExpr extends PrimExpr<{
-  func: PrimExpr<any>;
-  args: TupleExpr;
-}> {}
-
-export class CondExpr extends PrimExpr<{
+export class CondExpr extends KeywordExpr<{
   if: Expr<any>;
   then: Body;
   else: Body;
 }> {}
 
-export class LoopExpr extends PrimExpr<{
+export class LoopExpr extends KeywordExpr<{
   for: Ident;
   in: Expr<any>;
   body: Body;
