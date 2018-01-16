@@ -15,10 +15,12 @@ Please refer to [SPEC.md](SPEC.md).
 :construction: :construction: :construction:
 
 - [x] Tokenizer
-- [ ] Parser
-- [ ] Type system
+- [x] Parser
+- [ ] Desugarer
+- [ ] Type checker
 - [ ] Code generator for wasm
 - [ ] Module system
+- [ ] JS interop
 - [ ] IO
 - [ ] Bootstrapping
 
