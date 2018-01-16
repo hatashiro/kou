@@ -23,6 +23,7 @@
   + [TupleExpr](#tupleexpr)
   + [ListExpr](#listexpr)
   + [CallExpr](#callexpr)
+  + [IndexExpr](#indexexpr)
   + [FuncExpr](#funcexpr)
   + [CondExpr](#condexpr)
   + [LoopExpr](#loopexpr)
@@ -254,6 +255,19 @@ CallExpr = PrimExpr TupleExpr .
 ```
 
 Related: [TupleExpr](#tupleexpr)
+
+### IndexExpr
+
+```
+IndexExpr = PrimExpr "[" Expr "]" .
+```
+
+It can be used to retrieve an element from a list or a tuple.
+
+For the tuple case, the index should be a `LitExpr` having `int_lit`, with a
+value in the tuple's size range.
+
+Related: [Literals](#literals)
 
 ### FuncExpr
 

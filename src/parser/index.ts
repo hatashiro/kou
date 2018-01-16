@@ -46,6 +46,7 @@ import {
   MulOp,
   BoolOp,
   CallExpr,
+  IndexExpr,
   CondExpr,
   LoopExpr,
 } from './ast';
@@ -428,8 +429,14 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
     },
   );
 
-  while (nextToken(input).is(t.Punctuation, '(')) {
-    expr = parseCallExpr(input, expr);
+  while (nextToken(input).is(t.Punctuation)) {
+    if (nextToken(input).is(t.Punctuation, '(')) {
+      expr = parseCallExpr(input, expr);
+    } else if (nextToken(input).is(t.Punctuation, '[')) {
+      expr = parseIndexExpr(input, expr);
+    } else {
+      break;
+    }
   }
 
   return expr;
@@ -459,9 +466,16 @@ const parseListExpr: Parser<ListExpr> = parseNode(ListExpr, input => {
   return elems;
 });
 
-function parseCallExpr(input: ParserInput, func: Expr<any>): CallExpr {
+function parseCallExpr(input: ParserInput, func: PrimExpr<any>): CallExpr {
   const args = parseTupleExpr(input);
   return new CallExpr({ func, args }, func.row, func.column);
+}
+
+function parseIndexExpr(input: ParserInput, target: PrimExpr<any>): IndexExpr {
+  consume(input, t.Punctuation, '[');
+  const index = parseExpr(input);
+  consume(input, t.Punctuation, ']');
+  return new IndexExpr({ target, index }, target.row, target.column);
 }
 
 const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {

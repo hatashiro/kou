@@ -179,6 +179,11 @@ export class CallExpr extends PrimExpr<{
   args: TupleExpr;
 }> {}
 
+export class IndexExpr extends PrimExpr<{
+  target: PrimExpr<any>;
+  index: Expr<any>;
+}> {}
+
 export class FuncExpr extends PrimUnaryExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;

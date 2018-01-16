@@ -1029,6 +1029,78 @@ exprTest('fn (x int, y int) int { x + y }(10, 20)', [
   },
 ]);
 
+exprTest('arr[idx]', [
+  a.IndexExpr,
+  {
+    target: [a.IdentExpr, [a.Ident, 'arr']],
+    index: [a.IdentExpr, [a.Ident, 'idx']],
+  },
+]);
+exprTest('[1, 2, 3][2]', [
+  a.IndexExpr,
+  {
+    target: [
+      a.ListExpr,
+      [
+        [a.LitExpr, [a.IntLit, '1']],
+        [a.LitExpr, [a.IntLit, '2']],
+        [a.LitExpr, [a.IntLit, '3']],
+      ],
+    ],
+    index: [a.LitExpr, [a.IntLit, '2']],
+  },
+]);
+exprTest('func()[idx % 3]("hello")[2][1]', [
+  a.IndexExpr,
+  {
+    target: [
+      a.IndexExpr,
+      {
+        target: [
+          a.CallExpr,
+          {
+            func: [
+              a.IndexExpr,
+              {
+                target: [
+                  a.CallExpr,
+                  {
+                    func: [a.IdentExpr, [a.Ident, 'func']],
+                    args: [
+                      a.TupleExpr,
+                      {
+                        size: 0,
+                        items: [],
+                      },
+                    ],
+                  },
+                ],
+                index: [
+                  a.BinaryExpr,
+                  {
+                    op: [a.MulOp, '%'],
+                    left: [a.IdentExpr, [a.Ident, 'idx']],
+                    right: [a.LitExpr, [a.IntLit, '3']],
+                  },
+                ],
+              },
+            ],
+            args: [
+              a.TupleExpr,
+              {
+                size: 1,
+                items: [[a.LitExpr, [a.StrLit, '"hello"']]],
+              },
+            ],
+          },
+        ],
+        index: [a.LitExpr, [a.IntLit, '2']],
+      },
+    ],
+    index: [a.LitExpr, [a.IntLit, '1']],
+  },
+]);
+
 exprTest(
   `
 if 1 + 2 > 3 {
