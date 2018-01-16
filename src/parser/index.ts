@@ -46,7 +46,7 @@ import {
   AddOp,
   MulOp,
   BoolOp,
-  KeywordExpr,
+  BlockedExpr,
   CallExpr,
 } from './ast';
 
@@ -327,7 +327,7 @@ function parseNonBinaryExpr(input: ParserInput): NonBinaryExpr<any> {
   if (UnaryOp.isUnaryOp(next)) {
     return parseUnaryExpr(input);
   } else if (next.is(t.Keyword)) {
-    return parseKeywordExpr(input);
+    return parseBlockedExpr(input);
   } else {
     return parsePrimExpr(input);
   }
@@ -409,7 +409,7 @@ const parseUnaryOp: Parser<UnaryOp> = parseNode(UnaryOp, input => {
   }
 });
 
-function parseKeywordExpr(input: ParserInput): KeywordExpr<any> {
+function parseBlockedExpr(input: ParserInput): BlockedExpr<any> {
   const keyword = nextToken(input) as t.Keyword;
   return match(keyword.rep, [['fn', () => parseFuncExpr(input)]], () => {
     throw new ParseError(keyword.row, keyword.column, {

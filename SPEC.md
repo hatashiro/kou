@@ -207,9 +207,9 @@ Decl = "let" ident [ ":" Type ] "=" Expr .
 ```
 Expr = NonBinaryExpr | BinaryExpr .
 BinaryExpr = Expr binary_op Expr .
-NonBinaryExpr = KeywordExprExpr | PrimExpr | UnaryExpr .
+NonBinaryExpr = BlockedExpr | PrimExpr | UnaryExpr .
 UnaryExpr = unary_op NonBinaryExpr
-KeywordExpr = FuncExpr
+BlockedExpr = FuncExpr
             | CondExpr
             | LoopExpr .
 PrimExpr = LitExpr

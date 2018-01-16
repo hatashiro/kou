@@ -179,9 +179,9 @@ export class CallExpr extends PrimExpr<{
   args: TupleExpr;
 }> {}
 
-export class KeywordExpr<T> extends NonBinaryExpr<T> {}
+export class BlockedExpr<T> extends NonBinaryExpr<T> {}
 
-export class FuncExpr extends KeywordExpr<{
+export class FuncExpr extends BlockedExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;
   body: Body;
@@ -191,13 +191,13 @@ export type Param = { name: Ident; type: Type<any> };
 
 export type Body = Expr<any> | Block;
 
-export class CondExpr extends KeywordExpr<{
+export class CondExpr extends BlockedExpr<{
   if: Expr<any>;
   then: Body;
   else: Body;
 }> {}
 
-export class LoopExpr extends KeywordExpr<{
+export class LoopExpr extends BlockedExpr<{
   for: Ident;
   in: Expr<any>;
   body: Body;
