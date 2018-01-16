@@ -10,7 +10,7 @@ import {
   StrLit,
   BoolLit,
   CharLit,
-  Program,
+  Module,
   Import,
   Ident,
   Decl,
@@ -75,9 +75,9 @@ export class ParseError extends Error {
   }
 }
 
-export function parse(tokens: Iterable<t.Token<any>>): Program {
+export function parse(tokens: Iterable<t.Token<any>>): Module {
   const input = previewable(tokens);
-  return parseProgram(input);
+  return parseModule(input);
 }
 
 function nextToken(input: ParserInput, consume: boolean = false): t.Token<any> {
@@ -138,7 +138,7 @@ function commaSeparated<T>(input: ParserInput, parser: Parser<T>): Array<T> {
   );
 }
 
-const parseProgram: Parser<Program> = parseNode(Program, input => {
+const parseModule: Parser<Module> = parseNode(Module, input => {
   const imports = manyWhile(input, parseImport, token =>
     token.is(t.Keyword, 'import'),
   );

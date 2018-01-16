@@ -127,7 +127,7 @@ export class BoolOp extends BinaryOp<'||' | '&&'> {
   precedence = 3;
 }
 
-export class Program extends Node<{
+export class Module extends Node<{
   imports: Array<Import>;
   decls: Array<Decl>;
 }> {}

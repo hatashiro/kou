@@ -14,19 +14,18 @@
   + [Tuple type](#tuple-type)
   + [List type](#list-type)
   + [Void type](#void-type)
-* [Program](#program)
 * [Module](#module)
   + [Import](#import)
 * [Declaration](#declaration)
 * [Expressions](#expressions)
+  + [FuncExpr](#funcexpr)
+  + [CondExpr](#condexpr)
+  + [LoopExpr](#loopexpr)
   + [LitExpr](#litexpr)
   + [IdentExpr](#identexpr)
   + [TupleExpr](#tupleexpr)
   + [ListExpr](#listexpr)
-  + [FuncExpr](#funcexpr)
   + [CallExpr](#callexpr)
-  + [CondExpr](#condexpr)
-  + [LoopExpr](#loopexpr)
 * [Block](#block)
 
 ## Introduction
@@ -171,21 +170,13 @@ VoidType = "void" .
 Void type does not have a value. Any actual value in the type of `"void"`
 should result in a semantic error.
 
-## Program
-
-```
-Program = { Import } { Decl } .
-```
-
-`{ Decl }` must contain a main function.
-
-```
-let main = fn () void {
-  ...
-}
-```
-
 ## Module
+
+Each file in Kou is represented as a module.
+
+```
+Module = { Import } { Decl } .
+```
 
 ### Import
 

@@ -62,7 +62,7 @@ function programTest(
   sourceToShow: string = input,
 ) {
   try {
-    astEqual(parse(tokenize(input)), [a.Program, expected]);
+    astEqual(parse(tokenize(input)), [a.Module, expected]);
   } catch (err) {
     console.error(chalk.blue.bold('Source:'));
     console.error(sourceToShow);
