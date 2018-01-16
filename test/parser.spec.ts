@@ -1029,4 +1029,78 @@ if 1 + 2 > 3
   ],
 );
 
+exprTest('for x in [1, 2, 3] do x * 2', [
+  a.LoopExpr,
+  {
+    for: [a.Ident, 'x'],
+    in: [
+      a.ListExpr,
+      [
+        [a.LitExpr, [a.IntLit, '1']],
+        [a.LitExpr, [a.IntLit, '2']],
+        [a.LitExpr, [a.IntLit, '3']],
+      ],
+    ],
+    do: [
+      a.BinaryExpr,
+      {
+        op: [a.MulOp, '*'],
+        left: [a.IdentExpr, [a.Ident, 'x']],
+        right: [a.LitExpr, [a.IntLit, '2']],
+      },
+    ],
+  },
+]);
+exprTest(
+  `
+for x in [1, 2, 3] do {
+  print(x * 2);
+}
+`,
+  [
+    a.LoopExpr,
+    {
+      for: [a.Ident, 'x'],
+      in: [
+        a.ListExpr,
+        [
+          [a.LitExpr, [a.IntLit, '1']],
+          [a.LitExpr, [a.IntLit, '2']],
+          [a.LitExpr, [a.IntLit, '3']],
+        ],
+      ],
+      do: [
+        a.Block,
+        {
+          bodies: [
+            [
+              a.CallExpr,
+              {
+                func: [a.IdentExpr, [a.Ident, 'print']],
+                args: [
+                  a.TupleExpr,
+                  {
+                    size: 1,
+                    items: [
+                      [
+                        a.BinaryExpr,
+                        {
+                          op: [a.MulOp, '*'],
+                          left: [a.IdentExpr, [a.Ident, 'x']],
+                          right: [a.LitExpr, [a.IntLit, '2']],
+                        },
+                      ],
+                    ],
+                  },
+                ],
+              },
+            ],
+          ],
+          returnVoid: true,
+        },
+      ],
+    },
+  ],
+);
+
 console.log(chalk.green.bold('Parser tests passed'));

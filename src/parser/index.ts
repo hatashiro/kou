@@ -49,6 +49,7 @@ import {
   BlockedExpr,
   CallExpr,
   CondExpr,
+  LoopExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -414,7 +415,11 @@ function parseBlockedExpr(input: ParserInput): BlockedExpr<any> {
   const keyword = nextToken(input) as t.Keyword;
   return match<string, BlockedExpr<any>>(
     keyword.rep,
-    [['fn', () => parseFuncExpr(input)], ['if', () => parseCondExpr(input)]],
+    [
+      ['fn', () => parseFuncExpr(input)],
+      ['if', () => parseCondExpr(input)],
+      ['for', () => parseLoopExpr(input)],
+    ],
     () => {
       throw new ParseError(keyword.row, keyword.column, {
         name: 'unexpected keyword',
@@ -513,6 +518,16 @@ const parseCondExpr: Parser<CondExpr> = parseNode(CondExpr, input => {
   consume(input, t.Keyword, 'else');
   const else_ = parseBody(input);
   return { if: if_, then, else: else_ };
+});
+
+const parseLoopExpr: Parser<LoopExpr> = parseNode(LoopExpr, input => {
+  consume(input, t.Keyword, 'for');
+  const for_ = parseIdent(input);
+  consume(input, t.Keyword, 'in');
+  const in_ = parseExpr(input);
+  consume(input, t.Keyword, 'do');
+  const do_ = parseBody(input);
+  return { for: for_, in: in_, do: do_ };
 });
 
 function parseBody(input: ParserInput): Body {
