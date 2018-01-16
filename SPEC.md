@@ -18,14 +18,14 @@
   + [Import](#import)
 * [Declaration](#declaration)
 * [Expressions](#expressions)
-  + [FuncExpr](#funcexpr)
-  + [CondExpr](#condexpr)
-  + [LoopExpr](#loopexpr)
   + [LitExpr](#litexpr)
   + [IdentExpr](#identexpr)
   + [TupleExpr](#tupleexpr)
   + [ListExpr](#listexpr)
   + [CallExpr](#callexpr)
+  + [FuncExpr](#funcexpr)
+  + [CondExpr](#condexpr)
+  + [LoopExpr](#loopexpr)
 * [Block](#block)
 
 ## Introduction
@@ -196,47 +196,21 @@ Decl = "let" ident [ ":" Type ] "=" Expr .
 ## Expressions
 
 ```
-Expr = NonBinaryExpr | BinaryExpr .
+Expr = PrimUnaryExpr | BinaryExpr .
 BinaryExpr = Expr binary_op Expr .
-NonBinaryExpr = BlockedExpr | PrimExpr | UnaryExpr .
-UnaryExpr = unary_op NonBinaryExpr
-BlockedExpr = FuncExpr
-            | CondExpr
-            | LoopExpr .
+PrimUnaryExpr = PrimExpr | UnaryExpr .
+UnaryExpr = unary_op PrimUnaryExpr
 PrimExpr = LitExpr
          | IdentExpr
          | TupleExpr
          | ListExpr
-         | CallExpr .
+         | CallExpr
+         | FuncExpr
+         | CondExpr
+         | LoopExpr .
 ```
 
 `Expr` stands for *Expression*.
-
-### FuncExpr
-
-```
-FuncExpr = "fn" ParamTuple Type Block .
-ParamTuple = "(" [ Param { "," Param } ] ")" .
-Param = ident Type .
-```
-
-Related: [Block](#block)
-
-### CondExpr
-
-```
-CondExpr = "if" Expr Block "else" Block
-```
-
-Related: [Block](#block)
-
-### LoopExpr
-
-```
-LoopExpr = "for" ident "in" Expr Block
-```
-
-Related: [Block](#block)
 
 ### LitExpr
 
@@ -280,6 +254,32 @@ CallExpr = PrimExpr TupleExpr .
 ```
 
 Related: [TupleExpr](#tupleexpr)
+
+### FuncExpr
+
+```
+FuncExpr = "fn" ParamTuple Type Block .
+ParamTuple = "(" [ Param { "," Param } ] ")" .
+Param = ident Type .
+```
+
+Related: [Block](#block)
+
+### CondExpr
+
+```
+CondExpr = "if" Expr Block "else" Block
+```
+
+Related: [Block](#block)
+
+### LoopExpr
+
+```
+LoopExpr = "for" ident "in" Expr Block
+```
+
+Related: [Block](#block)
 
 ## Block
 

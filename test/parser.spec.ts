@@ -981,6 +981,53 @@ exprTest('(fn (x int, y int) int { x + y })(10, 20)', [
     ],
   },
 ]);
+exprTest('fn (x int, y int) int { x + y }(10, 20)', [
+  a.CallExpr,
+  {
+    func: [
+      a.FuncExpr,
+      {
+        params: {
+          size: 2,
+          items: [
+            {
+              name: [a.Ident, 'x'],
+              type: [a.IntType, null],
+            },
+            {
+              name: [a.Ident, 'y'],
+              type: [a.IntType, null],
+            },
+          ],
+        },
+        returnType: [a.IntType, null],
+        body: [
+          a.Block,
+          {
+            bodies: [
+              [
+                a.BinaryExpr,
+                {
+                  op: [a.AddOp, '+'],
+                  left: [a.IdentExpr, [a.Ident, 'x']],
+                  right: [a.IdentExpr, [a.Ident, 'y']],
+                },
+              ],
+            ],
+            returnVoid: false,
+          },
+        ],
+      },
+    ],
+    args: [
+      a.TupleExpr,
+      {
+        size: 2,
+        items: [[a.LitExpr, [a.IntLit, '10']], [a.LitExpr, [a.IntLit, '20']]],
+      },
+    ],
+  },
+]);
 
 exprTest(
   `

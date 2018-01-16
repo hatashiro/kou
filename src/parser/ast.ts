@@ -155,14 +155,14 @@ export class BinaryExpr extends Expr<{
   right: Expr<any>;
 }> {}
 
-export abstract class NonBinaryExpr<T> extends Expr<T> {}
+export abstract class PrimUnaryExpr<T> extends Expr<T> {}
 
-export class UnaryExpr extends NonBinaryExpr<{
+export class UnaryExpr extends PrimUnaryExpr<{
   op: UnaryOp;
-  right: NonBinaryExpr<any>;
+  right: PrimUnaryExpr<any>;
 }> {}
 
-export abstract class PrimExpr<T> extends NonBinaryExpr<T> {}
+export abstract class PrimExpr<T> extends PrimUnaryExpr<T> {}
 
 export class LitExpr extends PrimExpr<Literal<any>> {}
 
@@ -175,13 +175,11 @@ export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
 export class CallExpr extends PrimExpr<{
-  func: Expr<any>; // syntactically PrimExpr, but Expr for 1-tuple desugaring
+  func: PrimExpr<any>;
   args: TupleExpr;
 }> {}
 
-export class BlockedExpr<T> extends NonBinaryExpr<T> {}
-
-export class FuncExpr extends BlockedExpr<{
+export class FuncExpr extends PrimUnaryExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;
   body: Block;
@@ -189,13 +187,13 @@ export class FuncExpr extends BlockedExpr<{
 
 export type Param = { name: Ident; type: Type<any> };
 
-export class CondExpr extends BlockedExpr<{
+export class CondExpr extends PrimUnaryExpr<{
   if: Expr<any>;
   then: Block;
   else: Block;
 }> {}
 
-export class LoopExpr extends BlockedExpr<{
+export class LoopExpr extends PrimUnaryExpr<{
   for: Ident;
   in: Expr<any>;
   do: Block;
