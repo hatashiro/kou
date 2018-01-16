@@ -772,7 +772,7 @@ fn (x int, y int) int {
     },
   ],
 );
-exprTest('fn (ignored [boolean], negated int) int -negated', [
+exprTest('fn (ignored [boolean], negated int) int { -negated }', [
   a.FuncExpr,
   {
     params: {
@@ -784,15 +784,27 @@ exprTest('fn (ignored [boolean], negated int) int -negated', [
     },
     returnType: [a.IntType, null],
     body: [
-      a.UnaryExpr,
-      { op: [a.UnaryOp, '-'], right: [a.IdentExpr, [a.Ident, 'negated']] },
+      a.Block,
+      {
+        bodies: [
+          [
+            a.UnaryExpr,
+            {
+              op: [a.UnaryOp, '-'],
+              right: [a.IdentExpr, [a.Ident, 'negated']],
+            },
+          ],
+        ],
+        returnVoid: false,
+      },
     ],
   },
 ]);
 exprTest(
   `
-fn (i int) () -> int
-  fn () int i`,
+fn (i int) () -> int {
+  fn () int { i }
+}`,
   [
     a.FuncExpr,
     {
@@ -814,14 +826,28 @@ fn (i int) () -> int
         },
       ],
       body: [
-        a.FuncExpr,
+        a.Block,
         {
-          params: {
-            size: 0,
-            items: [],
-          },
-          returnType: [a.IntType, null],
-          body: [a.IdentExpr, [a.Ident, 'i']],
+          bodies: [
+            [
+              a.FuncExpr,
+              {
+                params: {
+                  size: 0,
+                  items: [],
+                },
+                returnType: [a.IntType, null],
+                body: [
+                  a.Block,
+                  {
+                    bodies: [[a.IdentExpr, [a.Ident, 'i']]],
+                    returnVoid: false,
+                  },
+                ],
+              },
+            ],
+          ],
+          returnVoid: false,
         },
       ],
     },
@@ -900,7 +926,7 @@ exprTest('func3("hello")(1 + 2, true)', [
     ],
   },
 ]);
-exprTest('(fn (x int, y int) int x + y)(10, 20)', [
+exprTest('(fn (x int, y int) int { x + y })(10, 20)', [
   a.CallExpr,
   {
     func: [
@@ -926,11 +952,19 @@ exprTest('(fn (x int, y int) int x + y)(10, 20)', [
               },
               returnType: [a.IntType, null],
               body: [
-                a.BinaryExpr,
+                a.Block,
                 {
-                  op: [a.AddOp, '+'],
-                  left: [a.IdentExpr, [a.Ident, 'x']],
-                  right: [a.IdentExpr, [a.Ident, 'y']],
+                  bodies: [
+                    [
+                      a.BinaryExpr,
+                      {
+                        op: [a.AddOp, '+'],
+                        left: [a.IdentExpr, [a.Ident, 'x']],
+                        right: [a.IdentExpr, [a.Ident, 'y']],
+                      },
+                    ],
+                  ],
+                  returnVoid: false,
                 },
               ],
             },
@@ -950,9 +984,11 @@ exprTest('(fn (x int, y int) int x + y)(10, 20)', [
 
 exprTest(
   `
-if 1 + 2 > 3
-  then "hello"
-  else "world"
+if 1 + 2 > 3 {
+  "hello"
+} else {
+  "world"
+}
 `,
   [
     a.CondExpr,
@@ -972,18 +1008,23 @@ if 1 + 2 > 3
           right: [a.LitExpr, [a.IntLit, '3']],
         },
       ],
-      then: [a.LitExpr, [a.StrLit, '"hello"']],
-      else: [a.LitExpr, [a.StrLit, '"world"']],
+      then: [
+        a.Block,
+        { bodies: [[a.LitExpr, [a.StrLit, '"hello"']]], returnVoid: false },
+      ],
+      else: [
+        a.Block,
+        { bodies: [[a.LitExpr, [a.StrLit, '"world"']]], returnVoid: false },
+      ],
     },
   ],
 );
 exprTest(
   `
-if 1 + 2 > 3
-  then {
-    print("hello, world");
-  }
-  else {}
+if 1 + 2 > 3 {
+  print("hello, world");
+} else {
+}
 `,
   [
     a.CondExpr,
@@ -1029,7 +1070,7 @@ if 1 + 2 > 3
   ],
 );
 
-exprTest('for x in [1, 2, 3] do x * 2', [
+exprTest('for x in [1, 2, 3] { x * 2 }', [
   a.LoopExpr,
   {
     for: [a.Ident, 'x'],
@@ -1042,18 +1083,26 @@ exprTest('for x in [1, 2, 3] do x * 2', [
       ],
     ],
     do: [
-      a.BinaryExpr,
+      a.Block,
       {
-        op: [a.MulOp, '*'],
-        left: [a.IdentExpr, [a.Ident, 'x']],
-        right: [a.LitExpr, [a.IntLit, '2']],
+        bodies: [
+          [
+            a.BinaryExpr,
+            {
+              op: [a.MulOp, '*'],
+              left: [a.IdentExpr, [a.Ident, 'x']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+        ],
+        returnVoid: false,
       },
     ],
   },
 ]);
 exprTest(
   `
-for x in [1, 2, 3] do {
+for x in [1, 2, 3] {
   print(x * 2);
 }
 `,

@@ -76,7 +76,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let fn if then else for in do
+import as let fn if else for in
 ```
 
 ### Literals
@@ -215,7 +215,7 @@ PrimExpr = LitExpr
 ### FuncExpr
 
 ```
-FuncExpr = "fn" ParamTuple Type ( Expr | Block ) .
+FuncExpr = "fn" ParamTuple Type Block .
 ParamTuple = "(" [ Param { "," Param } ] ")" .
 Param = ident Type .
 ```
@@ -225,7 +225,7 @@ Related: [Block](#block)
 ### CondExpr
 
 ```
-CondExpr = "if" Expr "then" ( Expr | Block ) "else" ( Expr | Block )
+CondExpr = "if" Expr Block "else" Block
 ```
 
 Related: [Block](#block)
@@ -233,7 +233,7 @@ Related: [Block](#block)
 ### LoopExpr
 
 ```
-LoopExpr = "for" ident "in" Expr "do" ( Expr | Block )
+LoopExpr = "for" ident "in" Expr Block
 ```
 
 Related: [Block](#block)

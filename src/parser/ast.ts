@@ -184,23 +184,21 @@ export class BlockedExpr<T> extends NonBinaryExpr<T> {}
 export class FuncExpr extends BlockedExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;
-  body: Body;
+  body: Block;
 }> {}
 
 export type Param = { name: Ident; type: Type<any> };
 
-export type Body = Expr<any> | Block;
-
 export class CondExpr extends BlockedExpr<{
   if: Expr<any>;
-  then: Body;
-  else: Body;
+  then: Block;
+  else: Block;
 }> {}
 
 export class LoopExpr extends BlockedExpr<{
   for: Ident;
   in: Expr<any>;
-  do: Body;
+  do: Block;
 }> {}
 
 export abstract class Type<T> extends Node<T> {}

@@ -37,7 +37,6 @@ import {
   ListExpr,
   FuncExpr,
   Param,
-  Body,
   Block,
   BinaryOp,
   BinaryExpr,
@@ -498,7 +497,7 @@ const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
   consume(input, t.Punctuation, ')');
 
   const returnType = parseType(input);
-  const body = parseBody(input);
+  const body = parseBlock(input);
 
   return {
     params: {
@@ -513,10 +512,9 @@ const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
 const parseCondExpr: Parser<CondExpr> = parseNode(CondExpr, input => {
   consume(input, t.Keyword, 'if');
   const if_ = parseExpr(input);
-  consume(input, t.Keyword, 'then');
-  const then = parseBody(input);
+  const then = parseBlock(input);
   consume(input, t.Keyword, 'else');
-  const else_ = parseBody(input);
+  const else_ = parseBlock(input);
   return { if: if_, then, else: else_ };
 });
 
@@ -525,18 +523,9 @@ const parseLoopExpr: Parser<LoopExpr> = parseNode(LoopExpr, input => {
   const for_ = parseIdent(input);
   consume(input, t.Keyword, 'in');
   const in_ = parseExpr(input);
-  consume(input, t.Keyword, 'do');
-  const do_ = parseBody(input);
+  const do_ = parseBlock(input);
   return { for: for_, in: in_, do: do_ };
 });
-
-function parseBody(input: ParserInput): Body {
-  if (nextToken(input).is(t.Punctuation, '{')) {
-    return parseBlock(input);
-  } else {
-    return parseExpr(input);
-  }
-}
 
 const parseBlock: Parser<Block> = parseNode(Block, input => {
   consume(input, t.Punctuation, '{');

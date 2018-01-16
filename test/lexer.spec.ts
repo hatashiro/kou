@@ -107,11 +107,9 @@ tokenizeTest('as', [[t.Keyword, 'as', 1, 1]]);
 tokenizeTest('let', [[t.Keyword, 'let', 1, 1]]);
 tokenizeTest('fn', [[t.Keyword, 'fn', 1, 1]]);
 tokenizeTest('if', [[t.Keyword, 'if', 1, 1]]);
-tokenizeTest('then', [[t.Keyword, 'then', 1, 1]]);
 tokenizeTest('else', [[t.Keyword, 'else', 1, 1]]);
 tokenizeTest('for', [[t.Keyword, 'for', 1, 1]]);
 tokenizeTest('in', [[t.Keyword, 'in', 1, 1]]);
-tokenizeTest('do', [[t.Keyword, 'do', 1, 1]]);
 
 tokenizeTest('hello', [[t.Ident, 'hello', 1, 1]]);
 tokenizeTest('hello1', [[t.Ident, 'hello1', 1, 1]]);
@@ -174,7 +172,7 @@ let main: () -> void = fn () void {
   }
 }
 
-let add = fn (x: int, y: int) int x + y
+let add = fn (x: int, y: int) int { x + y }
 `,
   [
     [t.Keyword, 'import'],
@@ -303,9 +301,11 @@ let add = fn (x: int, y: int) int x + y
     [t.Ident, 'int'],
     [t.Punctuation, ')'],
     [t.Ident, 'int'],
+    [t.Punctuation, '{'],
     [t.Ident, 'x'],
     [t.Operator, '+'],
     [t.Ident, 'y'],
+    [t.Punctuation, '}'],
   ],
 );
 
