@@ -645,9 +645,133 @@ exprTest('fn () void {}', [
       items: [],
     },
     returnType: [a.VoidType, null],
-    body: [a.Block, []],
+    body: [
+      a.Block,
+      {
+        bodies: [],
+        returnVoid: true,
+      },
+    ],
   },
 ]);
+exprTest(
+  `
+fn (x int, y int) int {
+  let result = x + y;
+  print(result);
+  result
+}
+`,
+  [
+    a.FuncExpr,
+    {
+      params: {
+        size: 2,
+        items: [
+          { name: [a.Ident, 'x'], type: [a.IntType, null] },
+          { name: [a.Ident, 'y'], type: [a.IntType, null] },
+        ],
+      },
+      returnType: [a.IntType, null],
+      body: [
+        a.Block,
+        {
+          bodies: [
+            [
+              a.Decl,
+              {
+                name: [a.Ident, 'result'],
+                type: null,
+                expr: [
+                  a.BinaryExpr,
+                  {
+                    op: [a.AddOp, '+'],
+                    left: [a.IdentExpr, [a.Ident, 'x']],
+                    right: [a.IdentExpr, [a.Ident, 'y']],
+                  },
+                ],
+              },
+            ],
+            [
+              a.CallExpr,
+              {
+                func: [a.IdentExpr, [a.Ident, 'print']],
+                args: [
+                  a.TupleExpr,
+                  {
+                    size: 1,
+                    items: [[a.IdentExpr, [a.Ident, 'result']]],
+                  },
+                ],
+              },
+            ],
+            [a.IdentExpr, [a.Ident, 'result']],
+          ],
+          returnVoid: false,
+        },
+      ],
+    },
+  ],
+);
+exprTest(
+  `
+fn (x int, y int) int {
+  let result = x + y;
+  print(result);
+  result;
+}
+`,
+  [
+    a.FuncExpr,
+    {
+      params: {
+        size: 2,
+        items: [
+          { name: [a.Ident, 'x'], type: [a.IntType, null] },
+          { name: [a.Ident, 'y'], type: [a.IntType, null] },
+        ],
+      },
+      returnType: [a.IntType, null],
+      body: [
+        a.Block,
+        {
+          bodies: [
+            [
+              a.Decl,
+              {
+                name: [a.Ident, 'result'],
+                type: null,
+                expr: [
+                  a.BinaryExpr,
+                  {
+                    op: [a.AddOp, '+'],
+                    left: [a.IdentExpr, [a.Ident, 'x']],
+                    right: [a.IdentExpr, [a.Ident, 'y']],
+                  },
+                ],
+              },
+            ],
+            [
+              a.CallExpr,
+              {
+                func: [a.IdentExpr, [a.Ident, 'print']],
+                args: [
+                  a.TupleExpr,
+                  {
+                    size: 1,
+                    items: [[a.IdentExpr, [a.Ident, 'result']]],
+                  },
+                ],
+              },
+            ],
+            [a.IdentExpr, [a.Ident, 'result']],
+          ],
+          returnVoid: true,
+        },
+      ],
+    },
+  ],
+);
 exprTest('fn (ignored [boolean], negated int) int -negated', [
   a.FuncExpr,
   {

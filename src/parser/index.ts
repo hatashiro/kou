@@ -488,13 +488,7 @@ const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
   consume(input, t.Punctuation, ')');
 
   const returnType = parseType(input);
-
-  let body: Body;
-  if (nextToken(input).is(t.Punctuation, '{')) {
-    body = parseBlock(input);
-  } else {
-    body = parseExpr(input);
-  }
+  const body = parseBody(input);
 
   return {
     params: {
@@ -506,12 +500,37 @@ const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
   };
 });
 
+function parseBody(input: ParserInput): Body {
+  if (nextToken(input).is(t.Punctuation, '{')) {
+    return parseBlock(input);
+  } else {
+    return parseExpr(input);
+  }
+}
+
 const parseBlock: Parser<Block> = parseNode(Block, input => {
-  // FIXME
   consume(input, t.Punctuation, '{');
+
+  let bodies: Array<Expr<any> | Decl> = [];
+  let returnVoid = true;
+
+  while (!nextToken(input).is(t.Punctuation, '}')) {
+    if (nextToken(input).is(t.Keyword, 'let')) {
+      bodies.push(parseDecl(input));
+    } else {
+      bodies.push(parseExpr(input));
+    }
+
+    if (nextToken(input).is(t.Punctuation, ';')) {
+      consume(input, t.Punctuation, ';');
+      returnVoid = true;
+    } else {
+      returnVoid = false;
+      break;
+    }
+  }
+
   consume(input, t.Punctuation, '}');
-  return {
-    bodies: [],
-    returnVoid: true,
-  };
+
+  return { bodies, returnVoid };
 });
