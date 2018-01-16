@@ -76,7 +76,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let fn if then else for in
+import as let fn if then else for in do
 ```
 
 ### Literals
@@ -233,7 +233,7 @@ Related: [Block](#block)
 ### LoopExpr
 
 ```
-LoopExpr = "for" ident "in" Expr ( Expr | Block )
+LoopExpr = "for" ident "in" Expr "do" ( Expr | Block )
 ```
 
 Related: [Block](#block)

@@ -200,7 +200,7 @@ export class CondExpr extends BlockedExpr<{
 export class LoopExpr extends BlockedExpr<{
   for: Ident;
   in: Expr<any>;
-  body: Body;
+  do: Body;
 }> {}
 
 export abstract class Type<T> extends Node<T> {}

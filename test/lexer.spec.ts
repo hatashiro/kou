@@ -111,6 +111,7 @@ tokenizeTest('then', [[t.Keyword, 'then', 1, 1]]);
 tokenizeTest('else', [[t.Keyword, 'else', 1, 1]]);
 tokenizeTest('for', [[t.Keyword, 'for', 1, 1]]);
 tokenizeTest('in', [[t.Keyword, 'in', 1, 1]]);
+tokenizeTest('do', [[t.Keyword, 'do', 1, 1]]);
 
 tokenizeTest('hello', [[t.Ident, 'hello', 1, 1]]);
 tokenizeTest('hello1', [[t.Ident, 'hello1', 1, 1]]);
