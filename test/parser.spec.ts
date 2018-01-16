@@ -948,4 +948,85 @@ exprTest('(fn (x int, y int) int x + y)(10, 20)', [
   },
 ]);
 
+exprTest(
+  `
+if 1 + 2 > 3
+  then "hello"
+  else "world"
+`,
+  [
+    a.CondExpr,
+    {
+      if: [
+        a.BinaryExpr,
+        {
+          op: [a.CompOp, '>'],
+          left: [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '1']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+          right: [a.LitExpr, [a.IntLit, '3']],
+        },
+      ],
+      then: [a.LitExpr, [a.StrLit, '"hello"']],
+      else: [a.LitExpr, [a.StrLit, '"world"']],
+    },
+  ],
+);
+exprTest(
+  `
+if 1 + 2 > 3
+  then {
+    print("hello, world");
+  }
+  else {}
+`,
+  [
+    a.CondExpr,
+    {
+      if: [
+        a.BinaryExpr,
+        {
+          op: [a.CompOp, '>'],
+          left: [
+            a.BinaryExpr,
+            {
+              op: [a.AddOp, '+'],
+              left: [a.LitExpr, [a.IntLit, '1']],
+              right: [a.LitExpr, [a.IntLit, '2']],
+            },
+          ],
+          right: [a.LitExpr, [a.IntLit, '3']],
+        },
+      ],
+      then: [
+        a.Block,
+        {
+          bodies: [
+            [
+              a.CallExpr,
+              {
+                func: [a.IdentExpr, [a.Ident, 'print']],
+                args: [
+                  a.TupleExpr,
+                  {
+                    size: 1,
+                    items: [[a.LitExpr, [a.StrLit, '"hello, world"']]],
+                  },
+                ],
+              },
+            ],
+          ],
+          returnVoid: true,
+        },
+      ],
+      else: [a.Block, { bodies: [], returnVoid: true }],
+    },
+  ],
+);
+
 console.log(chalk.green.bold('Parser tests passed'));

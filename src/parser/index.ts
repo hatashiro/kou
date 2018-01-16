@@ -48,6 +48,7 @@ import {
   BoolOp,
   BlockedExpr,
   CallExpr,
+  CondExpr,
 } from './ast';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
@@ -411,12 +412,16 @@ const parseUnaryOp: Parser<UnaryOp> = parseNode(UnaryOp, input => {
 
 function parseBlockedExpr(input: ParserInput): BlockedExpr<any> {
   const keyword = nextToken(input) as t.Keyword;
-  return match(keyword.rep, [['fn', () => parseFuncExpr(input)]], () => {
-    throw new ParseError(keyword.row, keyword.column, {
-      name: 'unexpected keyword',
-      rep: keyword.rep,
-    });
-  });
+  return match<string, BlockedExpr<any>>(
+    keyword.rep,
+    [['fn', () => parseFuncExpr(input)], ['if', () => parseCondExpr(input)]],
+    () => {
+      throw new ParseError(keyword.row, keyword.column, {
+        name: 'unexpected keyword',
+        rep: keyword.rep,
+      });
+    },
+  );
 }
 
 function parsePrimExpr(input: ParserInput): PrimExpr<any> {
@@ -498,6 +503,16 @@ const parseFuncExpr: Parser<FuncExpr> = parseNode(FuncExpr, input => {
     returnType,
     body,
   };
+});
+
+const parseCondExpr: Parser<CondExpr> = parseNode(CondExpr, input => {
+  consume(input, t.Keyword, 'if');
+  const if_ = parseExpr(input);
+  consume(input, t.Keyword, 'then');
+  const then = parseBody(input);
+  consume(input, t.Keyword, 'else');
+  const else_ = parseBody(input);
+  return { if: if_, then, else: else_ };
 });
 
 function parseBody(input: ParserInput): Body {
