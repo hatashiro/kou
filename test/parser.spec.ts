@@ -3,7 +3,12 @@ import { tokenize } from '../src/lexer';
 import { parse } from '../src/parser';
 import * as a from '../src/parser/ast';
 
-type NodeExpectation = [Function, any, number | undefined, number | undefined];
+type NodeExpectation<T> = [
+  a.NodeConstructor<any>,
+  any,
+  number | undefined,
+  number | undefined
+];
 
 function valueEqual(actual: any, expected: any): boolean {
   if (actual instanceof a.Node) {

@@ -3,7 +3,7 @@ import { tokenize } from '../src/lexer';
 import * as t from '../src/lexer/token';
 
 type TokenExpectation = [
-  Function,
+  t.TokenConstructor<any>,
   string,
   number | undefined,
   number | undefined
