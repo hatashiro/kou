@@ -126,4 +126,276 @@ exprDesugarTest(
   n(a.LitExpr, n(a.IntLit, '1')),
 );
 
+exprDesugarTest(
+  'Unwrap 1-tuple',
+  n(a.TupleExpr, { size: 1, items: [n(a.LitExpr, n(a.IntLit, '123'))] }),
+  n(a.LitExpr, n(a.IntLit, '123')),
+);
+
+exprDesugarTest(
+  'Unwrap 1-tuple multiple times',
+  n(a.TupleExpr, {
+    size: 1,
+    items: [
+      n(a.TupleExpr, {
+        size: 1,
+        items: [
+          n(a.TupleExpr, {
+            size: 1,
+            items: [n(a.LitExpr, n(a.IntLit, '123'))],
+          }),
+        ],
+      }),
+    ],
+  }),
+  n(a.LitExpr, n(a.IntLit, '123')),
+);
+
+exprDesugarTest(
+  'Unwrap 1-tuple with binary operator',
+  n(a.BinaryExpr, {
+    op: n(a.MulOp, '*'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.TupleExpr, {
+      size: 1,
+      items: [
+        n(a.BinaryExpr, {
+          op: n(a.AddOp, '+'),
+          left: n(a.LitExpr, n(a.IntLit, '2')),
+          right: n(a.LitExpr, n(a.IntLit, '3')),
+        }),
+      ],
+    }),
+  }),
+  n(a.BinaryExpr, {
+    op: n(a.MulOp, '*'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.BinaryExpr, {
+      op: n(a.AddOp, '+'),
+      left: n(a.LitExpr, n(a.IntLit, '2')),
+      right: n(a.LitExpr, n(a.IntLit, '3')),
+    }),
+  }),
+);
+
+exprDesugarTest(
+  'Unwrap unary + operator',
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '+'),
+    right: n(a.LitExpr, n(a.IntLit, '1')),
+  }),
+  n(a.LitExpr, n(a.IntLit, '1')),
+);
+
+exprDesugarTest(
+  'Unwrap multiple + operator',
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '+'),
+    right: n(a.UnaryExpr, {
+      op: n(a.UnaryOp, '-'),
+      right: n(a.UnaryExpr, {
+        op: n(a.UnaryOp, '+'),
+        right: n(a.UnaryExpr, {
+          op: n(a.UnaryOp, '+'),
+          right: n(a.UnaryExpr, {
+            op: n(a.UnaryOp, '-'),
+            right: n(a.LitExpr, n(a.IntLit, '1')),
+          }),
+        }),
+      }),
+    }),
+  }),
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '-'),
+    right: n(a.UnaryExpr, {
+      op: n(a.UnaryOp, '-'),
+      right: n(a.LitExpr, n(a.IntLit, '1')),
+    }),
+  }),
+);
+
+function typeDesugarTest(
+  description: string,
+  input: a.Type<any>,
+  expected: a.Type<any>,
+) {
+  declDesugarTest(
+    description,
+    n(a.Decl, {
+      name: n(a.Ident, 'x'),
+      type: input,
+      expr: n(a.Ident, 'y'),
+    }),
+    n(a.Decl, {
+      name: n(a.Ident, 'x'),
+      type: expected,
+      expr: n(a.Ident, 'y'),
+    }),
+  );
+}
+
+typeDesugarTest('No desugar', n(a.IntType, null), n(a.IntType, null));
+
+typeDesugarTest(
+  'Unwrap 1-tuple type',
+  n(a.TupleType, { size: 1, items: [n(a.IntType, null)] }),
+  n(a.IntType, null),
+);
+
+typeDesugarTest(
+  'Unwrap 1-tuple type multiple times',
+  n(a.TupleType, {
+    size: 1,
+    items: [
+      n(a.TupleType, {
+        size: 1,
+        items: [
+          n(a.TupleType, {
+            size: 1,
+            items: [n(a.IntType, null)],
+          }),
+        ],
+      }),
+    ],
+  }),
+  n(a.IntType, null),
+);
+
+declDesugarTest(
+  'Complex case',
+  n(a.Decl, {
+    name: n(a.Ident, 'x'),
+    type: n(a.FuncType, {
+      param: n(a.TupleType, {
+        size: 3,
+        items: [
+          n(a.StrType, null),
+          n(
+            a.ListType,
+            n(a.TupleType, {
+              size: 1,
+              items: [
+                n(a.TupleType, {
+                  size: 1,
+                  items: [n(a.BoolType, null)],
+                }),
+              ],
+            }),
+          ),
+          n(a.FuncType, {
+            param: n(a.TupleType, {
+              size: 1,
+              items: [n(a.CharType, null)],
+            }),
+            return: n(a.StrType, null),
+          }),
+        ],
+      }),
+      return: n(a.FuncType, {
+        param: n(a.IntType, null),
+        return: n(a.TupleType, {
+          size: 2,
+          items: [
+            n(a.TupleType, { size: 1, items: [n(a.IntType, null)] }),
+            n(a.TupleType, { size: 1, items: [n(a.IntType, null)] }),
+          ],
+        }),
+      }),
+    }),
+    expr: n(a.FuncExpr, {
+      params: {
+        size: 2,
+        items: [
+          {
+            name: n(a.Ident, 'x'),
+            type: n(a.TupleType, { size: 1, items: [n(a.IntType, null)] }),
+          },
+          { name: n(a.Ident, 'y'), type: n(a.IntType, null) },
+        ],
+      },
+      returnType: n(a.TupleType, {
+        size: 1,
+        items: [
+          n(a.TupleType, {
+            size: 1,
+            items: [n(a.TupleType, { size: 1, items: [n(a.IntType, null)] })],
+          }),
+        ],
+      }),
+      body: n(a.Block, {
+        bodies: [
+          n(a.BinaryExpr, {
+            op: n(a.MulOp, '*'),
+            left: n(a.UnaryExpr, {
+              op: n(a.UnaryOp, '+'),
+              right: n(a.LitExpr, n(a.IntLit, '1')),
+            }),
+            right: n(a.TupleExpr, {
+              size: 1,
+              items: [
+                n(a.BinaryExpr, {
+                  op: n(a.AddOp, '+'),
+                  left: n(a.IdentExpr, n(a.Ident, 'x')),
+                  right: n(a.IdentExpr, n(a.Ident, 'y')),
+                }),
+              ],
+            }),
+          }),
+        ],
+        returnVoid: false,
+      }),
+    }),
+  }),
+  n(a.Decl, {
+    name: n(a.Ident, 'x'),
+    type: n(a.FuncType, {
+      param: n(a.TupleType, {
+        size: 3,
+        items: [
+          n(a.StrType, null),
+          n(a.ListType, n(a.BoolType, null)),
+          n(a.FuncType, {
+            param: n(a.CharType, null),
+            return: n(a.StrType, null),
+          }),
+        ],
+      }),
+      return: n(a.FuncType, {
+        param: n(a.IntType, null),
+        return: n(a.TupleType, {
+          size: 2,
+          items: [n(a.IntType, null), n(a.IntType, null)],
+        }),
+      }),
+    }),
+    expr: n(a.FuncExpr, {
+      params: {
+        size: 2,
+        items: [
+          {
+            name: n(a.Ident, 'x'),
+            type: n(a.IntType, null),
+          },
+          { name: n(a.Ident, 'y'), type: n(a.IntType, null) },
+        ],
+      },
+      returnType: n(a.IntType, null),
+      body: n(a.Block, {
+        bodies: [
+          n(a.BinaryExpr, {
+            op: n(a.MulOp, '*'),
+            left: n(a.LitExpr, n(a.IntLit, '1')),
+            right: n(a.BinaryExpr, {
+              op: n(a.AddOp, '+'),
+              left: n(a.IdentExpr, n(a.Ident, 'x')),
+              right: n(a.IdentExpr, n(a.Ident, 'y')),
+            }),
+          }),
+        ],
+        returnVoid: false,
+      }),
+    }),
+  }),
+);
+
 console.log(chalk.green.bold('Desugarer tests passed'));
