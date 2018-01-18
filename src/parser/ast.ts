@@ -175,12 +175,12 @@ export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
 export class CallExpr extends PrimExpr<{
-  func: PrimExpr<any>;
+  func: Expr<any>; // Syntactically PrimExpr, but Expr for desugar
   args: TupleExpr;
 }> {}
 
 export class IndexExpr extends PrimExpr<{
-  target: PrimExpr<any>;
+  target: Expr<any>; // Syntactically PrimExpr, but Expr for desugar
   index: Expr<any>;
 }> {}
 
