@@ -24,7 +24,7 @@ function desugarExpr(node: a.Expr<any>): a.Expr<any> {
   return node;
 }
 
-export function desugarType(node: a.Type<any>): a.Type<any> {
+function desugarType(node: a.Type<any>): a.Type<any> {
   // Unwrap 1-tuple type
   if (node instanceof a.TupleType && node.value.size === 1) {
     return node.value.items[0];
