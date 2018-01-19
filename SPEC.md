@@ -1,4 +1,4 @@
-# Kou Language Specification
+# kou Language Specification
 
 * [Introduction](#introduction)
 * [Notation](#notation)
@@ -31,7 +31,7 @@
 
 ## Introduction
 
-This document is a language specification (yet informal) of the Kou programming
+This document is a language specification (yet informal) of the kou programming
 language.
 
 ## Notation
@@ -173,7 +173,7 @@ should result in a semantic error.
 
 ## Module
 
-Each file in Kou is represented as a module.
+Each file in kou is represented as a module.
 
 ```
 Module = { Import } { Decl } .
@@ -302,6 +302,6 @@ Block = "{" { ( Expr | Decl ) ";" } [ Expr ] "}" .
 ```
 
 A block ending without `Expr` (no `";"`) has its return type as `void`, and it
-is the only way to express `void` type in Kou.
+is the only way to express `void` type in kou.
 
 Related: [Void type](#void-type)
