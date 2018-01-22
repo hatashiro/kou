@@ -119,26 +119,26 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
   throw new TypeError(expr.row, expr.column, 'InvalidType');
 }
 
-export function typeEqual(expected: a.Type<any>, actual: a.Type<any>) {
+export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
   // simple types
   if (
-    (expected instanceof a.IntType && actual instanceof a.IntType) ||
-    (expected instanceof a.FloatType && actual instanceof a.FloatType) ||
-    (expected instanceof a.StrType && actual instanceof a.StrType) ||
-    (expected instanceof a.BoolType && actual instanceof a.BoolType) ||
-    (expected instanceof a.CharType && actual instanceof a.CharType) ||
-    (expected instanceof a.VoidType && actual instanceof a.VoidType)
+    (actual instanceof a.IntType && expected instanceof a.IntType) ||
+    (actual instanceof a.FloatType && expected instanceof a.FloatType) ||
+    (actual instanceof a.StrType && expected instanceof a.StrType) ||
+    (actual instanceof a.BoolType && expected instanceof a.BoolType) ||
+    (actual instanceof a.CharType && expected instanceof a.CharType) ||
+    (actual instanceof a.VoidType && expected instanceof a.VoidType)
   ) {
     return;
   }
 
   // func type
-  if (expected instanceof a.FuncType && actual instanceof a.FuncType) {
+  if (actual instanceof a.FuncType && expected instanceof a.FuncType) {
     // FIXME
   }
 
   // tuple type
-  if (expected instanceof a.TupleType && actual instanceof a.TupleType) {
+  if (actual instanceof a.TupleType && expected instanceof a.TupleType) {
     if (expected.value.size !== actual.value.size) {
       throw new TypeError(
         actual.row,
@@ -152,7 +152,7 @@ export function typeEqual(expected: a.Type<any>, actual: a.Type<any>) {
       let itemExpected = expected.value.items[i];
       let itemActual = actual.value.items[i];
       try {
-        typeEqual(itemExpected, itemActual);
+        typeEqual(itemActual, itemExpected);
       } catch (err) {
         throw new TypeError(
           actual.row,
@@ -168,7 +168,7 @@ export function typeEqual(expected: a.Type<any>, actual: a.Type<any>) {
   }
 
   // list type
-  if (expected instanceof a.ListType && actual instanceof a.ListType) {
+  if (actual instanceof a.ListType && expected instanceof a.ListType) {
     // FIXME
   }
 

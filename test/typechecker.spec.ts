@@ -15,7 +15,7 @@ function exprTypeTest(
   try {
     const mod = desugar(parse(tokenize(moduleStr)));
     const actualType = typeOf(mod.value.decls[0].value.expr, ctx);
-    typeEqual(expectedType, actualType);
+    typeEqual(actualType, expectedType);
   } catch (err) {
     if (
       shouldThrow &&
