@@ -93,4 +93,57 @@ exprTypeTest(
   'Semantic error: found undefined identifier invalid_ident',
 );
 
+// tuple
+exprTypeTest(
+  '(123, hello, true)',
+  ctx([{ hello: new a.StrType(-1, -1) }]),
+  new a.TupleType(
+    {
+      size: 3,
+      items: [
+        new a.IntType(-1, -1),
+        new a.StrType(-1, -1),
+        new a.BoolType(-1, -1),
+      ],
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  '(123, hello, false)',
+  ctx([{ hello: new a.StrType(-1, -1) }]),
+  new a.TupleType(
+    {
+      size: 4,
+      items: [
+        new a.IntType(-1, -1),
+        new a.StrType(-1, -1),
+        new a.BoolType(-1, -1),
+        new a.CharType(-1, -1),
+      ],
+    },
+    -1,
+    -1,
+  ),
+  'Type mismatch: expected 4-tuple, found 3-tuple',
+);
+exprTypeTest(
+  '(1234, hello, true)',
+  ctx([{ hello: new a.StrType(-1, -1) }]),
+  new a.TupleType(
+    {
+      size: 3,
+      items: [
+        new a.IntType(-1, -1),
+        new a.CharType(-1, -1),
+        new a.BoolType(-1, -1),
+      ],
+    },
+    -1,
+    -1,
+  ),
+  '2nd element type mismatch for tuple: expected CharType, found StrType',
+);
+
 console.log(chalk.green.bold('Typechecker tests passed'));

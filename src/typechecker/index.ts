@@ -1,6 +1,8 @@
 import { Context, ValDef } from '../parser/visitor';
 import * as a from '../parser/ast';
 
+const ordinal: (x: number) => string = require('ordinal');
+
 export class TypeContext implements Context {
   private scopes: Array<Map<string, a.Type<any>>>;
 
@@ -103,6 +105,15 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
         'Semantic error',
       );
     }
+  } else if (expr instanceof a.TupleExpr) {
+    return new a.TupleType(
+      {
+        size: expr.value.size,
+        items: expr.value.items.map(item => typeOf(item, ctx)),
+      },
+      expr.row,
+      expr.column,
+    );
   }
 
   throw new TypeError(expr.row, expr.column, 'InvalidType');
@@ -128,7 +139,32 @@ export function typeEqual(expected: a.Type<any>, actual: a.Type<any>) {
 
   // tuple type
   if (expected instanceof a.TupleType && actual instanceof a.TupleType) {
-    // FIXME
+    if (expected.value.size !== actual.value.size) {
+      throw new TypeError(
+        actual.row,
+        actual.column,
+        `${actual.value.size}-tuple`,
+        `${expected.value.size}-tuple`,
+      );
+    }
+
+    for (let i = 0; i < expected.value.size; i++) {
+      let itemExpected = expected.value.items[i];
+      let itemActual = actual.value.items[i];
+      try {
+        typeEqual(itemExpected, itemActual);
+      } catch (err) {
+        throw new TypeError(
+          actual.row,
+          actual.column,
+          itemActual.constructor.name,
+          itemExpected.constructor.name,
+          `${ordinal(i + 1)} element type mismatch for tuple`,
+        );
+      }
+    }
+
+    return;
   }
 
   // list type

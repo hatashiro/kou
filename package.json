@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "chalk": "^2.3.0",
+    "ordinal": "^1.0.2",
     "previewable-iterator": "^0.1.1"
   }
 }
