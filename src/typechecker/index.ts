@@ -3,6 +3,13 @@ import * as a from '../parser/ast';
 
 const ordinal: (x: number) => string = require('ordinal');
 
+// AnyType should be used only when it's really needed, e.g. empty list
+class AnyType extends a.Type<null> {
+  constructor() {
+    super(null, -1, -1);
+  }
+}
+
 export class TypeContext implements Context {
   private scopes: Array<Map<string, a.Type<any>>>;
 
@@ -114,12 +121,26 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
       expr.row,
       expr.column,
     );
+  } else if (expr instanceof a.ListExpr) {
+    if (expr.value.length === 0) {
+      return new a.ListType(new AnyType(), expr.row, expr.column);
+    }
+    const ty = typeOf(expr.value[0], ctx);
+    for (let i = 1; i < expr.value.length; i++) {
+      typeEqual(typeOf(expr.value[i], ctx), ty);
+    }
+    return new a.ListType(ty, expr.row, expr.column);
   }
 
   throw new TypeError(expr.row, expr.column, 'InvalidType');
 }
 
 export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
+  // if it's AnyType, it always succeeds
+  if (actual instanceof AnyType) {
+    return;
+  }
+
   // simple types
   if (
     (actual instanceof a.IntType && expected instanceof a.IntType) ||
@@ -169,7 +190,17 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
 
   // list type
   if (actual instanceof a.ListType && expected instanceof a.ListType) {
-    // FIXME
+    try {
+      typeEqual(actual.value, expected.value);
+    } catch (err) {
+      throw new TypeError(
+        actual.row,
+        actual.column,
+        `ListType of ${actual.value.constructor.name}`,
+        `ListType of ${expected.value.constructor.name}`,
+      );
+    }
+    return;
   }
 
   throw new TypeError(

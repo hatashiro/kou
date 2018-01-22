@@ -146,4 +146,35 @@ exprTypeTest(
   '2nd element type mismatch for tuple: expected CharType, found StrType',
 );
 
+// list
+exprTypeTest(
+  '[1, 2, 3, 4]',
+  ctx(),
+  new a.ListType(new a.IntType(-1, -1), -1, -1),
+);
+exprTypeTest('[]', ctx(), new a.ListType(new a.IntType(-1, -1), -1, -1));
+exprTypeTest('[]', ctx(), new a.ListType(new a.StrType(-1, -1), -1, -1));
+exprTypeTest(
+  '[[1], [2, 3, 4], []]',
+  ctx(),
+  new a.ListType(new a.ListType(new a.IntType(-1, -1), -1, -1), -1, -1),
+);
+exprTypeTest(
+  '[some_ident, 4]',
+  ctx([{ some_ident: new a.IntType(-1, -1) }]),
+  new a.ListType(new a.IntType(-1, -1), -1, -1),
+);
+exprTypeTest(
+  '[some_ident, 4]',
+  ctx([{ some_ident: new a.IntType(-1, -1) }]),
+  new a.ListType(new a.StrType(-1, -1), -1, -1),
+  'Type mismatch: expected ListType of StrType, found ListType of IntType',
+);
+exprTypeTest(
+  '[some_ident, "str", 4]',
+  ctx([{ some_ident: new a.IntType(-1, -1) }]),
+  new a.ListType(new a.IntType(-1, -1), -1, -1),
+  'Type mismatch: expected IntType, found StrType',
+);
+
 console.log(chalk.green.bold('Typechecker tests passed'));
