@@ -15,20 +15,34 @@ export class TypeError extends Error {
   constructor(
     public row: number,
     public column: number,
-    public expected: string,
     public actual: string,
+    public expected?: string,
     message?: string,
   ) {
     super(
-      `${message || 'Type mismatch'}: expected ${expected}, found ${
-        actual
-      } at ${row}:${column}`,
+      `${message || 'Type mismatch'}: ${
+        expected ? `expected ${expected}, ` : ''
+      }found ${actual} at ${row}:${column}`,
     );
   }
 }
 
 export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
-  return new a.VoidType(-1, -1);
+  if (expr instanceof a.LitExpr) {
+    if (expr.value instanceof a.IntLit) {
+      return new a.IntType(expr.row, expr.column);
+    } else if (expr.value instanceof a.FloatLit) {
+      return new a.FloatType(expr.row, expr.column);
+    } else if (expr.value instanceof a.CharLit) {
+      return new a.CharType(expr.row, expr.column);
+    } else if (expr.value instanceof a.BoolLit) {
+      return new a.BoolType(expr.row, expr.column);
+    } else if (expr.value instanceof a.StrLit) {
+      return new a.StrType(expr.row, expr.column);
+    }
+  }
+
+  throw new TypeError(expr.row, expr.column, 'InvalidType');
 }
 
 export function typeEqual(expected: a.Type<any>, actual: a.Type<any>) {

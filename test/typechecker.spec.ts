@@ -26,5 +26,10 @@ function exprTypeTest(
 }
 
 exprTypeTest('123', new TypeContext(), new a.IntType(0, 0));
+exprTypeTest('.123', new TypeContext(), new a.FloatType(0, 0));
+exprTypeTest('"hello, world"', new TypeContext(), new a.StrType(0, 0));
+exprTypeTest('true', new TypeContext(), new a.BoolType(0, 0));
+exprTypeTest('false', new TypeContext(), new a.BoolType(0, 0));
+exprTypeTest("'\\n'", new TypeContext(), new a.CharType(0, 0));
 
 console.log(chalk.green.bold('Typechecker tests passed'));
