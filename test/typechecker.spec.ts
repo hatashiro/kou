@@ -25,11 +25,77 @@ function exprTypeTest(
   }
 }
 
-exprTypeTest('123', new TypeContext(), new a.IntType(0, 0));
-exprTypeTest('.123', new TypeContext(), new a.FloatType(0, 0));
-exprTypeTest('"hello, world"', new TypeContext(), new a.StrType(0, 0));
-exprTypeTest('true', new TypeContext(), new a.BoolType(0, 0));
-exprTypeTest('false', new TypeContext(), new a.BoolType(0, 0));
-exprTypeTest("'\\n'", new TypeContext(), new a.CharType(0, 0));
+function ctx(obj: Array<{ [key: string]: a.Type<any> }> = []): TypeContext {
+  const ctx = new TypeContext();
+  for (const scopeObj of obj) {
+    Object.keys(scopeObj).forEach(key =>
+      ctx.push({
+        name: new a.Ident(key, -1, -1),
+        type: scopeObj[key],
+      }),
+    );
+  }
+  return ctx;
+}
+
+function shouldThrow(f: () => void, message: string) {
+  try {
+    f();
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes(message)) {
+      return;
+    }
+    throw err;
+  }
+}
+
+// literal
+exprTypeTest('123', ctx(), new a.IntType(0, 0));
+exprTypeTest('.123', ctx(), new a.FloatType(0, 0));
+exprTypeTest('"hello, world"', ctx(), new a.StrType(0, 0));
+exprTypeTest('true', ctx(), new a.BoolType(0, 0));
+exprTypeTest('false', ctx(), new a.BoolType(0, 0));
+exprTypeTest("'\\n'", ctx(), new a.CharType(0, 0));
+
+// ident
+exprTypeTest(
+  'some_ident',
+  ctx([{ some_ident: new a.IntType(-1, -1) }]),
+  new a.IntType(-1, -1),
+);
+exprTypeTest(
+  'some_ident',
+  ctx([
+    {},
+    { other_ident: new a.FloatType(-1, -1) },
+    { some_ident: new a.IntType(-1, -1) },
+    {},
+  ]),
+  new a.IntType(-1, -1),
+);
+exprTypeTest(
+  'some_ident',
+  ctx([
+    {},
+    { some_ident: new a.IntType(-1, -1) },
+    { some_ident: new a.StrType(-1, -1) },
+    {},
+  ]),
+  new a.StrType(-1, -1),
+);
+shouldThrow(
+  () =>
+    exprTypeTest(
+      'invalid_ident',
+      ctx([
+        {},
+        { some_ident: new a.IntType(-1, -1) },
+        { some_ident: new a.StrType(-1, -1) },
+        {},
+      ]),
+      new a.StrType(-1, -1),
+    ),
+  'undefined identifier invalid_ident',
+);
 
 console.log(chalk.green.bold('Typechecker tests passed'));

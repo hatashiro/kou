@@ -90,6 +90,19 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
     } else if (expr.value instanceof a.StrLit) {
       return new a.StrType(expr.row, expr.column);
     }
+  } else if (expr instanceof a.IdentExpr) {
+    const ty = ctx.getTypeOf(expr.value);
+    if (ty) {
+      return ty;
+    } else {
+      throw new TypeError(
+        expr.row,
+        expr.column,
+        `undefined identifier ${expr.value.value}`,
+        '',
+        'Semantic error',
+      );
+    }
   }
 
   throw new TypeError(expr.row, expr.column, 'InvalidType');
