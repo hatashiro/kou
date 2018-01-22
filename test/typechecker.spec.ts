@@ -9,13 +9,22 @@ function exprTypeTest(
   exprStr: string,
   ctx: TypeContext,
   expectedType: a.Type<any>,
+  shouldThrow?: string,
 ) {
   const moduleStr = `let x = ${exprStr}`;
-  const mod = desugar(parse(tokenize(moduleStr)));
-  const actualType = typeOf(mod.value.decls[0].value.expr, ctx);
   try {
+    const mod = desugar(parse(tokenize(moduleStr)));
+    const actualType = typeOf(mod.value.decls[0].value.expr, ctx);
     typeEqual(expectedType, actualType);
   } catch (err) {
+    if (
+      shouldThrow &&
+      err.name === 'TypeError' &&
+      err.message.includes(shouldThrow)
+    ) {
+      return;
+    }
+
     console.error(chalk.blue.bold('Test:'));
     console.error(exprStr);
     console.error();
@@ -36,17 +45,6 @@ function ctx(obj: Array<{ [key: string]: a.Type<any> }> = []): TypeContext {
     );
   }
   return ctx;
-}
-
-function shouldThrow(f: () => void, message: string) {
-  try {
-    f();
-  } catch (err) {
-    if (err.name === 'TypeError' && err.message.includes(message)) {
-      return;
-    }
-    throw err;
-  }
 }
 
 // literal
@@ -83,19 +81,16 @@ exprTypeTest(
   ]),
   new a.StrType(-1, -1),
 );
-shouldThrow(
-  () =>
-    exprTypeTest(
-      'invalid_ident',
-      ctx([
-        {},
-        { some_ident: new a.IntType(-1, -1) },
-        { some_ident: new a.StrType(-1, -1) },
-        {},
-      ]),
-      new a.StrType(-1, -1),
-    ),
-  'undefined identifier invalid_ident',
+exprTypeTest(
+  'invalid_ident',
+  ctx([
+    {},
+    { some_ident: new a.IntType(-1, -1) },
+    { some_ident: new a.StrType(-1, -1) },
+    {},
+  ]),
+  new a.StrType(-1, -1),
+  'Semantic error: found undefined identifier invalid_ident',
 );
 
 console.log(chalk.green.bold('Typechecker tests passed'));
