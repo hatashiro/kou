@@ -2,11 +2,61 @@ import { Context, ValDef } from '../parser/visitor';
 import * as a from '../parser/ast';
 
 export class TypeContext implements Context {
-  enterScope() {}
+  private scopes: Array<Map<string, a.Type<any>>>;
 
-  leaveScope() {}
+  constructor() {
+    this.scopes = [new Map()];
+  }
 
-  push(def: ValDef) {}
+  get currentScope() {
+    return this.scopes[0];
+  }
+
+  enterScope() {
+    this.scopes.unshift(new Map());
+  }
+
+  leaveScope() {
+    this.scopes.shift();
+  }
+
+  push(def: ValDef) {
+    if (def instanceof a.Import) {
+      // FIXME: handle when module system is ready
+    } else if (def instanceof a.Decl) {
+      this.currentScope.set(
+        def.value.name.value,
+        def.value.type || typeOf(def.value.expr, this),
+      );
+    } else if (def instanceof a.LoopExpr) {
+      const ty = typeOf(def.value.in, this);
+      if (ty instanceof a.ListType) {
+        this.currentScope.set(def.value.for.value, ty.value);
+      } else {
+        throw new TypeError(
+          ty.row,
+          ty.column,
+          'ListType',
+          ty.constructor.name,
+          'A target of for-in expression should be a list',
+        );
+      }
+    } else if (def.name && def.type) {
+      // must be a.Param
+      this.currentScope.set(def.name.value, def.type);
+    }
+    // unknown, ignore
+  }
+
+  getTypeOf(ident: a.Ident): a.Type<any> | null {
+    for (const scope of this.scopes) {
+      const ty = scope.get(ident.value);
+      if (ty) {
+        return ty;
+      }
+    }
+    return null;
+  }
 }
 
 export class TypeError extends Error {
