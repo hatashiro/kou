@@ -2,6 +2,8 @@ import * as chalk from 'chalk';
 import { tokenize } from '../src/lexer';
 import * as t from '../src/lexer/token';
 
+console.log(chalk.bold('Running lexer tests...'));
+
 type TokenExpectation = [
   t.TokenConstructor<any>,
   string,
@@ -309,4 +311,4 @@ let add = fn (x: int, y: int) int { x + y }
   ],
 );
 
-console.log(chalk.green.bold('Lexer tests passed'));
+console.log(chalk.green.bold('Passed!'));

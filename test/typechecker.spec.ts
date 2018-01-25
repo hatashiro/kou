@@ -5,6 +5,8 @@ import { parse } from '../src/parser/';
 import { desugar } from '../src/desugarer/';
 import { TypeContext, typeOf, typeEqual } from '../src/typechecker/';
 
+console.log(chalk.bold('Running typechecker tests...'));
+
 function exprTypeTest(
   exprStr: string,
   ctx: TypeContext,
@@ -177,4 +179,4 @@ exprTypeTest(
   'Type mismatch: expected int, found str',
 );
 
-console.log(chalk.green.bold('Typechecker tests passed'));
+console.log(chalk.green.bold('Passed!'));

@@ -3,6 +3,8 @@ import { tokenize } from '../src/lexer';
 import { parse } from '../src/parser';
 import * as a from '../src/parser/ast';
 
+console.log(chalk.bold('Running parser tests...'));
+
 type NodeExpectation<T> = [
   a.NodeConstructor<any>,
   any,
@@ -1276,4 +1278,4 @@ for x in [1, 2, 3] {
   ],
 );
 
-console.log(chalk.green.bold('Parser tests passed'));
+console.log(chalk.green.bold('Passed!'));

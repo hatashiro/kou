@@ -2,6 +2,8 @@ import * as chalk from 'chalk';
 import * as a from '../src/parser/ast';
 import { desugar } from '../src/desugarer';
 
+console.log(chalk.bold('Running desugarer tests...'));
+
 function n<T>(Node: a.NodeConstructor<T>, value: T): a.Node<T> {
   // -1, -1 for testing
   return new Node(value, -1, -1);
@@ -398,4 +400,4 @@ declDesugarTest(
   }),
 );
 
-console.log(chalk.green.bold('Desugarer tests passed'));
+console.log(chalk.green.bold('Passed!'));
