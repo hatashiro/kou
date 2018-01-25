@@ -251,7 +251,11 @@ export class CharType extends PrimType {
 
 export class FuncType extends Type<{ param: Type<any>; return: Type<any> }> {
   get name() {
-    return `${this.value.param.name} -> ${this.value.return.name}`;
+    let paramName = this.value.param.name;
+    if (this.value.param instanceof FuncType) {
+      paramName = `(${paramName})`;
+    }
+    return `${paramName} -> ${this.value.return.name}`;
   }
 }
 
