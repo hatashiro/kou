@@ -1,8 +1,6 @@
 import { Context, ValDef } from '../parser/visitor';
 import * as a from '../parser/ast';
 
-const ordinal: (x: number) => string = require('ordinal');
-
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {
   constructor() {
@@ -43,11 +41,9 @@ export class TypeContext implements Context {
         this.currentScope.set(def.value.for.value, ty.value);
       } else {
         throw new TypeError(
-          ty.row,
-          ty.column,
-          'ListType',
-          ty.constructor.name,
-          'A target of for-in expression should be a list',
+          ty,
+          undefined,
+          'Semantic error: a target of for-in expression should be a list',
         );
       }
     } else if (def.name && def.type) {
@@ -72,16 +68,14 @@ export class TypeError extends Error {
   name: string = 'TypeError';
 
   constructor(
-    public row: number,
-    public column: number,
-    public actual: string,
-    public expected?: string,
-    message?: string,
+    public actual: { row: number; column: number; name: string },
+    public expected?: { name: string },
+    message: string = 'Type mismatch',
   ) {
     super(
-      `${message || 'Type mismatch'}: ${
-        expected ? `expected ${expected}, ` : ''
-      }found ${actual} at ${row}:${column}`,
+      `${message}: ${expected ? `expected ${expected.name}, ` : ''}found ${
+        actual.name
+      } at ${actual.row}:${actual.column}`,
     );
   }
 }
@@ -105,10 +99,12 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
       return ty;
     } else {
       throw new TypeError(
-        expr.row,
-        expr.column,
-        `undefined identifier ${expr.value.value}`,
-        '',
+        {
+          row: expr.row,
+          column: expr.column,
+          name: `undefined identifier ${expr.value.value}`,
+        },
+        undefined,
         'Semantic error',
       );
     }
@@ -132,7 +128,11 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
     return new a.ListType(ty, expr.row, expr.column);
   }
 
-  throw new TypeError(expr.row, expr.column, 'InvalidType');
+  throw new TypeError({
+    row: expr.row,
+    column: expr.column,
+    name: 'invalid type',
+  });
 }
 
 export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
@@ -161,27 +161,14 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
   // tuple type
   if (actual instanceof a.TupleType && expected instanceof a.TupleType) {
     if (expected.value.size !== actual.value.size) {
-      throw new TypeError(
-        actual.row,
-        actual.column,
-        `${actual.value.size}-tuple`,
-        `${expected.value.size}-tuple`,
-      );
+      throw new TypeError(actual, expected, 'Tuple length mismatch');
     }
 
     for (let i = 0; i < expected.value.size; i++) {
-      let itemExpected = expected.value.items[i];
-      let itemActual = actual.value.items[i];
       try {
-        typeEqual(itemActual, itemExpected);
-      } catch (err) {
-        throw new TypeError(
-          actual.row,
-          actual.column,
-          itemActual.constructor.name,
-          itemExpected.constructor.name,
-          `${ordinal(i + 1)} element type mismatch for tuple`,
-        );
+        typeEqual(actual.value.items[i], expected.value.items[i]);
+      } catch {
+        throw new TypeError(actual, expected);
       }
     }
 
@@ -192,21 +179,11 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
   if (actual instanceof a.ListType && expected instanceof a.ListType) {
     try {
       typeEqual(actual.value, expected.value);
-    } catch (err) {
-      throw new TypeError(
-        actual.row,
-        actual.column,
-        `ListType of ${actual.value.constructor.name}`,
-        `ListType of ${expected.value.constructor.name}`,
-      );
+    } catch {
+      throw new TypeError(actual, expected);
     }
     return;
   }
 
-  throw new TypeError(
-    actual.row,
-    actual.column,
-    actual.constructor.name,
-    expected.constructor.name,
-  );
+  throw new TypeError(actual, expected);
 }

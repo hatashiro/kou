@@ -3,6 +3,10 @@ import { unescape } from '../util';
 
 export abstract class Node<T> {
   constructor(public value: T, public row: number, public column: number) {}
+
+  get name() {
+    return this.constructor.name;
+  }
 }
 
 export interface NodeConstructor<T> {
@@ -215,20 +219,56 @@ export abstract class SimpleType extends Type<null> {
 
 export abstract class PrimType extends SimpleType {}
 
-export class IntType extends PrimType {}
+export class IntType extends PrimType {
+  get name() {
+    return 'int';
+  }
+}
 
-export class FloatType extends PrimType {}
+export class FloatType extends PrimType {
+  get name() {
+    return 'float';
+  }
+}
 
-export class StrType extends PrimType {}
+export class StrType extends PrimType {
+  get name() {
+    return 'string';
+  }
+}
 
-export class BoolType extends PrimType {}
+export class BoolType extends PrimType {
+  get name() {
+    return 'boolean';
+  }
+}
 
-export class CharType extends PrimType {}
+export class CharType extends PrimType {
+  get name() {
+    return 'char';
+  }
+}
 
-export class FuncType extends Type<{ param: Type<any>; return: Type<any> }> {}
+export class FuncType extends Type<{ param: Type<any>; return: Type<any> }> {
+  get name() {
+    return `${this.value.param.name} -> ${this.value.return.name}`;
+  }
+}
 
-export class TupleType extends Type<Tuple<Type<any>>> {}
+export class TupleType extends Type<Tuple<Type<any>>> {
+  get name() {
+    return `(${this.value.items.map(item => item.name).join(', ')})`;
+  }
+}
 
-export class ListType extends Type<Type<any>> {}
+export class ListType extends Type<Type<any>> {
+  get name() {
+    return `[${this.value.name}]`;
+  }
+}
 
-export class VoidType extends SimpleType {}
+export class VoidType extends SimpleType {
+  get name() {
+    return 'void';
+  }
+}
