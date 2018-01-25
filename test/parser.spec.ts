@@ -223,7 +223,7 @@ import "file2.kou" (test_name as test_alias, hoge, foo as bar)
 declTest(
   `
 let simple = 10
-let typed: string = "hello, world"
+let typed: str = "hello, world"
 `,
   [
     [
@@ -247,13 +247,13 @@ let typed: string = "hello, world"
 
 typeTest('int', [a.IntType, null]);
 typeTest('float', [a.FloatType, null]);
-typeTest('string', [a.StrType, null]);
-typeTest('boolean', [a.BoolType, null]);
+typeTest('str', [a.StrType, null]);
+typeTest('bool', [a.BoolType, null]);
 typeTest('char', [a.CharType, null]);
 typeTest('void', [a.VoidType, null]);
 typeTest('[int]', [a.ListType, [a.IntType, null]]);
-typeTest('[[string]]', [a.ListType, [a.ListType, [a.StrType, null]]]);
-typeTest('[[[boolean]]]', [
+typeTest('[[str]]', [a.ListType, [a.ListType, [a.StrType, null]]]);
+typeTest('[[[bool]]]', [
   a.ListType,
   [a.ListType, [a.ListType, [a.BoolType, null]]],
 ]);
@@ -264,14 +264,14 @@ typeTest('(int, float)', [
     items: [[a.IntType, null], [a.FloatType, null]],
   },
 ]);
-typeTest('(int, float, string)', [
+typeTest('(int, float, str)', [
   a.TupleType,
   {
     size: 3,
     items: [[a.IntType, null], [a.FloatType, null], [a.StrType, null]],
   },
 ]);
-typeTest('[(int, string)]', [
+typeTest('[(int, str)]', [
   a.ListType,
   [
     a.TupleType,
@@ -281,7 +281,7 @@ typeTest('[(int, string)]', [
     },
   ],
 ]);
-typeTest('(int, [float], (string, boolean, char))', [
+typeTest('(int, [float], (str, bool, char))', [
   a.TupleType,
   {
     size: 3,
@@ -300,11 +300,11 @@ typeTest('(int, [float], (string, boolean, char))', [
 ]);
 typeTest('(int)', [a.TupleType, { size: 1, items: [[a.IntType, null]] }]);
 typeTest('()', [a.TupleType, { size: 0, items: [] }]);
-typeTest('int -> boolean', [
+typeTest('int -> bool', [
   a.FuncType,
   { param: [a.IntType, null], return: [a.BoolType, null] },
 ]);
-typeTest('(string, char) -> (string, int, (char))', [
+typeTest('(str, char) -> (str, int, (char))', [
   a.FuncType,
   {
     param: [
@@ -327,7 +327,7 @@ typeTest('(string, char) -> (string, int, (char))', [
     ],
   },
 ]);
-typeTest('boolean -> [string] -> string', [
+typeTest('bool -> [str] -> str', [
   a.FuncType,
   {
     param: [a.BoolType, null],
@@ -340,7 +340,7 @@ typeTest('boolean -> [string] -> string', [
     ],
   },
 ]);
-typeTest('string -> string -> string -> string', [
+typeTest('str -> str -> str -> str', [
   a.FuncType,
   {
     param: [a.StrType, null],
@@ -777,7 +777,7 @@ fn (x int, y int) int {
     },
   ],
 );
-exprTest('fn (ignored [boolean], negated int) int { -negated }', [
+exprTest('fn (ignored [bool], negated int) int { -negated }', [
   a.FuncExpr,
   {
     params: {

@@ -126,7 +126,7 @@ exprTypeTest(
     -1,
     -1,
   ),
-  'Tuple length mismatch: expected (int, string, boolean, char), found (int, string, boolean)',
+  'Tuple length mismatch: expected (int, str, bool, char), found (int, str, bool)',
 );
 exprTypeTest(
   '(1234, hello, true)',
@@ -143,7 +143,7 @@ exprTypeTest(
     -1,
     -1,
   ),
-  'Type mismatch: expected (int, char, boolean), found (int, string, boolean)',
+  'Type mismatch: expected (int, char, bool), found (int, str, bool)',
 );
 
 // list
@@ -168,13 +168,13 @@ exprTypeTest(
   '[some_ident, 4]',
   ctx([{ some_ident: new a.IntType(-1, -1) }]),
   new a.ListType(new a.StrType(-1, -1), -1, -1),
-  'Type mismatch: expected [string], found [int]',
+  'Type mismatch: expected [str], found [int]',
 );
 exprTypeTest(
   '[some_ident, "str", 4]',
   ctx([{ some_ident: new a.IntType(-1, -1) }]),
   new a.ListType(new a.IntType(-1, -1), -1, -1),
-  'Type mismatch: expected int, found string',
+  'Type mismatch: expected int, found str',
 );
 
 console.log(chalk.green.bold('Typechecker tests passed'));

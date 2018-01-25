@@ -233,13 +233,13 @@ export class FloatType extends PrimType {
 
 export class StrType extends PrimType {
   get name() {
-    return 'string';
+    return 'str';
   }
 }
 
 export class BoolType extends PrimType {
   get name() {
-    return 'boolean';
+    return 'bool';
   }
 }
 

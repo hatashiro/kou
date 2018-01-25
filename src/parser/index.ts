@@ -269,8 +269,8 @@ function parseSimpleType(input: ParserInput): SimpleType {
     [
       ['int', () => new IntType(ident.row, ident.column)],
       ['float', () => new FloatType(ident.row, ident.column)],
-      ['string', () => new StrType(ident.row, ident.column)],
-      ['boolean', () => new BoolType(ident.row, ident.column)],
+      ['str', () => new StrType(ident.row, ident.column)],
+      ['bool', () => new BoolType(ident.row, ident.column)],
       ['char', () => new CharType(ident.row, ident.column)],
       ['void', () => new VoidType(ident.row, ident.column)],
     ],

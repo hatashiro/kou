@@ -134,7 +134,7 @@ Type = PrimType | FuncType | TupleType | ListType | VoidType .
 ### Primary types
 
 ```
-PrimType = "int" | "float" | "string" | "boolean" | "char" .
+PrimType = "int" | "float" | "str" | "bool" | "char" .
 ```
 
 ### Function type
