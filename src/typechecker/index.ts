@@ -126,6 +126,25 @@ export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
       typeEqual(typeOf(expr.value[i], ctx), ty);
     }
     return new a.ListType(ty, expr.row, expr.column);
+  } else if (expr instanceof a.FuncExpr) {
+    let param: a.Type<any>;
+    if (expr.value.params.size === 1) {
+      param = expr.value.params.items[0].type;
+    } else {
+      param = new a.TupleType(
+        {
+          size: expr.value.params.size,
+          items: expr.value.params.items.map(item => item.type),
+        },
+        expr.row,
+        expr.column,
+      );
+    }
+    return new a.FuncType(
+      { param, return: expr.value.returnType },
+      expr.row,
+      expr.column,
+    );
   }
 
   throw new TypeError({
@@ -155,7 +174,13 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
 
   // func type
   if (actual instanceof a.FuncType && expected instanceof a.FuncType) {
-    // FIXME
+    try {
+      typeEqual(actual.value.param, expected.value.param);
+      typeEqual(actual.value.return, expected.value.return);
+    } catch {
+      throw new TypeError(actual, expected);
+    }
+    return;
   }
 
   // tuple type

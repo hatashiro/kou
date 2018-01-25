@@ -179,4 +179,195 @@ exprTypeTest(
   'Type mismatch: expected int, found str',
 );
 
+// function (only check type, not body)
+exprTypeTest(
+  'fn (a int) bool {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.IntType(-1, -1),
+      return: new a.BoolType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'fn (a int, b str) bool {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.TupleType(
+        {
+          size: 2,
+          items: [new a.IntType(-1, -1), new a.StrType(-1, -1)],
+        },
+        -1,
+        -1,
+      ),
+      return: new a.BoolType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'fn (a int, b str) bool -> char {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.TupleType(
+        {
+          size: 2,
+          items: [new a.IntType(-1, -1), new a.StrType(-1, -1)],
+        },
+        -1,
+        -1,
+      ),
+      return: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'fn (a str -> int) bool -> char {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.FuncType(
+        {
+          param: new a.StrType(-1, -1),
+          return: new a.IntType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+      return: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'fn (a float, b str -> int) bool -> char {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.TupleType({
+        size: 2,
+        items: [
+          new a.FloatType(-1, -1),
+          new a.FuncType(
+            {
+              param: new a.StrType(-1, -1),
+              return: new a.IntType(-1, -1),
+            },
+            -1,
+            -1,
+          ),
+        ],
+      }),
+      return: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'fn (a int, b str) bool {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.TupleType(
+        {
+          size: 2,
+          items: [new a.CharType(-1, -1), new a.StrType(-1, -1)],
+        },
+        -1,
+        -1,
+      ),
+      return: new a.BoolType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+  'Type mismatch: expected (char, str) -> bool, found (int, str) -> bool',
+);
+exprTypeTest(
+  'fn (a int, b str) bool -> char {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.TupleType(
+        {
+          size: 2,
+          items: [new a.IntType(-1, -1), new a.StrType(-1, -1)],
+        },
+        -1,
+        -1,
+      ),
+      return: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.BoolType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    -1,
+    -1,
+  ),
+  'Type mismatch: expected (int, str) -> bool -> bool, found (int, str) -> bool -> char',
+);
+exprTypeTest(
+  'fn (a str -> int) bool -> char {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.FuncType(
+        {
+          param: new a.StrType(-1, -1),
+          return: new a.BoolType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+      return: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    -1,
+    -1,
+  ),
+  'Type mismatch: expected (str -> bool) -> bool -> char, found (str -> int) -> bool -> char',
+);
+
 console.log(chalk.green.bold('Passed!'));
