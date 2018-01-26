@@ -180,7 +180,7 @@ export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
 
 export class CallExpr extends PrimExpr<{
   func: Expr<any>; // Syntactically PrimExpr, but Expr for desugar
-  args: TupleExpr;
+  args: Expr<any>; // Syntactically TupleExpr, but Expr for desugar
 }> {}
 
 export class IndexExpr extends PrimExpr<{
