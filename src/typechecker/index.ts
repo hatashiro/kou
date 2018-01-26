@@ -80,7 +80,18 @@ export class TypeError extends Error {
   }
 }
 
+const typeCache: Map<a.Expr<any>, a.Type<any>> = new Map();
+
 export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
+  let ty = typeCache.get(expr);
+  if (!ty) {
+    ty = uncachedTypeOf(expr, ctx);
+    typeCache.set(expr, ty);
+  }
+  return ty;
+}
+
+function uncachedTypeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
   if (expr instanceof a.LitExpr) {
     if (expr.value instanceof a.IntLit) {
       return new a.IntType(expr.row, expr.column);
