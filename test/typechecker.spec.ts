@@ -370,4 +370,83 @@ exprTypeTest(
   'Type mismatch: expected (str -> bool) -> bool -> char, found (str -> int) -> bool -> char',
 );
 
+// call expr
+exprTypeTest('fn (a int, b int) int {} (1, 2)', ctx(), new a.IntType(-1, -1));
+exprTypeTest('fn (a str) char {} ("hello")', ctx(), new a.CharType(-1, -1));
+exprTypeTest(
+  'fn (a str -> int) bool -> char {} (fn (a str) int {})',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.BoolType(-1, -1),
+      return: new a.CharType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  'f1(f2)',
+  ctx([
+    {
+      f1: new a.FuncType(
+        {
+          param: new a.FuncType(
+            {
+              param: new a.StrType(-1, -1),
+              return: new a.BoolType(-1, -1),
+            },
+            -1,
+            -1,
+          ),
+          return: new a.FuncType(
+            {
+              param: new a.BoolType(-1, -1),
+              return: new a.CharType(-1, -1),
+            },
+            -1,
+            -1,
+          ),
+        },
+        -1,
+        -1,
+      ),
+      f2: new a.FuncType(
+        {
+          param: new a.StrType(-1, -1),
+          return: new a.BoolType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.FuncType(
+    {
+      param: new a.BoolType(-1, -1),
+      return: new a.CharType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+);
+exprTypeTest(
+  '"i am not callable"(1, \'c\')',
+  ctx(),
+  new a.VoidType(-1, -1),
+  'Semantic error: non-callable target: expected function, found str',
+);
+exprTypeTest(
+  "fn (a int, b int) int {} (1, 'c')",
+  ctx(),
+  new a.IntType(-1, -1),
+  'Function parameter type mismatch: expected (int, int), found (int, char)',
+);
+exprTypeTest(
+  'fn (a str) char {} (.123)',
+  ctx(),
+  new a.CharType(-1, -1),
+  'Function parameter type mismatch: expected str, found float',
+);
+
 console.log(chalk.green.bold('Passed!'));

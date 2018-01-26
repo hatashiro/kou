@@ -156,6 +156,29 @@ function uncachedTypeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
       expr.row,
       expr.column,
     );
+  } else if (expr instanceof a.CallExpr) {
+    const funcType = typeOf(expr.value.func, ctx);
+    const argsType = typeOf(expr.value.args, ctx);
+
+    if (!(funcType instanceof a.FuncType)) {
+      throw new TypeError(
+        funcType,
+        { name: 'function' },
+        'Semantic error: non-callable target',
+      );
+    }
+
+    try {
+      typeEqual(argsType, funcType.value.param);
+    } catch {
+      throw new TypeError(
+        argsType,
+        funcType.value.param,
+        'Function parameter type mismatch',
+      );
+    }
+
+    return funcType.value.return;
   }
 
   throw new TypeError({
