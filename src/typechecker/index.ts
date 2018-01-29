@@ -1,4 +1,3 @@
-import { Context, ValDef } from '../parser/visitor';
 import * as a from '../parser/ast';
 
 // AnyType should be used only when it's really needed, e.g. empty list
@@ -8,7 +7,7 @@ class AnyType extends a.Type<null> {
   }
 }
 
-export class TypeContext implements Context {
+export class TypeContext {
   private scopes: Array<Map<string, a.Type<any>>>;
 
   constructor() {
@@ -27,30 +26,17 @@ export class TypeContext implements Context {
     this.scopes.shift();
   }
 
-  push(def: ValDef) {
-    if (def instanceof a.Import) {
-      // FIXME: handle when module system is ready
-    } else if (def instanceof a.Decl) {
-      this.currentScope.set(
-        def.value.name.value,
-        def.value.type || typeOf(def.value.expr, this),
+  push(ident: a.Ident, ty: a.Type<any>) {
+    const name = ident.value;
+    if (this.currentScope.has(name)) {
+      throw new TypeError(
+        ident,
+        undefined,
+        `Semantic error: identifier '${name}' has already been declared`,
       );
-    } else if (def instanceof a.LoopExpr) {
-      const ty = typeOf(def.value.in, this);
-      if (ty instanceof a.ListType) {
-        this.currentScope.set(def.value.for.value, ty.value);
-      } else {
-        throw new TypeError(
-          ty,
-          undefined,
-          'Semantic error: a target of for-in expression should be a list',
-        );
-      }
-    } else if (def.name && def.type) {
-      // must be a.Param
-      this.currentScope.set(def.name.value, def.type);
+    } else {
+      this.currentScope.set(name, ty);
     }
-    // unknown, ignore
   }
 
   getTypeOf(ident: a.Ident): a.Type<any> | null {

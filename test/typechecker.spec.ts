@@ -57,14 +57,11 @@ function blockTypeTest(
   }
 }
 
-function ctx(obj: Array<{ [key: string]: a.Type<any> }> = []): TypeContext {
+function ctx(obj: Array<{ [name: string]: a.Type<any> }> = []): TypeContext {
   const ctx = new TypeContext();
   for (const scopeObj of obj) {
-    Object.keys(scopeObj).forEach(key =>
-      ctx.push({
-        name: new a.Ident(key, -1, -1),
-        type: scopeObj[key],
-      }),
+    Object.keys(scopeObj).forEach(name =>
+      ctx.push(new a.Ident(name, -1, -1), scopeObj[name]),
     );
   }
   return ctx;
@@ -98,7 +95,7 @@ exprTypeTest(
   'some_ident',
   ctx([
     {},
-    { some_ident: new a.IntType(-1, -1) },
+    { one_ident: new a.IntType(-1, -1) },
     { some_ident: new a.StrType(-1, -1) },
     {},
   ]),
@@ -108,7 +105,7 @@ exprTypeTest(
   'invalid_ident',
   ctx([
     {},
-    { some_ident: new a.IntType(-1, -1) },
+    { one_ident: new a.IntType(-1, -1) },
     { some_ident: new a.StrType(-1, -1) },
     {},
   ]),

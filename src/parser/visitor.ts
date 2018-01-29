@@ -1,14 +1,6 @@
 import * as a from './ast';
 
-type Visit<T> = (orig: T, context: Context) => T;
-
-export type Context = {
-  enterScope: () => void;
-  leaveScope: () => void;
-  push: (def: ValDef) => void;
-};
-
-export type ValDef = a.Import | a.Decl | a.Param | a.LoopExpr;
+type Visit<T, U = T> = (orig: T) => U;
 
 export type Visitor = {
   visitModule: Visit<a.Module>;
@@ -21,147 +13,173 @@ export type Visitor = {
   visitBinaryOp: Visit<a.BinaryOp<any>>;
   visitUnaryOp: Visit<a.UnaryOp>;
   visitType: Visit<a.Type<any>>;
+
+  beforeVisitModule: Visit<a.Module, void>;
+  beforeVisitImport: Visit<a.Import, void>;
+  beforeVisitBlock: Visit<a.Block, void>;
+  beforeVisitLiteral: Visit<a.Literal<any>, void>;
+  beforeVisitExpr: Visit<a.Expr<any>, void>;
+  beforeVisitDecl: Visit<a.Decl, void>;
+  beforeVisitIdent: Visit<a.Ident, void>;
+  beforeVisitBinaryOp: Visit<a.BinaryOp<any>, void>;
+  beforeVisitUnaryOp: Visit<a.UnaryOp, void>;
+  beforeVisitType: Visit<a.Type<any>, void>;
 };
 
 export type VisitorOptions = { [K in keyof Visitor]?: Visitor[K] };
 
-const constVisit = <T>(orig: T, ctx: Context) => orig;
+const idVisit = <T>(orig: T) => orig;
+const voidVisit = <T>(orig: T) => {};
 
 // factory function for Visitor
 export function visitor(opts: VisitorOptions): Visitor {
   const v: Visitor = Object.assign(
     {
-      visitModule: constVisit,
-      visitImport: constVisit,
-      visitBlock: constVisit,
-      visitLiteral: constVisit,
-      visitExpr: constVisit,
-      visitDecl: constVisit,
-      visitIdent: constVisit,
-      visitBinaryOp: constVisit,
-      visitUnaryOp: constVisit,
-      visitType: constVisit,
+      visitModule: idVisit,
+      visitImport: idVisit,
+      visitBlock: idVisit,
+      visitLiteral: idVisit,
+      visitExpr: idVisit,
+      visitDecl: idVisit,
+      visitIdent: idVisit,
+      visitBinaryOp: idVisit,
+      visitUnaryOp: idVisit,
+      visitType: idVisit,
+
+      beforeVisitModule: voidVisit,
+      beforeVisitImport: voidVisit,
+      beforeVisitBlock: voidVisit,
+      beforeVisitLiteral: voidVisit,
+      beforeVisitExpr: voidVisit,
+      beforeVisitDecl: voidVisit,
+      beforeVisitIdent: voidVisit,
+      beforeVisitBinaryOp: voidVisit,
+      beforeVisitUnaryOp: voidVisit,
+      beforeVisitType: voidVisit,
     },
     opts,
   );
 
   return {
-    visitModule(node, ctx) {
+    visitModule(node) {
+      v.beforeVisitModule(node);
       node.value.imports = node.value.imports.map(node =>
-        this.visitImport(node, ctx),
+        this.visitImport(node),
       );
-      node.value.decls = node.value.decls.map(node =>
-        this.visitDecl(node, ctx),
-      );
-      return v.visitModule(node, ctx);
+      node.value.decls = node.value.decls.map(node => this.visitDecl(node));
+      return v.visitModule(node);
     },
-    visitImport(node, ctx) {
-      node.value.path = this.visitLiteral(node.value.path, ctx);
+    visitImport(node) {
+      v.beforeVisitImport(node);
+      node.value.path = this.visitLiteral(node.value.path);
       node.value.elems = node.value.elems.map(elem => ({
-        name: this.visitIdent(elem.name, ctx),
-        as: elem.as ? this.visitIdent(elem.as, ctx) : elem.as,
+        name: this.visitIdent(elem.name),
+        as: elem.as ? this.visitIdent(elem.as) : elem.as,
       }));
-      ctx.push(node);
-      return v.visitImport(node, ctx);
+      return v.visitImport(node);
     },
-    visitBlock(node, ctx) {
+    visitBlock(node) {
+      v.beforeVisitBlock(node);
       node.value.bodies = node.value.bodies.map(body => {
         if (body instanceof a.Expr) {
-          return this.visitExpr(body, ctx);
+          return this.visitExpr(body);
         } else {
-          return this.visitDecl(body, ctx);
+          return this.visitDecl(body);
         }
       });
-      return v.visitBlock(node, ctx);
+      return v.visitBlock(node);
     },
-    visitLiteral(node, ctx) {
-      return v.visitLiteral(node, ctx);
+    visitLiteral(node) {
+      v.beforeVisitLiteral(node);
+      return v.visitLiteral(node);
     },
-    visitExpr(node, ctx) {
+    visitExpr(node) {
+      v.beforeVisitExpr(node);
       if (node instanceof a.BinaryExpr) {
-        node.value.op = this.visitBinaryOp(node.value.op, ctx);
-        node.value.left = this.visitExpr(node.value.left, ctx);
-        node.value.right = this.visitExpr(node.value.right, ctx);
+        node.value.op = this.visitBinaryOp(node.value.op);
+        node.value.left = this.visitExpr(node.value.left);
+        node.value.right = this.visitExpr(node.value.right);
       } else if (node instanceof a.UnaryExpr) {
-        node.value.op = this.visitUnaryOp(node.value.op, ctx);
-        node.value.right = this.visitExpr(node.value.right, ctx);
+        node.value.op = this.visitUnaryOp(node.value.op);
+        node.value.right = this.visitExpr(node.value.right);
       } else if (node instanceof a.LitExpr) {
-        node.value = this.visitLiteral(node.value, ctx);
+        node.value = this.visitLiteral(node.value);
       } else if (node instanceof a.IdentExpr) {
-        node.value = this.visitIdent(node.value, ctx);
+        node.value = this.visitIdent(node.value);
       } else if (node instanceof a.TupleExpr) {
-        node.value.items = node.value.items.map(item =>
-          this.visitExpr(item, ctx),
-        );
+        node.value.items = node.value.items.map(item => this.visitExpr(item));
       } else if (node instanceof a.ListExpr) {
-        node.value = node.value.map(item => this.visitExpr(item, ctx));
+        node.value = node.value.map(item => this.visitExpr(item));
       } else if (node instanceof a.CallExpr) {
-        node.value.func = this.visitExpr(node.value.func, ctx);
-        node.value.args = this.visitExpr(node.value.args, ctx);
+        node.value.func = this.visitExpr(node.value.func);
+        node.value.args = this.visitExpr(node.value.args);
       } else if (node instanceof a.IndexExpr) {
-        node.value.target = this.visitExpr(node.value.target, ctx);
-        node.value.index = this.visitExpr(node.value.index, ctx);
+        node.value.target = this.visitExpr(node.value.target);
+        node.value.index = this.visitExpr(node.value.index);
       } else if (node instanceof a.FuncExpr) {
-        ctx.enterScope();
         node.value.params.items = node.value.params.items.map(item => {
           const param = {
-            name: this.visitIdent(item.name, ctx),
-            type: this.visitType(item.type, ctx),
+            name: this.visitIdent(item.name),
+            type: this.visitType(item.type),
           };
-          ctx.push(param);
           return param;
         });
-        node.value.returnType = this.visitType(node.value.returnType, ctx);
-        node.value.body = this.visitBlock(node.value.body, ctx);
-        ctx.leaveScope();
+        node.value.returnType = this.visitType(node.value.returnType);
+        node.value.body = this.visitBlock(node.value.body);
       } else if (node instanceof a.CondExpr) {
-        node.value.if = this.visitExpr(node.value.if, ctx);
-        ctx.enterScope();
-        node.value.then = this.visitBlock(node.value.then, ctx);
-        ctx.leaveScope();
-        ctx.enterScope();
-        node.value.else = this.visitBlock(node.value.else, ctx);
-        ctx.leaveScope();
+        node.value.if = this.visitExpr(node.value.if);
+        node.value.then = this.visitBlock(node.value.then);
+        node.value.else = this.visitBlock(node.value.else);
       } else if (node instanceof a.LoopExpr) {
-        ctx.enterScope();
-        node.value.for = this.visitIdent(node.value.for, ctx);
-        node.value.in = this.visitExpr(node.value.in, ctx);
-        ctx.push(node);
-        node.value.do = this.visitBlock(node.value.do, ctx);
-        ctx.leaveScope();
+        node.value.for = this.visitIdent(node.value.for);
+        node.value.in = this.visitExpr(node.value.in);
+        node.value.do = this.visitBlock(node.value.do);
       }
-      return v.visitExpr(node, ctx);
+      return v.visitExpr(node);
     },
-    visitDecl(node, ctx) {
-      node.value.name = this.visitIdent(node.value.name, ctx);
+    visitDecl(node) {
+      v.beforeVisitDecl(node);
+      node.value.name = this.visitIdent(node.value.name);
       if (node.value.type) {
-        node.value.type = this.visitType(node.value.type, ctx);
+        node.value.type = this.visitType(node.value.type);
       }
-      ctx.push(node); // this should be called before visitExpr for recursion
-      node.value.expr = this.visitExpr(node.value.expr, ctx);
-      return v.visitDecl(node, ctx);
+      node.value.expr = this.visitExpr(node.value.expr);
+      return v.visitDecl(node);
     },
-    visitIdent(node, ctx) {
-      return v.visitIdent(node, ctx);
+    visitIdent(node) {
+      v.beforeVisitIdent(node);
+      return v.visitIdent(node);
     },
-    visitBinaryOp(node, ctx) {
-      return v.visitBinaryOp(node, ctx);
+    visitBinaryOp(node) {
+      v.beforeVisitBinaryOp(node);
+      return v.visitBinaryOp(node);
     },
-    visitUnaryOp(node, ctx) {
-      return v.visitUnaryOp(node, ctx);
+    visitUnaryOp(node) {
+      v.beforeVisitUnaryOp(node);
+      return v.visitUnaryOp(node);
     },
-    visitType(node, ctx) {
+    visitType(node) {
+      v.beforeVisitType(node);
       if (node instanceof a.FuncType) {
-        node.value.param = this.visitType(node.value.param, ctx);
-        node.value.return = this.visitType(node.value.return, ctx);
+        node.value.param = this.visitType(node.value.param);
+        node.value.return = this.visitType(node.value.return);
       } else if (node instanceof a.TupleType) {
-        node.value.items = node.value.items.map(item =>
-          this.visitType(item, ctx),
-        );
+        node.value.items = node.value.items.map(item => this.visitType(item));
       } else if (node instanceof a.ListType) {
-        node.value = this.visitType(node.value, ctx);
+        node.value = this.visitType(node.value);
       }
-      return v.visitType(node, ctx);
+      return v.visitType(node);
     },
+
+    beforeVisitModule: voidVisit,
+    beforeVisitImport: voidVisit,
+    beforeVisitBlock: voidVisit,
+    beforeVisitLiteral: voidVisit,
+    beforeVisitExpr: voidVisit,
+    beforeVisitDecl: voidVisit,
+    beforeVisitIdent: voidVisit,
+    beforeVisitBinaryOp: voidVisit,
+    beforeVisitUnaryOp: voidVisit,
+    beforeVisitType: voidVisit,
   };
 }

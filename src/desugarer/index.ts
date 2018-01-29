@@ -1,5 +1,5 @@
 import * as a from '../parser/ast';
-import { Context, visitor } from '../parser/visitor';
+import { visitor } from '../parser/visitor';
 
 export function desugar(mod: a.Module): a.Module {
   const v = visitor({
@@ -7,13 +7,7 @@ export function desugar(mod: a.Module): a.Module {
     visitType: desugarType,
   });
 
-  const nullCtx: Context = {
-    enterScope() {},
-    leaveScope() {},
-    push() {},
-  };
-
-  return v.visitModule(mod, nullCtx);
+  return v.visitModule(mod);
 }
 
 function desugarExpr(node: a.Expr<any>): a.Expr<any> {
