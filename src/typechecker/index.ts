@@ -80,18 +80,25 @@ export class TypeError extends Error {
   }
 }
 
-const typeCache: Map<a.Expr<any>, a.Type<any>> = new Map();
+const typeCache: Map<a.Expr<any> | a.Block, a.Type<any>> = new Map();
 
-export function typeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
-  let ty = typeCache.get(expr);
+export function typeOf(
+  node: a.Expr<any> | a.Block,
+  ctx: TypeContext,
+): a.Type<any> {
+  let ty = typeCache.get(node);
   if (!ty) {
-    ty = uncachedTypeOf(expr, ctx);
-    typeCache.set(expr, ty);
+    if (node instanceof a.Block) {
+      ty = checkBlockType(node, ctx);
+    } else {
+      ty = checkExprType(node, ctx);
+    }
+    typeCache.set(node, ty);
   }
   return ty;
 }
 
-function uncachedTypeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
+function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
   if (expr instanceof a.LitExpr) {
     if (expr.value instanceof a.IntLit) {
       return new a.IntType(expr.row, expr.column);
@@ -186,6 +193,11 @@ function uncachedTypeOf(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
     column: expr.column,
     name: 'invalid type',
   });
+}
+
+function checkBlockType(block: a.Block, ctx: TypeContext): a.Type<any> {
+  // FIXME
+  return new a.VoidType(-1, -1);
 }
 
 export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {

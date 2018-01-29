@@ -36,6 +36,27 @@ function exprTypeTest(
   }
 }
 
+function blockTypeTest(
+  blockStr: string,
+  ctx: TypeContext,
+  expectedType: a.Type<any>,
+) {
+  const moduleStr = `let x = fn () ${expectedType.name} ${blockStr}`;
+  try {
+    const mod = desugar(parse(tokenize(moduleStr)));
+    const fn = mod.value.decls[0].value.expr as a.FuncExpr;
+    const actualType = typeOf(fn.value.body, ctx);
+    typeEqual(actualType, expectedType);
+  } catch (err) {
+    console.error(chalk.blue.bold('Test:'));
+    console.error(blockStr);
+    console.error();
+    console.error(chalk.red.bold('Error:'));
+    console.error(err);
+    process.exit(1);
+  }
+}
+
 function ctx(obj: Array<{ [key: string]: a.Type<any> }> = []): TypeContext {
   const ctx = new TypeContext();
   for (const scopeObj of obj) {
@@ -448,5 +469,8 @@ exprTypeTest(
   new a.CharType(-1, -1),
   'Function parameter type mismatch: expected str, found float',
 );
+
+// block
+blockTypeTest('{}', ctx(), new a.VoidType(-1, -1));
 
 console.log(chalk.green.bold('Passed!'));
