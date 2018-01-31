@@ -135,6 +135,30 @@ export function checkExprType(
         expr.column,
       );
     }
+
+    if (checkFuncBody) {
+      const bodyType = checkBlockType(
+        expr.value.body,
+        ctx,
+        expr.value.params.items.map(({ name, type: ty }) => ({
+          ident: name,
+          type: ty,
+        })),
+      );
+
+      try {
+        typeEqual(bodyType, expr.value.returnType);
+      } catch {
+        let message = 'Function return type mismatch';
+
+        if (expr.value.returnType instanceof a.VoidType) {
+          message += ", ';' may be missing";
+        }
+
+        throw new TypeError(bodyType, expr.value.returnType, message);
+      }
+    }
+
     return new a.FuncType(
       { param, return: expr.value.returnType },
       expr.row,

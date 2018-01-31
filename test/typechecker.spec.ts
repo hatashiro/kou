@@ -202,9 +202,9 @@ exprTypeTest(
   'Type mismatch: expected int, found str',
 );
 
-// function (only check type, not body)
+// function
 exprTypeTest(
-  'fn (a int) bool {}',
+  'fn (a int) bool { true }',
   ctx(),
   new a.FuncType(
     {
@@ -216,7 +216,7 @@ exprTypeTest(
   ),
 );
 exprTypeTest(
-  'fn (a int, b str) bool {}',
+  'fn (a int, b str) bool { true }',
   ctx(),
   new a.FuncType(
     {
@@ -235,7 +235,7 @@ exprTypeTest(
   ),
 );
 exprTypeTest(
-  'fn (a int, b str) bool -> char {}',
+  "fn (a int, b str) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
   new a.FuncType(
     {
@@ -261,7 +261,7 @@ exprTypeTest(
   ),
 );
 exprTypeTest(
-  'fn (a str -> int) bool -> char {}',
+  "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
   new a.FuncType(
     {
@@ -287,7 +287,7 @@ exprTypeTest(
   ),
 );
 exprTypeTest(
-  'fn (a float, b str -> int) bool -> char {}',
+  "fn (a float, b str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
   new a.FuncType(
     {
@@ -319,7 +319,7 @@ exprTypeTest(
   ),
 );
 exprTypeTest(
-  'fn (a int, b str) bool {}',
+  'fn (a int, b str) bool { false }',
   ctx(),
   new a.FuncType(
     {
@@ -339,7 +339,7 @@ exprTypeTest(
   'Type mismatch: expected (char, str) -> bool, found (int, str) -> bool',
 );
 exprTypeTest(
-  'fn (a int, b str) bool -> char {}',
+  "fn (a int, b str) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
   new a.FuncType(
     {
@@ -366,7 +366,7 @@ exprTypeTest(
   'Type mismatch: expected (int, str) -> bool -> bool, found (int, str) -> bool -> char',
 );
 exprTypeTest(
-  'fn (a str -> int) bool -> char {}',
+  "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
   new a.FuncType(
     {
@@ -392,12 +392,71 @@ exprTypeTest(
   ),
   'Type mismatch: expected (str -> bool) -> bool -> char, found (str -> int) -> bool -> char',
 );
+exprTypeTest(
+  'fn (a int) bool {}',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.IntType(-1, -1),
+      return: new a.BoolType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+  'Function return type mismatch: expected bool, found void',
+);
+exprTypeTest(
+  'fn (a int) bool { a }',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.IntType(-1, -1),
+      return: new a.BoolType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+  'Function return type mismatch: expected bool, found int',
+);
+exprTypeTest(
+  'fn (a int) void { a }',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.IntType(-1, -1),
+      return: new a.VoidType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+  "Function return type mismatch, ';' may be missing: expected void, found int",
+);
+exprTypeTest(
+  'fn (a int) void { a; }',
+  ctx(),
+  new a.FuncType(
+    {
+      param: new a.IntType(-1, -1),
+      return: new a.VoidType(-1, -1),
+    },
+    -1,
+    -1,
+  ),
+);
 
 // call expr
-exprTypeTest('fn (a int, b int) int {} (1, 2)', ctx(), new a.IntType(-1, -1));
-exprTypeTest('fn (a str) char {} ("hello")', ctx(), new a.CharType(-1, -1));
 exprTypeTest(
-  'fn (a str -> int) bool -> char {} (fn (a str) int {})',
+  'fn (a int, b int) int { a } (1, 2)',
+  ctx(),
+  new a.IntType(-1, -1),
+);
+exprTypeTest(
+  'fn (a str) char { \'a\' } ("hello")',
+  ctx(),
+  new a.CharType(-1, -1),
+);
+exprTypeTest(
+  "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } } (fn (a str) int { 1 })",
   ctx(),
   new a.FuncType(
     {
@@ -460,13 +519,13 @@ exprTypeTest(
   'Semantic error: non-callable target: expected function, found str',
 );
 exprTypeTest(
-  "fn (a int, b int) int {} (1, 'c')",
+  "fn (a int, b int) int { a } (1, 'c')",
   ctx(),
   new a.IntType(-1, -1),
   'Function parameter type mismatch: expected (int, int), found (int, char)',
 );
 exprTypeTest(
-  'fn (a str) char {} (.123)',
+  "fn (a str) char { 'a' } (.123)",
   ctx(),
   new a.CharType(-1, -1),
   'Function parameter type mismatch: expected str, found float',
