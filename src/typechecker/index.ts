@@ -7,6 +7,11 @@ class AnyType extends a.Type<null> {
   }
 }
 
+type IdentTypeDef = {
+  ident: a.Ident;
+  type: a.Type<any>;
+};
+
 export class TypeContext {
   private scopes: Array<Map<string, a.Type<any>>>;
 
@@ -26,7 +31,7 @@ export class TypeContext {
     this.scopes.shift();
   }
 
-  push(ident: a.Ident, ty: a.Type<any>) {
+  push({ ident, type: ty }: IdentTypeDef) {
     const name = ident.value;
     if (this.currentScope.has(name)) {
       throw new TypeError(
@@ -66,25 +71,10 @@ export class TypeError extends Error {
   }
 }
 
-const typeCache: Map<a.Expr<any> | a.Block, a.Type<any>> = new Map();
-
-export function typeOf(
-  node: a.Expr<any> | a.Block,
+export function checkExprType(
+  expr: a.Expr<any>,
   ctx: TypeContext,
 ): a.Type<any> {
-  let ty = typeCache.get(node);
-  if (!ty) {
-    if (node instanceof a.Block) {
-      ty = checkBlockType(node, ctx);
-    } else {
-      ty = checkExprType(node, ctx);
-    }
-    typeCache.set(node, ty);
-  }
-  return ty;
-}
-
-function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
   if (expr instanceof a.LitExpr) {
     if (expr.value instanceof a.IntLit) {
       return new a.IntType(expr.row, expr.column);
@@ -116,7 +106,7 @@ function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
     return new a.TupleType(
       {
         size: expr.value.size,
-        items: expr.value.items.map(item => typeOf(item, ctx)),
+        items: expr.value.items.map(item => checkExprType(item, ctx)),
       },
       expr.row,
       expr.column,
@@ -125,9 +115,9 @@ function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
     if (expr.value.length === 0) {
       return new a.ListType(new AnyType(), expr.row, expr.column);
     }
-    const ty = typeOf(expr.value[0], ctx);
+    const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
-      typeEqual(typeOf(expr.value[i], ctx), ty);
+      typeEqual(checkExprType(expr.value[i], ctx), ty);
     }
     return new a.ListType(ty, expr.row, expr.column);
   } else if (expr instanceof a.FuncExpr) {
@@ -150,8 +140,8 @@ function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
       expr.column,
     );
   } else if (expr instanceof a.CallExpr) {
-    const funcType = typeOf(expr.value.func, ctx);
-    const argsType = typeOf(expr.value.args, ctx);
+    const funcType = checkExprType(expr.value.func, ctx);
+    const argsType = checkExprType(expr.value.args, ctx);
 
     if (!(funcType instanceof a.FuncType)) {
       throw new TypeError(
@@ -181,9 +171,26 @@ function checkExprType(expr: a.Expr<any>, ctx: TypeContext): a.Type<any> {
   });
 }
 
-function checkBlockType(block: a.Block, ctx: TypeContext): a.Type<any> {
-  // FIXME
-  return new a.VoidType(-1, -1);
+export function checkBlockType(
+  block: a.Block,
+  ctx: TypeContext,
+  initialDefs: Array<IdentTypeDef> = [],
+): a.Type<any> {
+  ctx.enterScope();
+  initialDefs.forEach(def => ctx.push(def));
+
+  // FIXME: handle decls
+
+  // FIXME: handle exprs
+  let exprType: a.Type<any> = new a.VoidType(-1, -1);
+
+  const ty: a.Type<any> = block.value.returnVoid
+    ? new a.VoidType(block.row, block.column)
+    : exprType;
+
+  ctx.leaveScope();
+
+  return ty;
 }
 
 export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {

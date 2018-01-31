@@ -3,7 +3,12 @@ import * as a from '../src/parser/ast';
 import { tokenize } from '../src/lexer/';
 import { parse } from '../src/parser/';
 import { desugar } from '../src/desugarer/';
-import { TypeContext, typeOf, typeEqual } from '../src/typechecker/';
+import {
+  TypeContext,
+  checkExprType,
+  checkBlockType,
+  typeEqual,
+} from '../src/typechecker/';
 
 console.log(chalk.bold('Running typechecker tests...'));
 
@@ -16,7 +21,7 @@ function exprTypeTest(
   const moduleStr = `let x = ${exprStr}`;
   try {
     const mod = desugar(parse(tokenize(moduleStr)));
-    const actualType = typeOf(mod.value.decls[0].value.expr, ctx);
+    const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
     if (
@@ -45,7 +50,7 @@ function blockTypeTest(
   try {
     const mod = desugar(parse(tokenize(moduleStr)));
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
-    const actualType = typeOf(fn.value.body, ctx);
+    const actualType = checkBlockType(fn.value.body, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
     console.error(chalk.blue.bold('Test:'));
@@ -61,7 +66,7 @@ function ctx(obj: Array<{ [name: string]: a.Type<any> }> = []): TypeContext {
   const ctx = new TypeContext();
   for (const scopeObj of obj) {
     Object.keys(scopeObj).forEach(name =>
-      ctx.push(new a.Ident(name, -1, -1), scopeObj[name]),
+      ctx.push({ ident: new a.Ident(name, -1, -1), type: scopeObj[name] }),
     );
   }
   return ctx;
