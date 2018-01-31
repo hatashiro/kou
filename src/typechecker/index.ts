@@ -74,6 +74,7 @@ export class TypeError extends Error {
 export function checkExprType(
   expr: a.Expr<any>,
   ctx: TypeContext,
+  checkFuncBody: boolean = true,
 ): a.Type<any> {
   if (expr instanceof a.LitExpr) {
     if (expr.value instanceof a.IntLit) {
@@ -171,6 +172,22 @@ export function checkExprType(
   });
 }
 
+function handleLocalDecl(decl: a.Decl, ctx: TypeContext) {
+  const ident = decl.value.name;
+
+  let ty: a.Type<any>;
+  if (decl.value.type) {
+    ty = decl.value.type;
+  } else {
+    ty = checkExprType(decl.value.expr, ctx, false);
+  }
+
+  ctx.push({ ident, type: ty });
+
+  // decl type equality check
+  typeEqual(checkExprType(decl.value.expr, ctx), ty);
+}
+
 export function checkBlockType(
   block: a.Block,
   ctx: TypeContext,
@@ -179,10 +196,14 @@ export function checkBlockType(
   ctx.enterScope();
   initialDefs.forEach(def => ctx.push(def));
 
-  // FIXME: handle decls
-
-  // FIXME: handle exprs
   let exprType: a.Type<any> = new a.VoidType(-1, -1);
+  block.value.bodies.forEach(body => {
+    if (body instanceof a.Decl) {
+      handleLocalDecl(body, ctx);
+    } else {
+      exprType = checkExprType(body, ctx);
+    }
+  });
 
   const ty: a.Type<any> = block.value.returnVoid
     ? new a.VoidType(block.row, block.column)

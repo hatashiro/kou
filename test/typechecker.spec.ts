@@ -474,5 +474,81 @@ exprTypeTest(
 
 // block
 blockTypeTest('{}', ctx(), new a.VoidType(-1, -1));
+blockTypeTest(
+  `
+{
+  let x = fn () int { x() };
+  x()
+}
+`,
+  ctx(),
+  new a.IntType(-1, -1),
+);
+blockTypeTest(
+  `
+{
+  f(123);
+  let y = f(g);
+  h(y)
+}
+`,
+  ctx([
+    {
+      f: new a.FuncType(
+        {
+          param: new a.IntType(-1, -1),
+          return: new a.BoolType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    { g: new a.IntType(-1, -1) },
+    {
+      h: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.CharType(-1, -1),
+);
+blockTypeTest(
+  `
+{
+  f(123);
+  let y = f(g);
+  h(y);
+}
+`,
+  ctx([
+    {
+      f: new a.FuncType(
+        {
+          param: new a.IntType(-1, -1),
+          return: new a.BoolType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+    { g: new a.IntType(-1, -1) },
+    {
+      h: new a.FuncType(
+        {
+          param: new a.BoolType(-1, -1),
+          return: new a.CharType(-1, -1),
+        },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.VoidType(-1, -1),
+);
 
 console.log(chalk.green.bold('Passed!'));
