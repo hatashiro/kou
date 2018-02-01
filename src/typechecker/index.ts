@@ -259,6 +259,21 @@ export function checkExprType(
     }
 
     return ifBlockType;
+  } else if (expr instanceof a.LoopExpr) {
+    const targetType = checkExprType(expr.value.in, ctx);
+
+    if (targetType instanceof a.ListType) {
+      const doBlockType = checkBlockType(expr.value.do, ctx, [
+        { ident: expr.value.for, type: targetType.value },
+      ]);
+      return new a.ListType(doBlockType, doBlockType.row, doBlockType.column);
+    } else {
+      throw new TypeError(
+        targetType,
+        undefined,
+        'Loop target should be a list',
+      );
+    }
   }
 
   throw new TypeError({

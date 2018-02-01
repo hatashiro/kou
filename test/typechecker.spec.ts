@@ -705,4 +705,60 @@ exprTypeTest(
   new a.VoidType(-1, -1),
 );
 
+// loop expr
+exprTypeTest(
+  'for x in [1, 2, 3] { f(x) }',
+  ctx([
+    {
+      f: new a.FuncType(
+        { param: new a.IntType(-1, -1), return: new a.BoolType(-1, -1) },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.ListType(new a.BoolType(-1, -1), -1, -1),
+);
+exprTypeTest(
+  'for x in [1, 2, 3] { f(x); }',
+  ctx([
+    {
+      f: new a.FuncType(
+        { param: new a.IntType(-1, -1), return: new a.BoolType(-1, -1) },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.ListType(new a.VoidType(-1, -1), -1, -1),
+);
+exprTypeTest(
+  'for x in [1, 2, 3] { f(x) }',
+  ctx([
+    {
+      f: new a.FuncType(
+        { param: new a.CharType(-1, -1), return: new a.BoolType(-1, -1) },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.ListType(new a.BoolType(-1, -1), -1, -1),
+  'Function parameter type mismatch: expected char, found int',
+);
+exprTypeTest(
+  'for x in 123 { f(x) }',
+  ctx([
+    {
+      f: new a.FuncType(
+        { param: new a.IntType(-1, -1), return: new a.BoolType(-1, -1) },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.ListType(new a.BoolType(-1, -1), -1, -1),
+  'Loop target should be a list: found int',
+);
+
 console.log(chalk.green.bold('Passed!'));
