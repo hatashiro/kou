@@ -662,4 +662,47 @@ exprTypeTest(
   'Indexable type mismatch: expected list, str or tuple, found int',
 );
 
+// cond expr
+exprTypeTest(
+  'if some_bool { 10 } else { 20 }',
+  ctx([{ some_bool: new a.BoolType(-1, -1) }]),
+  new a.IntType(-1, -1),
+);
+exprTypeTest(
+  'if f(123) { "hello" } else { "world" }',
+  ctx([
+    {
+      f: new a.FuncType(
+        { param: new a.IntType(-1, -1), return: new a.BoolType(-1, -1) },
+        -1,
+        -1,
+      ),
+    },
+  ]),
+  new a.StrType(-1, -1),
+);
+exprTypeTest(
+  'if some_char { 10 } else { 20 }',
+  ctx([{ some_char: new a.CharType(-1, -1) }]),
+  new a.IntType(-1, -1),
+  'Type mismatch: expected bool, found char',
+);
+exprTypeTest(
+  'if some_bool { 10 } else { "hello" }',
+  ctx([{ some_bool: new a.BoolType(-1, -1) }]),
+  new a.IntType(-1, -1),
+  "'else' block should have the same type as 'if' block: expected int, found str",
+);
+exprTypeTest(
+  'if some_bool { } else { "hello" }',
+  ctx([{ some_bool: new a.BoolType(-1, -1) }]),
+  new a.VoidType(-1, -1),
+  "'else' block should have the same type as 'if' block, ';' may be missing: expected void, found str",
+);
+exprTypeTest(
+  'if some_bool { } else { "hello"; }',
+  ctx([{ some_bool: new a.BoolType(-1, -1) }]),
+  new a.VoidType(-1, -1),
+);
+
 console.log(chalk.green.bold('Passed!'));

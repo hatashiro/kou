@@ -1,5 +1,4 @@
 import * as a from '../parser/ast';
-import { IntType } from '../parser/ast';
 
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {
@@ -197,7 +196,7 @@ export function checkExprType(
       } else {
         throw new TypeError(
           indexType,
-          new IntType(-1, -1),
+          new a.IntType(-1, -1),
           'Index type mismatch',
         );
       }
@@ -208,7 +207,7 @@ export function checkExprType(
       } else {
         throw new TypeError(
           indexType,
-          new IntType(-1, -1),
+          new a.IntType(-1, -1),
           'Index type mismatch',
         );
       }
@@ -239,6 +238,27 @@ export function checkExprType(
         'Indexable type mismatch',
       );
     }
+  } else if (expr instanceof a.CondExpr) {
+    typeEqual(
+      checkExprType(expr.value.if, ctx),
+      new a.BoolType(expr.row, expr.column),
+    );
+
+    const ifBlockType = checkBlockType(expr.value.then, ctx);
+    const elseBlockType = checkBlockType(expr.value.else, ctx);
+    try {
+      typeEqual(ifBlockType, elseBlockType);
+    } catch {
+      let message = "'else' block should have the same type as 'if' block";
+
+      if (ifBlockType instanceof a.VoidType) {
+        message += ", ';' may be missing";
+      }
+
+      throw new TypeError(elseBlockType, ifBlockType, message);
+    }
+
+    return ifBlockType;
   }
 
   throw new TypeError({
