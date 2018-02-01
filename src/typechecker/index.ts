@@ -1,4 +1,5 @@
 import * as a from '../parser/ast';
+import { IntType } from '../parser/ast';
 
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {
@@ -187,6 +188,57 @@ export function checkExprType(
     }
 
     return funcType.value.return;
+  } else if (expr instanceof a.IndexExpr) {
+    const targetType = checkExprType(expr.value.target, ctx);
+    if (targetType instanceof a.ListType) {
+      const indexType = checkExprType(expr.value.index, ctx);
+      if (indexType instanceof a.IntType) {
+        return targetType.value;
+      } else {
+        throw new TypeError(
+          indexType,
+          new IntType(-1, -1),
+          'Index type mismatch',
+        );
+      }
+    } else if (targetType instanceof a.StrType) {
+      const indexType = checkExprType(expr.value.index, ctx);
+      if (indexType instanceof a.IntType) {
+        return new a.CharType(expr.row, expr.column);
+      } else {
+        throw new TypeError(
+          indexType,
+          new IntType(-1, -1),
+          'Index type mismatch',
+        );
+      }
+    } else if (targetType instanceof a.TupleType) {
+      const index = expr.value.index;
+      if (index instanceof a.LitExpr && index.value instanceof a.IntLit) {
+        const lit = index.value;
+        if (lit.parsedValue < targetType.value.size) {
+          return targetType.value.items[lit.parsedValue];
+        } else {
+          throw new TypeError(
+            { row: lit.row, column: lit.column, name: lit.value },
+            { name: `int < ${targetType.value.size}` },
+            'Tuple index out of range',
+          );
+        }
+      } else {
+        throw new TypeError(
+          { row: index.row, column: index.column, name: 'expr' },
+          undefined,
+          'Invalid tuple index: only int literal is allowed for tuple index',
+        );
+      }
+    } else {
+      throw new TypeError(
+        targetType,
+        { name: 'list, str or tuple' },
+        'Indexable type mismatch',
+      );
+    }
   }
 
   throw new TypeError({

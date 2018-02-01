@@ -610,4 +610,56 @@ blockTypeTest(
   new a.VoidType(-1, -1),
 );
 
+// index expr
+exprTypeTest(
+  'list[3]',
+  ctx([{ list: new a.ListType(new a.IntType(-1, -1), -1, -1) }]),
+  new a.IntType(-1, -1),
+);
+exprTypeTest('"hello"[3]', ctx(), new a.CharType(-1, -1));
+exprTypeTest('("hello", false, 123)[0]', ctx(), new a.StrType(-1, -1));
+exprTypeTest('("hello", false, 123)[1]', ctx(), new a.BoolType(-1, -1));
+exprTypeTest('("hello", false, 123)[2]', ctx(), new a.IntType(-1, -1));
+exprTypeTest(
+  '("hello", false, 123)[3]',
+  ctx(),
+  new a.VoidType(-1, -1),
+  'Tuple index out of range: expected int < 3, found 3',
+);
+exprTypeTest(
+  'list[no_int]',
+  ctx([
+    {
+      list: new a.ListType(new a.IntType(-1, -1), -1, -1),
+      no_int: new a.CharType(-1, -1),
+    },
+  ]),
+  new a.IntType(-1, -1),
+  'Index type mismatch: expected int, found char',
+);
+exprTypeTest(
+  '"hello"[3]',
+  ctx([{ no_int: new a.CharType(-1, -1) }]),
+  new a.CharType(-1, -1),
+  'Index type mismatch: expected int, found char',
+);
+exprTypeTest(
+  '("hello", false, 123)[i]',
+  ctx([{ i: new a.IntType(-1, -1) }]),
+  new a.VoidType(-1, -1),
+  'Invalid tuple index: only int literal is allowed for tuple index: found expr',
+);
+exprTypeTest(
+  '("hello", false, 123)[no_int]',
+  ctx([{ no_int: new a.CharType(-1, -1) }]),
+  new a.VoidType(-1, -1),
+  'Invalid tuple index: only int literal is allowed for tuple index: found expr',
+);
+exprTypeTest(
+  '3[0]',
+  ctx(),
+  new a.VoidType(-1, -1),
+  'Indexable type mismatch: expected list, str or tuple, found int',
+);
+
 console.log(chalk.green.bold('Passed!'));
