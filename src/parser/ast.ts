@@ -208,11 +208,15 @@ export class LoopExpr extends PrimUnaryExpr<{
   do: Block;
 }> {}
 
-export abstract class Type<T> extends Node<T> {}
+export abstract class Type<T> extends Node<T> {
+  constructor(value: T, row: number = -1, column: number = -1) {
+    super(value, row, column);
+  }
+}
 
 // type without nested type
 export abstract class SimpleType extends Type<null> {
-  constructor(row: number, column: number) {
+  constructor(row?: number, column?: number) {
     super(null, row, column);
   }
 }

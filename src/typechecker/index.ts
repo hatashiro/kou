@@ -1,11 +1,16 @@
 import * as a from '../parser/ast';
 
 // AnyType should be used only when it's really needed, e.g. empty list
-class AnyType extends a.Type<null> {
-  constructor() {
-    super(null, -1, -1);
-  }
-}
+class AnyType extends a.Type<null> {}
+
+// simple type instances
+const anyType = new AnyType(null);
+const intType = new a.IntType();
+const floatType = new a.FloatType();
+const charType = new a.CharType();
+const strType = new a.StrType();
+const boolType = new a.BoolType();
+const voidType = new a.VoidType();
 
 type IdentTypeDef = {
   ident: a.Ident;
@@ -114,7 +119,7 @@ export function checkExprType(
     );
   } else if (expr instanceof a.ListExpr) {
     if (expr.value.length === 0) {
-      return new a.ListType(new AnyType(), expr.row, expr.column);
+      return new a.ListType(anyType, expr.row, expr.column);
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
@@ -194,22 +199,14 @@ export function checkExprType(
       if (indexType instanceof a.IntType) {
         return targetType.value;
       } else {
-        throw new TypeError(
-          indexType,
-          new a.IntType(-1, -1),
-          'Index type mismatch',
-        );
+        throw new TypeError(indexType, intType, 'Index type mismatch');
       }
     } else if (targetType instanceof a.StrType) {
       const indexType = checkExprType(expr.value.index, ctx);
       if (indexType instanceof a.IntType) {
         return new a.CharType(expr.row, expr.column);
       } else {
-        throw new TypeError(
-          indexType,
-          new a.IntType(-1, -1),
-          'Index type mismatch',
-        );
+        throw new TypeError(indexType, intType, 'Index type mismatch');
       }
     } else if (targetType instanceof a.TupleType) {
       const index = expr.value.index;
@@ -291,11 +288,11 @@ function unaryOperandTypes(
 
   switch (op.value) {
     case '+':
-      return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
+      return [res(intType), res(floatType)];
     case '-':
-      return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
+      return [res(intType), res(floatType)];
     case '!':
-      return [res(new a.BoolType(-1, -1))];
+      return [res(boolType)];
   }
 }
 
@@ -310,18 +307,18 @@ function binaryOperandTypes(
     return [res(left)];
   } else if (op instanceof a.CompOp) {
     return [
-      res(new a.IntType(-1, -1)),
-      res(new a.FloatType(-1, -1)),
-      res(new a.BoolType(-1, -1)),
-      res(new a.CharType(-1, -1)),
-      res(new a.StrType(-1, -1)),
+      res(intType),
+      res(floatType),
+      res(boolType),
+      res(charType),
+      res(strType),
     ];
   } else if (op instanceof a.AddOp) {
-    return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
+    return [res(intType), res(floatType)];
   } else if (op instanceof a.MulOp) {
-    return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
+    return [res(intType), res(floatType)];
   } else if (op instanceof a.BinaryOp) {
-    return [res(new a.BoolType(-1, -1))];
+    return [res(boolType)];
   }
   throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
 }
@@ -350,7 +347,7 @@ export function checkBlockType(
   ctx.enterScope();
   initialDefs.forEach(def => ctx.push(def));
 
-  let exprType: a.Type<any> = new a.VoidType(-1, -1);
+  let exprType: a.Type<any> = voidType;
   block.value.bodies.forEach(body => {
     if (body instanceof a.Decl) {
       handleLocalDecl(body, ctx);
