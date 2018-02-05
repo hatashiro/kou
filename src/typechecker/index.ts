@@ -283,6 +283,47 @@ export function checkExprType(
   });
 }
 
+function unaryOperandTypes(op: a.UnaryOp): Array<a.Type<any>> {
+  switch (op.value) {
+    case '+':
+      return [new a.IntType(-1, -1), new a.FloatType(-1, -1)];
+    case '-':
+      return [new a.IntType(-1, -1), new a.FloatType(-1, -1)];
+    case '!':
+      return [new a.BoolType(-1, -1)];
+  }
+}
+
+function binaryOperandTypes(
+  op: a.BinaryOp<any>,
+  left: a.Type<any>,
+): Array<{ left: a.Type<any>; right: a.Type<any> }> {
+  if (op instanceof a.EqOp) {
+    return [{ left, right: left }];
+  } else if (op instanceof a.CompOp) {
+    return [
+      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
+      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
+      { left: new a.BoolType(-1, -1), right: new a.BoolType(-1, -1) },
+      { left: new a.CharType(-1, -1), right: new a.CharType(-1, -1) },
+      { left: new a.StrType(-1, -1), right: new a.StrType(-1, -1) },
+    ];
+  } else if (op instanceof a.AddOp) {
+    return [
+      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
+      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
+    ];
+  } else if (op instanceof a.MulOp) {
+    return [
+      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
+      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
+    ];
+  } else if (op instanceof a.BinaryOp) {
+    return [{ left: new a.BoolType(-1, -1), right: new a.BoolType(-1, -1) }];
+  }
+  throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
+}
+
 function handleLocalDecl(decl: a.Decl, ctx: TypeContext) {
   const ident = decl.value.name;
 
