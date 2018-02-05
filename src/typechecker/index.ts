@@ -283,43 +283,45 @@ export function checkExprType(
   });
 }
 
-function unaryOperandTypes(op: a.UnaryOp): Array<a.Type<any>> {
+function unaryOperandTypes(
+  op: a.UnaryOp,
+): Array<{ right: a.Type<any>; return: a.Type<any> }> {
+  // helper for op with same operand/return types
+  const res = (ty: a.Type<any>) => ({ right: ty, return: ty });
+
   switch (op.value) {
     case '+':
-      return [new a.IntType(-1, -1), new a.FloatType(-1, -1)];
+      return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
     case '-':
-      return [new a.IntType(-1, -1), new a.FloatType(-1, -1)];
+      return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
     case '!':
-      return [new a.BoolType(-1, -1)];
+      return [res(new a.BoolType(-1, -1))];
   }
 }
 
 function binaryOperandTypes(
   op: a.BinaryOp<any>,
   left: a.Type<any>,
-): Array<{ left: a.Type<any>; right: a.Type<any> }> {
+): Array<{ left: a.Type<any>; right: a.Type<any>; return: a.Type<any> }> {
+  // helper for op with same operand/return types
+  const res = (ty: a.Type<any>) => ({ left: ty, right: ty, return: ty });
+
   if (op instanceof a.EqOp) {
-    return [{ left, right: left }];
+    return [res(left)];
   } else if (op instanceof a.CompOp) {
     return [
-      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
-      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
-      { left: new a.BoolType(-1, -1), right: new a.BoolType(-1, -1) },
-      { left: new a.CharType(-1, -1), right: new a.CharType(-1, -1) },
-      { left: new a.StrType(-1, -1), right: new a.StrType(-1, -1) },
+      res(new a.IntType(-1, -1)),
+      res(new a.FloatType(-1, -1)),
+      res(new a.BoolType(-1, -1)),
+      res(new a.CharType(-1, -1)),
+      res(new a.StrType(-1, -1)),
     ];
   } else if (op instanceof a.AddOp) {
-    return [
-      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
-      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
-    ];
+    return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
   } else if (op instanceof a.MulOp) {
-    return [
-      { left: new a.IntType(-1, -1), right: new a.IntType(-1, -1) },
-      { left: new a.FloatType(-1, -1), right: new a.FloatType(-1, -1) },
-    ];
+    return [res(new a.IntType(-1, -1)), res(new a.FloatType(-1, -1))];
   } else if (op instanceof a.BinaryOp) {
-    return [{ left: new a.BoolType(-1, -1), right: new a.BoolType(-1, -1) }];
+    return [res(new a.BoolType(-1, -1))];
   }
   throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
 }
