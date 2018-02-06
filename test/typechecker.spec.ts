@@ -610,7 +610,7 @@ exprTypeTest(
     },
   ]),
   boolType,
-  'Operand type mismatch: expected int or float, found bool',
+  "Operand type mismatch for '-': expected int or float, found bool",
 );
 exprTypeTest(
   '!x',
@@ -620,7 +620,65 @@ exprTypeTest(
     },
   ]),
   intType,
-  'Operand type mismatch: expected bool, found int',
+  "Operand type mismatch for '!': expected bool, found int",
+);
+
+// binary expr
+// eq op
+exprTypeTest('1 == 1', ctx(), boolType);
+exprTypeTest('"hello" != "hello"', ctx(), boolType);
+exprTypeTest(
+  '"hello" == 3',
+  ctx(),
+  boolType,
+  "Right-hand operand type mismatch for '==': expected str, found int",
+);
+// comp op
+exprTypeTest('3.5 > .0', ctx(), boolType);
+exprTypeTest("'c' > 'a'", ctx(), boolType);
+exprTypeTest(
+  "'c' < 3",
+  ctx(),
+  boolType,
+  "Right-hand operand type mismatch for '<': expected char, found int",
+);
+exprTypeTest(
+  'fn () void {} <= 3',
+  ctx(),
+  boolType,
+  "Left-hand operand type mismatch for '<=': expected int, float, bool, char or str, found () -> void",
+);
+// add & mul op
+exprTypeTest('3 + 0', ctx(), intType);
+exprTypeTest('3 * 123 / 13', ctx(), intType);
+exprTypeTest('3.5 + .0', ctx(), floatType);
+exprTypeTest('3.5 * .0 / 1.0', ctx(), floatType);
+exprTypeTest(
+  '3.5 * 1 / 1.0',
+  ctx(),
+  floatType,
+  "Right-hand operand type mismatch for '*': expected float, found int",
+);
+exprTypeTest(
+  '"4" | 1',
+  ctx(),
+  intType,
+  "Left-hand operand type mismatch for '|': expected int or float, found str",
+);
+// bool op
+exprTypeTest('true && false', ctx(), boolType);
+exprTypeTest('true || false', ctx(), boolType);
+exprTypeTest(
+  '.1 || false',
+  ctx(),
+  boolType,
+  "Left-hand operand type mismatch for '||': expected bool, found float",
+);
+exprTypeTest(
+  'true && 1',
+  ctx(),
+  boolType,
+  "Right-hand operand type mismatch for '&&': expected bool, found int",
 );
 
 console.log(chalk.green.bold('Passed!'));

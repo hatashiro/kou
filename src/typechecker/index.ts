@@ -293,7 +293,42 @@ export function checkExprType(
       {
         name: orStr(opTypes.map(x => x.right.name)),
       },
-      'Operand type mismatch',
+      `Operand type mismatch for '${expr.value.op.value}'`,
+    );
+  } else if (expr instanceof a.BinaryExpr) {
+    const leftActualTy = checkExprType(expr.value.left, ctx);
+    const opTypes = binaryOpTypes(expr.value.op, leftActualTy);
+    const rightActualTy = checkExprType(expr.value.right, ctx);
+    for (const ty of opTypes) {
+      try {
+        typeEqual(leftActualTy, ty.left);
+      } catch {
+        // ignore, try the next
+        continue;
+      }
+
+      try {
+        typeEqual(rightActualTy, ty.right);
+
+        // tag the operator with type
+        expr.value.op.ty = ty;
+
+        return ty.return;
+      } catch {
+        throw new TypeError(
+          rightActualTy,
+          ty.right,
+          `Right-hand operand type mismatch for '${expr.value.op.value}'`,
+        );
+      }
+    }
+    // fails for all the operand types
+    throw new TypeError(
+      leftActualTy,
+      {
+        name: orStr(opTypes.map(x => x.left.name)),
+      },
+      `Left-hand operand type mismatch for '${expr.value.op.value}'`,
     );
   }
 
@@ -323,27 +358,27 @@ function binaryOpTypes(
   leftActualTy: a.Type<any>,
 ): Array<a.BinaryOpType> {
   // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({
+  const res = (ty: a.Type<any>, ret: a.Type<any> = ty) => ({
     left: ty,
     right: ty,
-    return: ty,
+    return: ret,
   });
 
   if (op instanceof a.EqOp) {
-    return [res(leftActualTy)];
+    return [res(leftActualTy, boolType)];
   } else if (op instanceof a.CompOp) {
     return [
-      res(intType),
-      res(floatType),
-      res(boolType),
-      res(charType),
-      res(strType),
+      res(intType, boolType),
+      res(floatType, boolType),
+      res(boolType, boolType),
+      res(charType, boolType),
+      res(strType, boolType),
     ];
   } else if (op instanceof a.AddOp) {
     return [res(intType), res(floatType)];
   } else if (op instanceof a.MulOp) {
     return [res(intType), res(floatType)];
-  } else if (op instanceof a.BinaryOp) {
+  } else if (op instanceof a.BoolOp) {
     return [res(boolType)];
   }
   throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
