@@ -9,8 +9,8 @@ export abstract class Node<T> {
   }
 }
 
-export interface NodeConstructor<T> {
-  new (value: T, row: number, column: number): Node<T>;
+export interface NodeConstructor<T, N extends Node<T>> {
+  new (value: T, row: number, column: number): N;
 }
 
 export abstract class Literal<T> extends Node<string> {
@@ -78,12 +78,18 @@ export class Ident extends Node<string> {}
 export abstract class Operator<T extends string> extends Node<T> {}
 
 export class UnaryOp extends Operator<'+' | '-' | '!'> {
+  ty: UnaryOpType | undefined;
+
   static isUnaryOp(token: t.Token<any>) {
     return token.is(t.Operator) && ['+', '-', '!'].includes(token.rep);
   }
 }
 
+export type UnaryOpType = { right: Type<any>; return: Type<any> };
+
 export abstract class BinaryOp<T extends string> extends Operator<T> {
+  ty: BinaryOpType | undefined;
+
   abstract precedence: number;
 
   static isBinaryOp(token: t.Token<any>) {
@@ -110,6 +116,12 @@ export abstract class BinaryOp<T extends string> extends Operator<T> {
     );
   }
 }
+
+export type BinaryOpType = {
+  left: Type<any>;
+  right: Type<any>;
+  return: Type<any>;
+};
 
 export class EqOp extends BinaryOp<'==' | '!='> {
   precedence = 0;

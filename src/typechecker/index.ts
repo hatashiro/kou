@@ -273,21 +273,25 @@ export function checkExprType(
       );
     }
   } else if (expr instanceof a.UnaryExpr) {
-    const operandTypes = unaryOperandTypes(expr.value.op);
-    const exprType = checkExprType(expr.value.right, ctx);
-    for (const { rightType, returnType } of operandTypes) {
+    const opTypes = unaryOpTypes(expr.value.op);
+    const rightActualTy = checkExprType(expr.value.right, ctx);
+    for (const ty of opTypes) {
       try {
-        typeEqual(exprType, rightType);
-        return returnType;
+        typeEqual(rightActualTy, ty.right);
+
+        // tag the operator with type
+        expr.value.op.ty = ty;
+
+        return ty.return;
       } catch {
         // ignore, try the next
       }
     }
     // fails for all the operand types
     throw new TypeError(
-      exprType,
+      rightActualTy,
       {
-        name: orStr(operandTypes.map(x => x.rightType.name)),
+        name: orStr(opTypes.map(x => x.right.name)),
       },
       'Operand type mismatch',
     );
@@ -300,11 +304,9 @@ export function checkExprType(
   });
 }
 
-function unaryOperandTypes(
-  op: a.UnaryOp,
-): Array<{ rightType: a.Type<any>; returnType: a.Type<any> }> {
+function unaryOpTypes(op: a.UnaryOp): Array<a.UnaryOpType> {
   // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({ rightType: ty, returnType: ty });
+  const res = (ty: a.Type<any>) => ({ right: ty, return: ty });
 
   switch (op.value) {
     case '+':
@@ -316,23 +318,19 @@ function unaryOperandTypes(
   }
 }
 
-function binaryOperandTypes(
+function binaryOpTypes(
   op: a.BinaryOp<any>,
-  left: a.Type<any>,
-): Array<{
-  leftType: a.Type<any>;
-  rightType: a.Type<any>;
-  returnType: a.Type<any>;
-}> {
+  leftActualTy: a.Type<any>,
+): Array<a.BinaryOpType> {
   // helper for op with same operand/return types
   const res = (ty: a.Type<any>) => ({
-    leftType: ty,
-    rightType: ty,
-    returnType: ty,
+    left: ty,
+    right: ty,
+    return: ty,
   });
 
   if (op instanceof a.EqOp) {
-    return [res(left)];
+    return [res(leftActualTy)];
   } else if (op instanceof a.CompOp) {
     return [
       res(intType),

@@ -88,10 +88,10 @@ function nextToken(input: ParserInput, consume: boolean = false): t.Token<any> {
   return consume ? input.next().value : input.preview().value;
 }
 
-function parseNode<T>(
-  Cons: NodeConstructor<T>,
+function parseNode<T, N extends Node<T>>(
+  Cons: NodeConstructor<T, N>,
   parser: Parser<T>,
-): Parser<Node<T>> {
+): Parser<N> {
   return (input: ParserInput) => {
     const { row, column } = nextToken(input);
     return new Cons(parser(input), row, column);
