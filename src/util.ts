@@ -34,8 +34,13 @@ export function isAlphanumeric(c: string): boolean {
 }
 
 export function unescape(str: string): string {
-  // FIXME
-  return str;
+  return str
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\\t/g, '\t')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\'/g, "'")
+    .replace(/\\"/g, '"');
 }
 
 export function orStr(words: Array<string>): string {
