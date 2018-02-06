@@ -153,69 +153,6 @@ exprDesugarTest(
   n(a.LitExpr, n(a.IntLit, '123')),
 );
 
-exprDesugarTest(
-  'Unwrap 1-tuple with binary operator',
-  n(a.BinaryExpr, {
-    op: n(a.MulOp, '*'),
-    left: n(a.LitExpr, n(a.IntLit, '1')),
-    right: n(a.TupleExpr, {
-      size: 1,
-      items: [
-        n(a.BinaryExpr, {
-          op: n(a.AddOp, '+'),
-          left: n(a.LitExpr, n(a.IntLit, '2')),
-          right: n(a.LitExpr, n(a.IntLit, '3')),
-        }),
-      ],
-    }),
-  }),
-  n(a.BinaryExpr, {
-    op: n(a.MulOp, '*'),
-    left: n(a.LitExpr, n(a.IntLit, '1')),
-    right: n(a.BinaryExpr, {
-      op: n(a.AddOp, '+'),
-      left: n(a.LitExpr, n(a.IntLit, '2')),
-      right: n(a.LitExpr, n(a.IntLit, '3')),
-    }),
-  }),
-);
-
-exprDesugarTest(
-  'Unwrap unary + operator',
-  n(a.UnaryExpr, {
-    op: n(a.UnaryOp, '+'),
-    right: n(a.LitExpr, n(a.IntLit, '1')),
-  }),
-  n(a.LitExpr, n(a.IntLit, '1')),
-);
-
-exprDesugarTest(
-  'Unwrap multiple + operator',
-  n(a.UnaryExpr, {
-    op: n(a.UnaryOp, '+'),
-    right: n(a.UnaryExpr, {
-      op: n(a.UnaryOp, '-'),
-      right: n(a.UnaryExpr, {
-        op: n(a.UnaryOp, '+'),
-        right: n(a.UnaryExpr, {
-          op: n(a.UnaryOp, '+'),
-          right: n(a.UnaryExpr, {
-            op: n(a.UnaryOp, '-'),
-            right: n(a.LitExpr, n(a.IntLit, '1')),
-          }),
-        }),
-      }),
-    }),
-  }),
-  n(a.UnaryExpr, {
-    op: n(a.UnaryOp, '-'),
-    right: n(a.UnaryExpr, {
-      op: n(a.UnaryOp, '-'),
-      right: n(a.LitExpr, n(a.IntLit, '1')),
-    }),
-  }),
-);
-
 function typeDesugarTest(
   description: string,
   input: a.Type<any>,
@@ -386,7 +323,10 @@ declDesugarTest(
         bodies: [
           n(a.BinaryExpr, {
             op: n(a.MulOp, '*'),
-            left: n(a.LitExpr, n(a.IntLit, '1')),
+            left: n(a.UnaryExpr, {
+              op: n(a.UnaryOp, '+'),
+              right: n(a.LitExpr, n(a.IntLit, '1')),
+            }),
             right: n(a.BinaryExpr, {
               op: n(a.AddOp, '+'),
               left: n(a.IdentExpr, n(a.Ident, 'x')),

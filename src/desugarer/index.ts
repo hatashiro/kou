@@ -16,11 +16,6 @@ function desugarExpr(node: a.Expr<any>): a.Expr<any> {
     return node.value.items[0];
   }
 
-  // Unwrap unary '+' operator
-  if (node instanceof a.UnaryExpr && node.value.op.value === '+') {
-    return node.value.right;
-  }
-
   return node;
 }
 
