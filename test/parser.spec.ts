@@ -64,7 +64,7 @@ function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
   );
 }
 
-const process = compose(parse, tokenize);
+const compile = compose(parse, tokenize);
 
 function programTest(
   input: string,
@@ -72,7 +72,7 @@ function programTest(
   sourceToShow: string = input,
 ) {
   try {
-    astEqual(process(input), [a.Module, expected]);
+    astEqual(compile(input), [a.Module, expected]);
   } catch (err) {
     console.error(chalk.blue.bold('Source:'));
     console.error(sourceToShow);

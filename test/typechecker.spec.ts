@@ -21,7 +21,7 @@ const strType = new a.StrType();
 const boolType = new a.BoolType();
 const voidType = new a.VoidType();
 
-const process = compose(desugarBefore, parse, tokenize);
+const compile = compose(desugarBefore, parse, tokenize);
 
 function exprTypeTest(
   exprStr: string,
@@ -31,7 +31,7 @@ function exprTypeTest(
 ) {
   const moduleStr = `let x = ${exprStr}`;
   try {
-    const mod = process(moduleStr);
+    const mod = compile(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
@@ -59,7 +59,7 @@ function blockTypeTest(
 ) {
   const moduleStr = `let x = fn () ${expectedType.name} ${blockStr}`;
   try {
-    const mod = process(moduleStr);
+    const mod = compile(moduleStr);
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
     const actualType = checkBlockType(fn.value.body, ctx);
     typeEqual(actualType, expectedType);
