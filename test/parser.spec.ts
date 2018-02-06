@@ -1,3 +1,4 @@
+import { compose } from '@typed/compose';
 import * as chalk from 'chalk';
 import { tokenize } from '../src/lexer';
 import { parse } from '../src/parser';
@@ -63,13 +64,15 @@ function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
   );
 }
 
+const process = compose(parse, tokenize);
+
 function programTest(
   input: string,
   expected: any,
   sourceToShow: string = input,
 ) {
   try {
-    astEqual(parse(tokenize(input)), [a.Module, expected]);
+    astEqual(process(input), [a.Module, expected]);
   } catch (err) {
     console.error(chalk.blue.bold('Source:'));
     console.error(sourceToShow);

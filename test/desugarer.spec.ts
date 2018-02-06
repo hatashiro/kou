@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import * as a from '../src/parser/ast';
-import { desugar } from '../src/desugarer';
+import { desugarBefore, desugarAfter } from '../src/desugarer';
 
 console.log(chalk.bold('Running desugarer tests...'));
 
@@ -45,11 +45,27 @@ function astEqual<T>(actual: a.Node<T>, expected?: a.Node<T>) {
   );
 }
 
+type DesugarPath = 'before' | 'after' | 'both';
+
 function moduleDesugarTest(
+  path: DesugarPath,
   description: string,
   input: a.Module,
   expected: a.Module,
 ) {
+  let desugar;
+  switch (path) {
+    case 'before':
+      desugar = desugarBefore;
+      break;
+    case 'after':
+      desugar = desugarAfter;
+      break;
+    case 'both':
+      desugar = x => desugarAfter(desugarBefore(x));
+      break;
+  }
+
   try {
     astEqual(desugar(input), expected);
   } catch (err) {
@@ -63,6 +79,7 @@ function moduleDesugarTest(
 }
 
 moduleDesugarTest(
+  'both',
   'No desugar',
   n(a.Module, {
     imports: [],
@@ -74,8 +91,14 @@ moduleDesugarTest(
   }),
 );
 
-function declDesugarTest(description: string, input: a.Decl, expected: a.Decl) {
+function declDesugarTest(
+  path: DesugarPath,
+  description: string,
+  input: a.Decl,
+  expected: a.Decl,
+) {
   moduleDesugarTest(
+    path,
     description,
     n(a.Module, {
       imports: [],
@@ -89,6 +112,7 @@ function declDesugarTest(description: string, input: a.Decl, expected: a.Decl) {
 }
 
 declDesugarTest(
+  'both',
   'No desugar',
   n(a.Decl, {
     name: n(a.Ident, 'x'),
@@ -103,11 +127,13 @@ declDesugarTest(
 );
 
 function exprDesugarTest(
+  path: DesugarPath,
   description: string,
   input: a.Expr<any>,
   expected: a.Expr<any>,
 ) {
   declDesugarTest(
+    path,
     description,
     n(a.Decl, {
       name: n(a.Ident, 'x'),
@@ -123,18 +149,21 @@ function exprDesugarTest(
 }
 
 exprDesugarTest(
+  'both',
   'No desugar',
   n(a.LitExpr, n(a.IntLit, '1')),
   n(a.LitExpr, n(a.IntLit, '1')),
 );
 
 exprDesugarTest(
+  'before',
   'Unwrap 1-tuple',
   n(a.TupleExpr, { size: 1, items: [n(a.LitExpr, n(a.IntLit, '123'))] }),
   n(a.LitExpr, n(a.IntLit, '123')),
 );
 
 exprDesugarTest(
+  'before',
   'Unwrap 1-tuple multiple times',
   n(a.TupleExpr, {
     size: 1,
@@ -153,12 +182,107 @@ exprDesugarTest(
   n(a.LitExpr, n(a.IntLit, '123')),
 );
 
+exprDesugarTest(
+  'before',
+  'Unwrap 1-tuple with binary operator 1',
+  n(a.BinaryExpr, {
+    op: n(a.MulOp, '*'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.TupleExpr, {
+      size: 1,
+      items: [
+        n(a.BinaryExpr, {
+          op: n(a.AddOp, '+'),
+          left: n(a.LitExpr, n(a.IntLit, '2')),
+          right: n(a.LitExpr, n(a.IntLit, '3')),
+        }),
+      ],
+    }),
+  }),
+  n(a.BinaryExpr, {
+    op: n(a.MulOp, '*'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.BinaryExpr, {
+      op: n(a.AddOp, '+'),
+      left: n(a.LitExpr, n(a.IntLit, '2')),
+      right: n(a.LitExpr, n(a.IntLit, '3')),
+    }),
+  }),
+);
+
+exprDesugarTest(
+  'before',
+  'Unwrap 1-tuple with binary operator 2',
+  n(a.BinaryExpr, {
+    op: n(a.AddOp, '+'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.TupleExpr, {
+      size: 1,
+      items: [
+        n(a.BinaryExpr, {
+          op: n(a.MulOp, '*'),
+          left: n(a.LitExpr, n(a.IntLit, '2')),
+          right: n(a.LitExpr, n(a.IntLit, '3')),
+        }),
+      ],
+    }),
+  }),
+  n(a.BinaryExpr, {
+    op: n(a.AddOp, '+'),
+    left: n(a.LitExpr, n(a.IntLit, '1')),
+    right: n(a.BinaryExpr, {
+      op: n(a.MulOp, '*'),
+      left: n(a.LitExpr, n(a.IntLit, '2')),
+      right: n(a.LitExpr, n(a.IntLit, '3')),
+    }),
+  }),
+);
+
+exprDesugarTest(
+  'after',
+  'Unwrap unary + operator',
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '+'),
+    right: n(a.LitExpr, n(a.IntLit, '1')),
+  }),
+  n(a.LitExpr, n(a.IntLit, '1')),
+);
+exprDesugarTest(
+  'after',
+  'Unwrap multiple + operator',
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '+'),
+    right: n(a.UnaryExpr, {
+      op: n(a.UnaryOp, '-'),
+      right: n(a.UnaryExpr, {
+        op: n(a.UnaryOp, '+'),
+        right: n(a.UnaryExpr, {
+          op: n(a.UnaryOp, '+'),
+          right: n(a.UnaryExpr, {
+            op: n(a.UnaryOp, '-'),
+            right: n(a.LitExpr, n(a.IntLit, '1')),
+          }),
+        }),
+      }),
+    }),
+  }),
+  n(a.UnaryExpr, {
+    op: n(a.UnaryOp, '-'),
+    right: n(a.UnaryExpr, {
+      op: n(a.UnaryOp, '-'),
+      right: n(a.LitExpr, n(a.IntLit, '1')),
+    }),
+  }),
+);
+
 function typeDesugarTest(
+  path: DesugarPath,
   description: string,
   input: a.Type<any>,
   expected: a.Type<any>,
 ) {
   declDesugarTest(
+    path,
     description,
     n(a.Decl, {
       name: n(a.Ident, 'x'),
@@ -173,15 +297,17 @@ function typeDesugarTest(
   );
 }
 
-typeDesugarTest('No desugar', n(a.IntType, null), n(a.IntType, null));
+typeDesugarTest('before', 'No desugar', n(a.IntType, null), n(a.IntType, null));
 
 typeDesugarTest(
+  'before',
   'Unwrap 1-tuple type',
   n(a.TupleType, { size: 1, items: [n(a.IntType, null)] }),
   n(a.IntType, null),
 );
 
 typeDesugarTest(
+  'before',
   'Unwrap 1-tuple type multiple times',
   n(a.TupleType, {
     size: 1,
@@ -201,6 +327,7 @@ typeDesugarTest(
 );
 
 declDesugarTest(
+  'both',
   'Complex case',
   n(a.Decl, {
     name: n(a.Ident, 'x'),
@@ -323,10 +450,7 @@ declDesugarTest(
         bodies: [
           n(a.BinaryExpr, {
             op: n(a.MulOp, '*'),
-            left: n(a.UnaryExpr, {
-              op: n(a.UnaryOp, '+'),
-              right: n(a.LitExpr, n(a.IntLit, '1')),
-            }),
+            left: n(a.LitExpr, n(a.IntLit, '1')),
             right: n(a.BinaryExpr, {
               op: n(a.AddOp, '+'),
               left: n(a.IdentExpr, n(a.Ident, 'x')),

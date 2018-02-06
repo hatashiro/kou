@@ -1,8 +1,9 @@
 import * as chalk from 'chalk';
+import { compose } from '@typed/compose';
 import * as a from '../src/parser/ast';
 import { tokenize } from '../src/lexer/';
 import { parse } from '../src/parser/';
-import { desugar } from '../src/desugarer/';
+import { desugarBefore } from '../src/desugarer/';
 import {
   TypeContext,
   checkExprType,
@@ -20,6 +21,8 @@ const strType = new a.StrType();
 const boolType = new a.BoolType();
 const voidType = new a.VoidType();
 
+const process = compose(desugarBefore, parse, tokenize);
+
 function exprTypeTest(
   exprStr: string,
   ctx: TypeContext,
@@ -28,7 +31,7 @@ function exprTypeTest(
 ) {
   const moduleStr = `let x = ${exprStr}`;
   try {
-    const mod = desugar(parse(tokenize(moduleStr)));
+    const mod = process(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
@@ -56,7 +59,7 @@ function blockTypeTest(
 ) {
   const moduleStr = `let x = fn () ${expectedType.name} ${blockStr}`;
   try {
-    const mod = desugar(parse(tokenize(moduleStr)));
+    const mod = process(moduleStr);
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
     const actualType = checkBlockType(fn.value.body, ctx);
     typeEqual(actualType, expectedType);
