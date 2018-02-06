@@ -553,4 +553,71 @@ exprTypeTest(
   'Loop target should be a list: found int',
 );
 
+// unary expr
+exprTypeTest(
+  '+x',
+  ctx([
+    {
+      x: intType,
+    },
+  ]),
+  intType,
+);
+exprTypeTest(
+  '-x',
+  ctx([
+    {
+      x: intType,
+    },
+  ]),
+  intType,
+);
+exprTypeTest(
+  '+x',
+  ctx([
+    {
+      x: floatType,
+    },
+  ]),
+  floatType,
+);
+exprTypeTest(
+  '-x',
+  ctx([
+    {
+      x: floatType,
+    },
+  ]),
+  floatType,
+);
+exprTypeTest(
+  '!x',
+  ctx([
+    {
+      x: boolType,
+    },
+  ]),
+  boolType,
+);
+exprTypeTest(
+  '-x',
+  ctx([
+    {
+      x: boolType,
+    },
+  ]),
+  boolType,
+  'Operand type mismatch: expected int or float, found bool',
+);
+exprTypeTest(
+  '!x',
+  ctx([
+    {
+      x: intType,
+    },
+  ]),
+  intType,
+  'Operand type mismatch: expected bool, found int',
+);
+
 console.log(chalk.green.bold('Passed!'));

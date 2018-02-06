@@ -37,3 +37,9 @@ export function unescape(str: string): string {
   // FIXME
   return str;
 }
+
+export function orStr(words: Array<string>): string {
+  const last = words.slice(-1)[0];
+  const rests = words.slice(0, -1).join(', ');
+  return rests ? `${rests} or ${last}` : last;
+}

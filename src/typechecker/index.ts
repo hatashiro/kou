@@ -1,4 +1,5 @@
 import * as a from '../parser/ast';
+import { orStr } from '../util';
 
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {}
@@ -271,6 +272,25 @@ export function checkExprType(
         'Loop target should be a list',
       );
     }
+  } else if (expr instanceof a.UnaryExpr) {
+    const operandTypes = unaryOperandTypes(expr.value.op);
+    const exprType = checkExprType(expr.value.right, ctx);
+    for (const { rightType, returnType } of operandTypes) {
+      try {
+        typeEqual(exprType, rightType);
+        return returnType;
+      } catch {
+        // ignore, try the next
+      }
+    }
+    // fails for all the operand types
+    throw new TypeError(
+      exprType,
+      {
+        name: orStr(operandTypes.map(x => x.rightType.name)),
+      },
+      'Operand type mismatch',
+    );
   }
 
   throw new TypeError({
@@ -282,9 +302,9 @@ export function checkExprType(
 
 function unaryOperandTypes(
   op: a.UnaryOp,
-): Array<{ right: a.Type<any>; return: a.Type<any> }> {
+): Array<{ rightType: a.Type<any>; returnType: a.Type<any> }> {
   // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({ right: ty, return: ty });
+  const res = (ty: a.Type<any>) => ({ rightType: ty, returnType: ty });
 
   switch (op.value) {
     case '+':
@@ -299,9 +319,17 @@ function unaryOperandTypes(
 function binaryOperandTypes(
   op: a.BinaryOp<any>,
   left: a.Type<any>,
-): Array<{ left: a.Type<any>; right: a.Type<any>; return: a.Type<any> }> {
+): Array<{
+  leftType: a.Type<any>;
+  rightType: a.Type<any>;
+  returnType: a.Type<any>;
+}> {
   // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({ left: ty, right: ty, return: ty });
+  const res = (ty: a.Type<any>) => ({
+    leftType: ty,
+    rightType: ty,
+    returnType: ty,
+  });
 
   if (op instanceof a.EqOp) {
     return [res(left)];
