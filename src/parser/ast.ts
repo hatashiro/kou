@@ -228,8 +228,15 @@ export abstract class Type<T> extends Node<T> {
 
 // type without nested type
 export abstract class SimpleType extends Type<null> {
-  constructor(row: number, column: number) {
-    super(null, row, column);
+  constructor(row: number, column: number);
+  constructor(value: null, row: number, column: number);
+
+  constructor() {
+    if (arguments.length === 3) {
+      super(arguments[0], arguments[1], arguments[2]);
+    } else {
+      super(null, arguments[0], arguments[1]);
+    }
   }
 }
 

@@ -5,14 +5,13 @@ import { orStr } from '../util';
 class AnyType extends a.Type<null> {}
 
 // simple type factories
-const anyType = () => new AnyType(null, -1, -1);
-const intType = ({ row, column }: a.Node<any>) => new a.IntType(row, column);
-const floatType = ({ row, column }: a.Node<any>) =>
-  new a.FloatType(row, column);
-const charType = ({ row, column }: a.Node<any>) => new a.CharType(row, column);
-const strType = ({ row, column }: a.Node<any>) => new a.StrType(row, column);
-const boolType = ({ row, column }: a.Node<any>) => new a.BoolType(row, column);
-const voidType = ({ row, column }: a.Node<any>) => new a.VoidType(row, column);
+const anyType = new AnyType(null, -1, -1);
+const intType = new a.IntType(-1, -1);
+const floatType = new a.FloatType(-1, -1);
+const charType = new a.CharType(-1, -1);
+const strType = new a.StrType(-1, -1);
+const boolType = new a.BoolType(-1, -1);
+const voidType = new a.VoidType(-1, -1);
 
 type IdentTypeDef = {
   ident: a.Ident;
@@ -94,6 +93,13 @@ export const typeCheck = (ctx: TypeContext) => (mod: a.Module): a.Module => {
   return mod;
 };
 
+function copyWithPos<T, TY extends a.Type<T>>(
+  orig: TY,
+  { row, column }: { row: number; column: number },
+): TY {
+  return new (orig.constructor as any)(orig.value, row, column);
+}
+
 export function checkExprType(
   expr: a.Expr<any>,
   ctx: TypeContext,
@@ -137,7 +143,7 @@ export function checkExprType(
     );
   } else if (expr instanceof a.ListExpr) {
     if (expr.value.length === 0) {
-      return new a.ListType(anyType(), expr.row, expr.column);
+      return new a.ListType(anyType, expr.row, expr.column);
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
@@ -209,7 +215,7 @@ export function checkExprType(
       );
     }
 
-    return funcType.value.return;
+    return copyWithPos(funcType.value.return, expr);
   } else if (expr instanceof a.IndexExpr) {
     const targetType = checkExprType(expr.value.target, ctx);
     if (targetType instanceof a.ListType) {
@@ -217,14 +223,14 @@ export function checkExprType(
       if (indexType instanceof a.IntType) {
         return targetType.value;
       } else {
-        throw new TypeError(indexType, intType(expr), 'Index type mismatch');
+        throw new TypeError(indexType, intType, 'Index type mismatch');
       }
     } else if (targetType instanceof a.StrType) {
       const indexType = checkExprType(expr.value.index, ctx);
       if (indexType instanceof a.IntType) {
         return new a.CharType(expr.row, expr.column);
       } else {
-        throw new TypeError(indexType, intType(expr), 'Index type mismatch');
+        throw new TypeError(indexType, intType, 'Index type mismatch');
       }
     } else if (targetType instanceof a.TupleType) {
       const index = expr.value.index;
@@ -290,7 +296,7 @@ export function checkExprType(
       );
     }
   } else if (expr instanceof a.UnaryExpr) {
-    const opTypes = unaryExprOpTypes(expr);
+    const opTypes = unaryOpTypes(expr.value.op);
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const ty of opTypes) {
       try {
@@ -299,7 +305,7 @@ export function checkExprType(
         // tag the operator with type
         expr.value.op.ty = ty;
 
-        return ty.return;
+        return copyWithPos(ty.return, expr);
       } catch {
         // ignore, try the next
       }
@@ -314,7 +320,7 @@ export function checkExprType(
     );
   } else if (expr instanceof a.BinaryExpr) {
     const leftActualTy = checkExprType(expr.value.left, ctx);
-    const opTypes = binaryExprOpTypes(expr, leftActualTy);
+    const opTypes = binaryOpTypes(expr.value.op, leftActualTy);
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const ty of opTypes) {
       try {
@@ -330,7 +336,7 @@ export function checkExprType(
         // tag the operator with type
         expr.value.op.ty = ty;
 
-        return ty.return;
+        return copyWithPos(ty.return, expr);
       } catch {
         throw new TypeError(
           rightActualTy,
@@ -356,26 +362,24 @@ export function checkExprType(
   });
 }
 
-function unaryExprOpTypes(expr: a.UnaryExpr): Array<a.UnaryOpType> {
+function unaryOpTypes(op: a.UnaryOp): Array<a.UnaryOpType> {
   // helper for op with same operand/return types
   const res = (ty: a.Type<any>) => ({ right: ty, return: ty });
 
-  switch (expr.value.op.value) {
+  switch (op.value) {
     case '+':
-      return [res(intType(expr)), res(floatType(expr))];
+      return [res(intType), res(floatType)];
     case '-':
-      return [res(intType(expr)), res(floatType(expr))];
+      return [res(intType), res(floatType)];
     case '!':
-      return [res(boolType(expr))];
+      return [res(boolType)];
   }
 }
 
-function binaryExprOpTypes(
-  expr: a.BinaryExpr,
+function binaryOpTypes(
+  op: a.BinaryOp<any>,
   leftActualTy: a.Type<any>,
 ): Array<a.BinaryOpType> {
-  const op = expr.value.op;
-
   // helper for op with same operand/return types
   const res = (ty: a.Type<any>, ret: a.Type<any> = ty) => ({
     left: ty,
@@ -384,21 +388,21 @@ function binaryExprOpTypes(
   });
 
   if (op instanceof a.EqOp) {
-    return [res(leftActualTy, boolType(expr))];
+    return [res(leftActualTy, boolType)];
   } else if (op instanceof a.CompOp) {
     return [
-      res(intType(expr), boolType(expr)),
-      res(floatType(expr), boolType(expr)),
-      res(boolType(expr), boolType(expr)),
-      res(charType(expr), boolType(expr)),
-      res(strType(expr), boolType(expr)),
+      res(intType, boolType),
+      res(floatType, boolType),
+      res(boolType, boolType),
+      res(charType, boolType),
+      res(strType, boolType),
     ];
   } else if (op instanceof a.AddOp) {
-    return [res(intType(expr)), res(floatType(expr))];
+    return [res(intType), res(floatType)];
   } else if (op instanceof a.MulOp) {
-    return [res(intType(expr)), res(floatType(expr))];
+    return [res(intType), res(floatType)];
   } else if (op instanceof a.BoolOp) {
-    return [res(boolType(expr))];
+    return [res(boolType)];
   }
   throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
 }
@@ -432,7 +436,7 @@ export function checkBlockType(
   ctx.enterScope();
   initialDefs.forEach(def => ctx.push(def));
 
-  let exprType: a.Type<any> = voidType(block);
+  let exprType: a.Type<any> = voidType;
   block.value.bodies.forEach(body => {
     if (body instanceof a.Decl) {
       registerDeclType(body, ctx);

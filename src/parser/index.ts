@@ -267,12 +267,12 @@ function parseSimpleType(input: ParserInput): SimpleType {
   return match(
     ident.rep,
     [
-      ['int', () => new IntType(ident.row, ident.column)],
-      ['float', () => new FloatType(ident.row, ident.column)],
-      ['str', () => new StrType(ident.row, ident.column)],
-      ['bool', () => new BoolType(ident.row, ident.column)],
-      ['char', () => new CharType(ident.row, ident.column)],
-      ['void', () => new VoidType(ident.row, ident.column)],
+      ['int', () => new IntType(null, ident.row, ident.column)],
+      ['float', () => new FloatType(null, ident.row, ident.column)],
+      ['str', () => new StrType(null, ident.row, ident.column)],
+      ['bool', () => new BoolType(null, ident.row, ident.column)],
+      ['char', () => new CharType(null, ident.row, ident.column)],
+      ['void', () => new VoidType(null, ident.row, ident.column)],
     ],
     () => {
       throw new ParseError(ident.row, ident.column, {

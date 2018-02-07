@@ -790,7 +790,7 @@ let main = fn () void {
       i2s: new a.FuncType({ param: intType, return: strType }),
     },
   ]),
-  'Function parameter type mismatch: expected (int, str), found int',
+  'Function parameter type mismatch: expected (int, str), found int at 15:13',
 );
 
 console.log(chalk.green.bold('Passed!'));
