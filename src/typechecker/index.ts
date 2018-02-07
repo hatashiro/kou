@@ -431,7 +431,27 @@ function checkDeclType(decl: a.Decl, ctx: TypeContext) {
     );
   }
 
+  if (containsVoidType(decl.value.type)) {
+    throw new TypeError(
+      { name: decl.value.type.name, row: decl.row, column: decl.column },
+      undefined,
+      'A decl type cannot contain void',
+    );
+  }
+
   typeEqual(checkExprType(decl.value.expr, ctx), decl.value.type);
+}
+
+function containsVoidType(ty: a.Type<any>): boolean {
+  if (ty instanceof a.VoidType) {
+    return true;
+  } else if (ty instanceof a.TupleType) {
+    return ty.value.items.some(containsVoidType);
+  } else if (ty instanceof a.ListType) {
+    return containsVoidType(ty.value);
+  } else {
+    return false;
+  }
 }
 
 export function checkBlockType(

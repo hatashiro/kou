@@ -812,4 +812,91 @@ let main = fn () void {
   'Function parameter type mismatch: expected (int, str), found int at 15:13',
 );
 
+// no void decl tests
+typeCheckTest(
+  `
+let f = fn () void {}
+let x: void = f()
+`,
+  ctx(),
+  'A decl type cannot contain void: found void at 3:1',
+);
+typeCheckTest(
+  `
+let f = fn () void {}
+let x = f()
+`,
+  ctx(),
+  'A decl type cannot contain void: found void at 3:1',
+);
+typeCheckTest(
+  `
+let f = fn () void {}
+let x = (1, f())
+`,
+  ctx(),
+  'A decl type cannot contain void: found (int, void) at 3:1',
+);
+typeCheckTest(
+  `
+let f = fn () void {}
+let x = (1, ("hello", f(), false))
+`,
+  ctx(),
+  'A decl type cannot contain void: found (int, (str, void, bool)) at 3:1',
+);
+typeCheckTest(
+  `
+let f = fn () void {}
+let x = [f()]
+`,
+  ctx(),
+  'A decl type cannot contain void: found [void] at 3:1',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x: void = f()
+}
+`,
+  ctx(),
+  'A decl type cannot contain void: found void at 3:3',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = f()
+}
+`,
+  ctx(),
+  'A decl type cannot contain void: found void at 3:3',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = (1, f())
+}
+`,
+  ctx(),
+  'A decl type cannot contain void: found (int, void) at 3:3',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = (1, ("hello", f(), false))
+}
+`,
+  ctx(),
+  'A decl type cannot contain void: found (int, (str, void, bool)) at 3:3',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = [f()]
+}
+`,
+  ctx(),
+  'A decl type cannot contain void: found [void] at 3:3',
+);
+
 console.log(chalk.green.bold('Passed!'));
