@@ -17,7 +17,7 @@ Please refer to [SPEC.md](SPEC.md).
 - [x] Tokenizer
 - [x] Parser
 - [x] Desugarer
-- [ ] Type checker
+- [x] Type checker
 - [ ] Code generator for wasm
 - [ ] Module system
 - [ ] JS interop
