@@ -12,7 +12,7 @@
     "prettier": "prettier --parser typescript --single-quote --trailing-comma all '{src,test}/**/*.ts'",
     "format": "npm run prettier -- --write",
     "check-format": "npm run prettier -- -l",
-    "test": "npm run check-format && npm run build && ts-node --no-cache test",
+    "test": "npm run check-format && npm run build && ts-node --no-cache --type-check test",
     "release": "npm run build && npm publish",
     "precommit": "npm run check-format",
     "prepush": "npm run test"
@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/utatti/kou",
   "devDependencies": {
+    "chalk": "^2.3.0",
     "husky": "^0.14.3",
     "prettier": "^1.8.2",
     "sane": "^2.2.0",
@@ -36,7 +37,6 @@
   },
   "dependencies": {
     "@typed/compose": "^1.0.0",
-    "chalk": "^2.3.0",
     "previewable-iterator": "^0.1.1"
   }
 }
