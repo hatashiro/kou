@@ -64,6 +64,9 @@ export class TypeContext {
 export class TypeError extends Error {
   name: string = 'TypeError';
 
+  row: number;
+  column: number;
+
   constructor(
     public actual: { row: number; column: number; name: string },
     public expected?: { name: string },
@@ -74,6 +77,9 @@ export class TypeError extends Error {
         actual.name
       } at ${actual.row}:${actual.column}`,
     );
+
+    this.row = actual.row;
+    this.column = actual.column;
   }
 }
 
