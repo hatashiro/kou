@@ -78,6 +78,22 @@ export class TypeError extends Error {
   }
 }
 
+export const typeCheck = (ctx: TypeContext) => (mod: a.Module): a.Module => {
+  ctx.enterScope();
+
+  // FIXME: process imports
+
+  // register global decls
+  mod.value.decls.forEach(decl => registerDeclType(decl, ctx));
+
+  // actual type checks for exprs (including function body)
+  mod.value.decls.forEach(decl => checkDeclType(decl, ctx));
+
+  ctx.leaveScope();
+
+  return mod;
+};
+
 export function checkExprType(
   expr: a.Expr<any>,
   ctx: TypeContext,
@@ -387,20 +403,25 @@ function binaryExprOpTypes(
   throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
 }
 
-function handleLocalDecl(decl: a.Decl, ctx: TypeContext) {
-  const ident = decl.value.name;
-
-  let ty: a.Type<any>;
-  if (decl.value.type) {
-    ty = decl.value.type;
-  } else {
-    ty = checkExprType(decl.value.expr, ctx, false);
+function registerDeclType(decl: a.Decl, ctx: TypeContext) {
+  if (!decl.value.type) {
+    // ensure type property
+    decl.value.type = checkExprType(decl.value.expr, ctx, false);
   }
 
-  ctx.push({ ident, type: ty });
+  ctx.push({ ident: decl.value.name, type: decl.value.type });
+}
 
-  // decl type equality check
-  typeEqual(checkExprType(decl.value.expr, ctx), ty);
+function checkDeclType(decl: a.Decl, ctx: TypeContext) {
+  if (!decl.value.type) {
+    throw new TypeError(
+      decl,
+      undefined,
+      'Type of decl should be tagged before being checked',
+    );
+  }
+
+  typeEqual(checkExprType(decl.value.expr, ctx), decl.value.type);
 }
 
 export function checkBlockType(
@@ -414,7 +435,8 @@ export function checkBlockType(
   let exprType: a.Type<any> = voidType(block);
   block.value.bodies.forEach(body => {
     if (body instanceof a.Decl) {
-      handleLocalDecl(body, ctx);
+      registerDeclType(body, ctx);
+      checkDeclType(body, ctx);
     } else {
       exprType = checkExprType(body, ctx);
     }

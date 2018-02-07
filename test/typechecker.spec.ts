@@ -9,6 +9,7 @@ import {
   checkExprType,
   checkBlockType,
   typeEqual,
+  typeCheck,
 } from '../src/typechecker/';
 
 console.log(chalk.bold('Running typechecker tests...'));
@@ -679,6 +680,117 @@ exprTypeTest(
   ctx(),
   boolType,
   "Right-hand operand type mismatch for '&&': expected bool, found int",
+);
+
+function typeCheckTest(
+  program: string,
+  context: TypeContext,
+  shouldThrow?: string,
+) {
+  const compile = compose(typeCheck(context), desugarBefore, parse, tokenize);
+
+  try {
+    compile(program);
+  } catch (err) {
+    if (
+      shouldThrow &&
+      err.name === 'TypeError' &&
+      err.message.includes(shouldThrow)
+    ) {
+      return;
+    }
+
+    console.error(chalk.blue.bold('Test:'));
+    console.error(program);
+    console.error();
+    console.error(chalk.red.bold('Error:'));
+    console.error(err);
+    process.exit(1);
+  }
+}
+
+typeCheckTest(
+  `
+let main = fn () void {
+  print("hello, world!");
+}
+`,
+  ctx([{ print: new a.FuncType({ param: strType, return: voidType }) }]),
+);
+
+typeCheckTest(
+  `
+let fac = fn (n int) int {
+  if (n == 1) {
+    1
+  } else {
+    n * fac(n - 1)
+  }
+}
+
+let main = fn () void {
+  print(i2s(fac(10)));
+}
+`,
+  ctx([
+    {
+      print: new a.FuncType({ param: strType, return: voidType }),
+      i2s: new a.FuncType({ param: intType, return: strType }),
+    },
+  ]),
+);
+
+typeCheckTest(
+  `
+let fac = fn (n int) int {
+  if (n == 1) {
+    1
+  } else {
+    n * fac(n - 1)
+  }
+}
+
+let print_int = fn (n int) void {
+  print(i2s(n))
+}
+
+let main = fn () void {
+  print_int(fac(10))
+}
+`,
+  ctx([
+    {
+      print: new a.FuncType({ param: strType, return: voidType }),
+      i2s: new a.FuncType({ param: intType, return: strType }),
+    },
+  ]),
+);
+
+typeCheckTest(
+  `
+let fac = fn (n int) int {
+  if (n == 1) {
+    1
+  } else {
+    n * fac(n - 1)
+  }
+}
+
+let print_int = fn (n int, blah str) void {
+  print(i2s(n))
+}
+
+let main = fn () void {
+  print_int(fac(10))
+}
+`,
+  ctx([
+    {
+      print: new a.FuncType({ param: strType, return: voidType }),
+      i2s: new a.FuncType({ param: intType, return: strType }),
+    },
+  ]),
+  'Function parameter type mismatch: expected (int, str), found int',
 );
 
 console.log(chalk.green.bold('Passed!'));
