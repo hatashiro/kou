@@ -10,6 +10,7 @@ import {
   checkBlockType,
   typeEqual,
   typeCheck,
+  TypeError,
 } from '../src/typechecker/';
 
 console.log(chalk.bold('Running typechecker tests...'));
@@ -54,7 +55,7 @@ function exprTypeTest(
   } catch (err) {
     if (
       shouldThrow &&
-      err.name === 'TypeError' &&
+      err instanceof TypeError &&
       err.message.includes(shouldThrow)
     ) {
       return;
@@ -123,7 +124,7 @@ exprTypeTest(
   'invalid_ident',
   ctx([{}, { one_ident: intType }, { some_ident: strType }, {}]),
   strType,
-  'Semantic error: found undefined identifier invalid_ident',
+  'undefined identifier: found invalid_ident',
 );
 
 // tuple
@@ -363,7 +364,7 @@ exprTypeTest(
   '"i am not callable"(1, \'c\')',
   ctx(),
   voidType,
-  'Semantic error: non-callable target: expected function, found str',
+  'non-callable target: expected function, found str',
 );
 exprTypeTest(
   "fn (a int, b int) int { a } (1, 'c')",
@@ -714,7 +715,7 @@ function typeCheckTest(
   } catch (err) {
     if (
       shouldThrow &&
-      err.name === 'TypeError' &&
+      err instanceof TypeError &&
       err.message.includes(shouldThrow)
     ) {
       return;

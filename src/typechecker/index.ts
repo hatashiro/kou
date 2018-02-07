@@ -43,7 +43,8 @@ export class TypeContext {
       throw new TypeError(
         ident,
         undefined,
-        `Semantic error: identifier '${name}' has already been declared`,
+        `identifier '${name}' has already been declared`,
+        'SemanticError',
       );
     } else {
       this.currentScope.set(name, ty);
@@ -62,8 +63,7 @@ export class TypeContext {
 }
 
 export class TypeError extends Error {
-  name: string = 'TypeError';
-
+  name: 'TypeError' | 'SemanticError';
   row: number;
   column: number;
 
@@ -71,6 +71,7 @@ export class TypeError extends Error {
     public actual: { row: number; column: number; name: string },
     public expected?: { name: string },
     message: string = 'Type mismatch',
+    name: 'TypeError' | 'SemanticError' = 'TypeError',
   ) {
     super(
       `${message}: ${expected ? `expected ${expected.name}, ` : ''}found ${
@@ -78,6 +79,7 @@ export class TypeError extends Error {
       } at ${actual.row}:${actual.column}`,
     );
 
+    this.name = name;
     this.row = actual.row;
     this.column = actual.column;
   }
@@ -132,10 +134,11 @@ export function checkExprType(
         {
           row: expr.row,
           column: expr.column,
-          name: `undefined identifier ${expr.value.value}`,
+          name: expr.value.value,
         },
         undefined,
-        'Semantic error',
+        'undefined identifier',
+        'SemanticError',
       );
     }
   } else if (expr instanceof a.TupleExpr) {
@@ -207,7 +210,8 @@ export function checkExprType(
       throw new TypeError(
         funcType,
         { name: 'function' },
-        'Semantic error: non-callable target',
+        'non-callable target',
+        'SemanticError',
       );
     }
 
@@ -436,6 +440,7 @@ function checkDeclType(decl: a.Decl, ctx: TypeContext) {
       { name: decl.value.type.name, row: decl.row, column: decl.column },
       undefined,
       'A decl type cannot contain void',
+      'SemanticError',
     );
   }
 
