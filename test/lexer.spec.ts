@@ -1,4 +1,4 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { tokenize } from '../src/lexer';
 import * as t from '../src/lexer/token';
 
@@ -6,16 +6,28 @@ console.log(chalk.bold('Running lexer tests...'));
 
 type TokenExpectation = [
   t.TokenConstructor<any>,
-  string,
+  string | null,
   number | undefined,
   number | undefined
 ];
 
+const exp = (
+  Cons: t.TokenConstructor<any>,
+  rep: string | null,
+  row?: number,
+  column?: number,
+): TokenExpectation => [Cons, rep, row, column];
+
 function tokenEqual(token: t.Token<any>, expected?: TokenExpectation) {
-  let Con, rep, row, column;
-  if (expected) {
-    [Con, rep, row, column] = expected;
+  if (!expected) {
+    throw new Error(
+      `Expected undefined, found ${token.constructor['name']}(${token.row}, ${
+        token.column
+      }, ${token.rep})`,
+    );
   }
+
+  let [Con, rep, row, column] = expected;
 
   if (
     expected &&
@@ -29,16 +41,14 @@ function tokenEqual(token: t.Token<any>, expected?: TokenExpectation) {
   }
 
   throw new Error(
-    `Expected ${
-      expected ? `${Con['name']}(${row}, ${column}, ${rep})` : 'undefined'
-    }, found ${token.constructor['name']}(${token.row}, ${token.column}, ${
-      token.rep
-    })`,
+    `Expected ${Con['name']}(${row}, ${column}, ${rep}), found ${
+      token.constructor['name']
+    }(${token.row}, ${token.column}, ${token.rep})`,
   );
 }
 
 function tokenizeTest(input: string, expectations: Array<TokenExpectation>) {
-  expectations.push([t.EOF, null]);
+  expectations.push(exp(t.EOF, null));
   try {
     for (const token of tokenize(input)) {
       tokenEqual(token, expectations.shift());
@@ -54,103 +64,110 @@ function tokenizeTest(input: string, expectations: Array<TokenExpectation>) {
 }
 
 // single token test
-tokenizeTest('->', [[t.Punctuation, '->', 1, 1]]);
-tokenizeTest(',', [[t.Punctuation, ',', 1, 1]]);
-tokenizeTest('(', [[t.Punctuation, '(', 1, 1]]);
-tokenizeTest(')', [[t.Punctuation, ')', 1, 1]]);
-tokenizeTest('[', [[t.Punctuation, '[', 1, 1]]);
-tokenizeTest(']', [[t.Punctuation, ']', 1, 1]]);
-tokenizeTest('{', [[t.Punctuation, '{', 1, 1]]);
-tokenizeTest('}', [[t.Punctuation, '}', 1, 1]]);
-tokenizeTest(':', [[t.Punctuation, ':', 1, 1]]);
-tokenizeTest('=', [[t.Punctuation, '=', 1, 1]]);
-tokenizeTest(';', [[t.Punctuation, ';', 1, 1]]);
+tokenizeTest('->', [exp(t.Punctuation, '->', 1, 1)]);
+tokenizeTest(',', [exp(t.Punctuation, ',', 1, 1)]);
+tokenizeTest('(', [exp(t.Punctuation, '(', 1, 1)]);
+tokenizeTest(')', [exp(t.Punctuation, ')', 1, 1)]);
+tokenizeTest('[', [exp(t.Punctuation, '[', 1, 1)]);
+tokenizeTest(']', [exp(t.Punctuation, ']', 1, 1)]);
+tokenizeTest('{', [exp(t.Punctuation, '{', 1, 1)]);
+tokenizeTest('}', [exp(t.Punctuation, '}', 1, 1)]);
+tokenizeTest(':', [exp(t.Punctuation, ':', 1, 1)]);
+tokenizeTest('=', [exp(t.Punctuation, '=', 1, 1)]);
+tokenizeTest(';', [exp(t.Punctuation, ';', 1, 1)]);
 
-tokenizeTest('+', [[t.Operator, '+', 1, 1]]);
-tokenizeTest('-', [[t.Operator, '-', 1, 1]]);
-tokenizeTest('!', [[t.Operator, '!', 1, 1]]);
-tokenizeTest('==', [[t.Operator, '==', 1, 1]]);
-tokenizeTest('!=', [[t.Operator, '!=', 1, 1]]);
-tokenizeTest('<', [[t.Operator, '<', 1, 1]]);
-tokenizeTest('<=', [[t.Operator, '<=', 1, 1]]);
-tokenizeTest('>', [[t.Operator, '>', 1, 1]]);
-tokenizeTest('>=', [[t.Operator, '>=', 1, 1]]);
-tokenizeTest('|', [[t.Operator, '|', 1, 1]]);
-tokenizeTest('^', [[t.Operator, '^', 1, 1]]);
-tokenizeTest('*', [[t.Operator, '*', 1, 1]]);
-tokenizeTest('/', [[t.Operator, '/', 1, 1]]);
-tokenizeTest('%', [[t.Operator, '%', 1, 1]]);
-tokenizeTest('&', [[t.Operator, '&', 1, 1]]);
-tokenizeTest('||', [[t.Operator, '||', 1, 1]]);
-tokenizeTest('&&', [[t.Operator, '&&', 1, 1]]);
+tokenizeTest('+', [exp(t.Operator, '+', 1, 1)]);
+tokenizeTest('-', [exp(t.Operator, '-', 1, 1)]);
+tokenizeTest('!', [exp(t.Operator, '!', 1, 1)]);
+tokenizeTest('==', [exp(t.Operator, '==', 1, 1)]);
+tokenizeTest('!=', [exp(t.Operator, '!=', 1, 1)]);
+tokenizeTest('<', [exp(t.Operator, '<', 1, 1)]);
+tokenizeTest('<=', [exp(t.Operator, '<=', 1, 1)]);
+tokenizeTest('>', [exp(t.Operator, '>', 1, 1)]);
+tokenizeTest('>=', [exp(t.Operator, '>=', 1, 1)]);
+tokenizeTest('|', [exp(t.Operator, '|', 1, 1)]);
+tokenizeTest('^', [exp(t.Operator, '^', 1, 1)]);
+tokenizeTest('*', [exp(t.Operator, '*', 1, 1)]);
+tokenizeTest('/', [exp(t.Operator, '/', 1, 1)]);
+tokenizeTest('%', [exp(t.Operator, '%', 1, 1)]);
+tokenizeTest('&', [exp(t.Operator, '&', 1, 1)]);
+tokenizeTest('||', [exp(t.Operator, '||', 1, 1)]);
+tokenizeTest('&&', [exp(t.Operator, '&&', 1, 1)]);
 
-tokenizeTest('1', [[t.IntLit, '1', 1, 1]]);
-tokenizeTest('123', [[t.IntLit, '123', 1, 1]]);
-tokenizeTest('1234567890', [[t.IntLit, '1234567890', 1, 1]]);
-tokenizeTest('1010101010', [[t.IntLit, '1010101010', 1, 1]]);
-tokenizeTest('01234', [[t.IntLit, '01234', 1, 1]]);
-tokenizeTest('00000', [[t.IntLit, '00000', 1, 1]]);
-tokenizeTest('00100', [[t.IntLit, '00100', 1, 1]]);
+tokenizeTest('1', [exp(t.IntLit, '1', 1, 1)]);
+tokenizeTest('123', [exp(t.IntLit, '123', 1, 1)]);
+tokenizeTest('1234567890', [exp(t.IntLit, '1234567890', 1, 1)]);
+tokenizeTest('1010101010', [exp(t.IntLit, '1010101010', 1, 1)]);
+tokenizeTest('01234', [exp(t.IntLit, '01234', 1, 1)]);
+tokenizeTest('00000', [exp(t.IntLit, '00000', 1, 1)]);
+tokenizeTest('00100', [exp(t.IntLit, '00100', 1, 1)]);
 
-tokenizeTest('1.123', [[t.FloatLit, '1.123', 1, 1]]);
-tokenizeTest('123.1', [[t.FloatLit, '123.1', 1, 1]]);
-tokenizeTest('01234.1234', [[t.FloatLit, '01234.1234', 1, 1]]);
-tokenizeTest('00000.00000', [[t.FloatLit, '00000.00000', 1, 1]]);
-tokenizeTest('00100.10000', [[t.FloatLit, '00100.10000', 1, 1]]);
-tokenizeTest('.1234', [[t.FloatLit, '.1234', 1, 1]]);
-tokenizeTest('.00000', [[t.FloatLit, '.00000', 1, 1]]);
-tokenizeTest('.10000', [[t.FloatLit, '.10000', 1, 1]]);
+tokenizeTest('1.123', [exp(t.FloatLit, '1.123', 1, 1)]);
+tokenizeTest('123.1', [exp(t.FloatLit, '123.1', 1, 1)]);
+tokenizeTest('01234.1234', [exp(t.FloatLit, '01234.1234', 1, 1)]);
+tokenizeTest('00000.00000', [exp(t.FloatLit, '00000.00000', 1, 1)]);
+tokenizeTest('00100.10000', [exp(t.FloatLit, '00100.10000', 1, 1)]);
+tokenizeTest('.1234', [exp(t.FloatLit, '.1234', 1, 1)]);
+tokenizeTest('.00000', [exp(t.FloatLit, '.00000', 1, 1)]);
+tokenizeTest('.10000', [exp(t.FloatLit, '.10000', 1, 1)]);
 
-tokenizeTest('true', [[t.BoolLit, 'true', 1, 1]]);
-tokenizeTest('false', [[t.BoolLit, 'false', 1, 1]]);
+tokenizeTest('true', [exp(t.BoolLit, 'true', 1, 1)]);
+tokenizeTest('false', [exp(t.BoolLit, 'false', 1, 1)]);
 
-tokenizeTest('import', [[t.Keyword, 'import', 1, 1]]);
-tokenizeTest('as', [[t.Keyword, 'as', 1, 1]]);
-tokenizeTest('let', [[t.Keyword, 'let', 1, 1]]);
-tokenizeTest('fn', [[t.Keyword, 'fn', 1, 1]]);
-tokenizeTest('if', [[t.Keyword, 'if', 1, 1]]);
-tokenizeTest('else', [[t.Keyword, 'else', 1, 1]]);
-tokenizeTest('for', [[t.Keyword, 'for', 1, 1]]);
-tokenizeTest('in', [[t.Keyword, 'in', 1, 1]]);
+tokenizeTest('import', [exp(t.Keyword, 'import', 1, 1)]);
+tokenizeTest('as', [exp(t.Keyword, 'as', 1, 1)]);
+tokenizeTest('let', [exp(t.Keyword, 'let', 1, 1)]);
+tokenizeTest('fn', [exp(t.Keyword, 'fn', 1, 1)]);
+tokenizeTest('if', [exp(t.Keyword, 'if', 1, 1)]);
+tokenizeTest('else', [exp(t.Keyword, 'else', 1, 1)]);
+tokenizeTest('for', [exp(t.Keyword, 'for', 1, 1)]);
+tokenizeTest('in', [exp(t.Keyword, 'in', 1, 1)]);
 
-tokenizeTest('hello', [[t.Ident, 'hello', 1, 1]]);
-tokenizeTest('hello1', [[t.Ident, 'hello1', 1, 1]]);
-tokenizeTest('_hello', [[t.Ident, '_hello', 1, 1]]);
-tokenizeTest('_1he2ll3o', [[t.Ident, '_1he2ll3o', 1, 1]]);
-tokenizeTest('___', [[t.Ident, '___', 1, 1]]);
+tokenizeTest('hello', [exp(t.Ident, 'hello', 1, 1)]);
+tokenizeTest('hello1', [exp(t.Ident, 'hello1', 1, 1)]);
+tokenizeTest('_hello', [exp(t.Ident, '_hello', 1, 1)]);
+tokenizeTest('_1he2ll3o', [exp(t.Ident, '_1he2ll3o', 1, 1)]);
+tokenizeTest('___', [exp(t.Ident, '___', 1, 1)]);
 
-tokenizeTest("'a'", [[t.CharLit, "'a'", 1, 1]]);
-tokenizeTest("'1'", [[t.CharLit, "'1'", 1, 1]]);
-tokenizeTest("'*'", [[t.CharLit, "'*'", 1, 1]]);
-tokenizeTest("'\\n'", [[t.CharLit, "'\\n'", 1, 1]]);
-tokenizeTest("'\\r'", [[t.CharLit, "'\\r'", 1, 1]]);
-tokenizeTest("'\\t'", [[t.CharLit, "'\\t'", 1, 1]]);
-tokenizeTest("'\\\\'", [[t.CharLit, "'\\\\'", 1, 1]]);
-tokenizeTest("'\\\"'", [[t.CharLit, "'\\\"'", 1, 1]]);
-tokenizeTest("'\\''", [[t.CharLit, "'\\''", 1, 1]]);
+tokenizeTest("'a'", [exp(t.CharLit, "'a'", 1, 1)]);
+tokenizeTest("'1'", [exp(t.CharLit, "'1'", 1, 1)]);
+tokenizeTest("'*'", [exp(t.CharLit, "'*'", 1, 1)]);
+tokenizeTest("'\\n'", [exp(t.CharLit, "'\\n'", 1, 1)]);
+tokenizeTest("'\\r'", [exp(t.CharLit, "'\\r'", 1, 1)]);
+tokenizeTest("'\\t'", [exp(t.CharLit, "'\\t'", 1, 1)]);
+tokenizeTest("'\\\\'", [exp(t.CharLit, "'\\\\'", 1, 1)]);
+tokenizeTest("'\\\"'", [exp(t.CharLit, "'\\\"'", 1, 1)]);
+tokenizeTest("'\\''", [exp(t.CharLit, "'\\''", 1, 1)]);
 
-tokenizeTest('"hello, world 123!"', [[t.StrLit, '"hello, world 123!"', 1, 1]]);
-tokenizeTest('"!@#$\'%^&*()"', [[t.StrLit, '"!@#$\'%^&*()"', 1, 1]]);
-tokenizeTest('"hello,\\nworld!"', [[t.StrLit, '"hello,\\nworld!"', 1, 1]]);
-tokenizeTest('"hello,\\rworld!"', [[t.StrLit, '"hello,\\rworld!"', 1, 1]]);
-tokenizeTest('"hello,\\tworld!"', [[t.StrLit, '"hello,\\tworld!"', 1, 1]]);
-tokenizeTest('"hello,\\\\world!"', [[t.StrLit, '"hello,\\\\world!"', 1, 1]]);
-tokenizeTest('"hello,\\"world!"', [[t.StrLit, '"hello,\\"world!"', 1, 1]]);
-tokenizeTest('"hello,\\\'rworld!"', [[t.StrLit, '"hello,\\\'rworld!"', 1, 1]]);
+tokenizeTest('"hello, world 123!"', [
+  exp(t.StrLit, '"hello, world 123!"', 1, 1),
+]);
+tokenizeTest('"!@#$\'%^&*()"', [exp(t.StrLit, '"!@#$\'%^&*()"', 1, 1)]);
+tokenizeTest('"hello,\\nworld!"', [exp(t.StrLit, '"hello,\\nworld!"', 1, 1)]);
+tokenizeTest('"hello,\\rworld!"', [exp(t.StrLit, '"hello,\\rworld!"', 1, 1)]);
+tokenizeTest('"hello,\\tworld!"', [exp(t.StrLit, '"hello,\\tworld!"', 1, 1)]);
+tokenizeTest('"hello,\\\\world!"', [exp(t.StrLit, '"hello,\\\\world!"', 1, 1)]);
+tokenizeTest('"hello,\\"world!"', [exp(t.StrLit, '"hello,\\"world!"', 1, 1)]);
+tokenizeTest('"hello,\\\'rworld!"', [
+  exp(t.StrLit, '"hello,\\\'rworld!"', 1, 1),
+]);
 
 // token position test
-tokenizeTest('123hello', [[t.IntLit, '123', 1, 1], [t.Ident, 'hello', 1, 4]]);
+tokenizeTest('123hello', [
+  exp(t.IntLit, '123', 1, 1),
+  exp(t.Ident, 'hello', 1, 4),
+]);
 tokenizeTest('123     hello', [
-  [t.IntLit, '123', 1, 1],
-  [t.Ident, 'hello', 1, 9],
+  exp(t.IntLit, '123', 1, 1),
+  exp(t.Ident, 'hello', 1, 9),
 ]);
 tokenizeTest('123\n\nhello', [
-  [t.IntLit, '123', 1, 1],
-  [t.Ident, 'hello', 3, 1],
+  exp(t.IntLit, '123', 1, 1),
+  exp(t.Ident, 'hello', 3, 1),
 ]);
 tokenizeTest('123\n\n   hello', [
-  [t.IntLit, '123', 1, 1],
-  [t.Ident, 'hello', 3, 4],
+  exp(t.IntLit, '123', 1, 1),
+  exp(t.Ident, 'hello', 3, 4),
 ]);
 
 // empty program test
@@ -177,137 +194,137 @@ let main: () -> void = fn () void {
 let add = fn (x: int, y: int) int { x + y }
 `,
   [
-    [t.Keyword, 'import'],
-    [t.StrLit, '"/some/x.kou"'],
-    [t.Punctuation, '('],
-    [t.Ident, 'x'],
-    [t.Punctuation, ')'],
-    [t.Keyword, 'import'],
-    [t.StrLit, '"/some/xy.kou"'],
-    [t.Punctuation, '('],
-    [t.Ident, 'x'],
-    [t.Punctuation, ','],
-    [t.Ident, 'y'],
-    [t.Punctuation, ')'],
-    [t.Keyword, 'import'],
-    [t.StrLit, '"/some/as.kou"'],
-    [t.Punctuation, '('],
-    [t.Ident, 'orig_one'],
-    [t.Keyword, 'as'],
-    [t.Ident, 'new_one'],
-    [t.Punctuation, ')'],
-    [t.Keyword, 'import'],
-    [t.StrLit, '"/some/asas.kou"'],
-    [t.Punctuation, '('],
-    [t.Ident, 'orig_one2'],
-    [t.Keyword, 'as'],
-    [t.Ident, 'new_one2'],
-    [t.Punctuation, ','],
-    [t.Ident, 'orig3'],
-    [t.Keyword, 'as'],
-    [t.Ident, 'new3'],
-    [t.Punctuation, ')'],
-    [t.Keyword, 'let'],
-    [t.Ident, 'main'],
-    [t.Punctuation, ':'],
-    [t.Punctuation, '('],
-    [t.Punctuation, ')'],
-    [t.Punctuation, '->'],
-    [t.Ident, 'void'],
-    [t.Punctuation, '='],
-    [t.Keyword, 'fn'],
-    [t.Punctuation, '('],
-    [t.Punctuation, ')'],
-    [t.Ident, 'void'],
-    [t.Punctuation, '{'],
-    [t.Keyword, 'let'],
-    [t.Ident, 'x'],
-    [t.Punctuation, ':'],
-    [t.Punctuation, '('],
-    [t.Ident, 'int'],
-    [t.Punctuation, ','],
-    [t.Ident, 'string'],
-    [t.Punctuation, ','],
-    [t.Ident, 'char'],
-    [t.Punctuation, ')'],
-    [t.Punctuation, '='],
-    [t.Punctuation, '('],
-    [t.IntLit, '123'],
-    [t.Punctuation, ','],
-    [t.StrLit, '"hello, world"'],
-    [t.Punctuation, ','],
-    [t.CharLit, "'\\n'"],
-    [t.Punctuation, ')'],
-    [t.Punctuation, ';'],
-    [t.Keyword, 'let'],
-    [t.Ident, 'y'],
-    [t.Punctuation, ':'],
-    [t.Punctuation, '['],
-    [t.Ident, 'float'],
-    [t.Punctuation, ']'],
-    [t.Punctuation, '='],
-    [t.Punctuation, '['],
-    [t.FloatLit, '1.3'],
-    [t.Punctuation, ','],
-    [t.FloatLit, '.0'],
-    [t.Punctuation, ','],
-    [t.FloatLit, '0.4'],
-    [t.Punctuation, ','],
-    [t.FloatLit, '.12345'],
-    [t.Punctuation, ']'],
-    [t.Punctuation, ';'],
-    [t.Keyword, 'if'],
-    [t.Ident, 'fst'],
-    [t.Punctuation, '('],
-    [t.Ident, 'x'],
-    [t.Punctuation, ')'],
-    [t.Operator, '=='],
-    [t.IntLit, '123'],
-    [t.Punctuation, '{'],
-    [t.Ident, 'println'],
-    [t.Punctuation, '('],
-    [t.Ident, 'add'],
-    [t.Punctuation, '('],
-    [t.IntLit, '1'],
-    [t.Punctuation, ','],
-    [t.IntLit, '2'],
-    [t.Punctuation, ')'],
-    [t.Punctuation, ')'],
-    [t.Punctuation, ';'],
-    [t.Punctuation, '}'],
-    [t.Keyword, 'else'],
-    [t.Punctuation, '{'],
-    [t.Keyword, 'let'],
-    [t.Ident, 'z'],
-    [t.Punctuation, '='],
-    [t.Ident, 'y'],
-    [t.Punctuation, '['],
-    [t.IntLit, '1'],
-    [t.Punctuation, ']'],
-    [t.Operator, '-'],
-    [t.FloatLit, '.1'],
-    [t.Punctuation, ';'],
-    [t.Punctuation, '}'],
-    [t.Punctuation, '}'],
-    [t.Keyword, 'let'],
-    [t.Ident, 'add'],
-    [t.Punctuation, '='],
-    [t.Keyword, 'fn'],
-    [t.Punctuation, '('],
-    [t.Ident, 'x'],
-    [t.Punctuation, ':'],
-    [t.Ident, 'int'],
-    [t.Punctuation, ','],
-    [t.Ident, 'y'],
-    [t.Punctuation, ':'],
-    [t.Ident, 'int'],
-    [t.Punctuation, ')'],
-    [t.Ident, 'int'],
-    [t.Punctuation, '{'],
-    [t.Ident, 'x'],
-    [t.Operator, '+'],
-    [t.Ident, 'y'],
-    [t.Punctuation, '}'],
+    exp(t.Keyword, 'import'),
+    exp(t.StrLit, '"/some/x.kou"'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'x'),
+    exp(t.Punctuation, ')'),
+    exp(t.Keyword, 'import'),
+    exp(t.StrLit, '"/some/xy.kou"'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'x'),
+    exp(t.Punctuation, ','),
+    exp(t.Ident, 'y'),
+    exp(t.Punctuation, ')'),
+    exp(t.Keyword, 'import'),
+    exp(t.StrLit, '"/some/as.kou"'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'orig_one'),
+    exp(t.Keyword, 'as'),
+    exp(t.Ident, 'new_one'),
+    exp(t.Punctuation, ')'),
+    exp(t.Keyword, 'import'),
+    exp(t.StrLit, '"/some/asas.kou"'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'orig_one2'),
+    exp(t.Keyword, 'as'),
+    exp(t.Ident, 'new_one2'),
+    exp(t.Punctuation, ','),
+    exp(t.Ident, 'orig3'),
+    exp(t.Keyword, 'as'),
+    exp(t.Ident, 'new3'),
+    exp(t.Punctuation, ')'),
+    exp(t.Keyword, 'let'),
+    exp(t.Ident, 'main'),
+    exp(t.Punctuation, ':'),
+    exp(t.Punctuation, '('),
+    exp(t.Punctuation, ')'),
+    exp(t.Punctuation, '->'),
+    exp(t.Ident, 'void'),
+    exp(t.Punctuation, '='),
+    exp(t.Keyword, 'fn'),
+    exp(t.Punctuation, '('),
+    exp(t.Punctuation, ')'),
+    exp(t.Ident, 'void'),
+    exp(t.Punctuation, '{'),
+    exp(t.Keyword, 'let'),
+    exp(t.Ident, 'x'),
+    exp(t.Punctuation, ':'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'int'),
+    exp(t.Punctuation, ','),
+    exp(t.Ident, 'string'),
+    exp(t.Punctuation, ','),
+    exp(t.Ident, 'char'),
+    exp(t.Punctuation, ')'),
+    exp(t.Punctuation, '='),
+    exp(t.Punctuation, '('),
+    exp(t.IntLit, '123'),
+    exp(t.Punctuation, ','),
+    exp(t.StrLit, '"hello, world"'),
+    exp(t.Punctuation, ','),
+    exp(t.CharLit, "'\\n'"),
+    exp(t.Punctuation, ')'),
+    exp(t.Punctuation, ';'),
+    exp(t.Keyword, 'let'),
+    exp(t.Ident, 'y'),
+    exp(t.Punctuation, ':'),
+    exp(t.Punctuation, '['),
+    exp(t.Ident, 'float'),
+    exp(t.Punctuation, ']'),
+    exp(t.Punctuation, '='),
+    exp(t.Punctuation, '['),
+    exp(t.FloatLit, '1.3'),
+    exp(t.Punctuation, ','),
+    exp(t.FloatLit, '.0'),
+    exp(t.Punctuation, ','),
+    exp(t.FloatLit, '0.4'),
+    exp(t.Punctuation, ','),
+    exp(t.FloatLit, '.12345'),
+    exp(t.Punctuation, ']'),
+    exp(t.Punctuation, ';'),
+    exp(t.Keyword, 'if'),
+    exp(t.Ident, 'fst'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'x'),
+    exp(t.Punctuation, ')'),
+    exp(t.Operator, '=='),
+    exp(t.IntLit, '123'),
+    exp(t.Punctuation, '{'),
+    exp(t.Ident, 'println'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'add'),
+    exp(t.Punctuation, '('),
+    exp(t.IntLit, '1'),
+    exp(t.Punctuation, ','),
+    exp(t.IntLit, '2'),
+    exp(t.Punctuation, ')'),
+    exp(t.Punctuation, ')'),
+    exp(t.Punctuation, ';'),
+    exp(t.Punctuation, '}'),
+    exp(t.Keyword, 'else'),
+    exp(t.Punctuation, '{'),
+    exp(t.Keyword, 'let'),
+    exp(t.Ident, 'z'),
+    exp(t.Punctuation, '='),
+    exp(t.Ident, 'y'),
+    exp(t.Punctuation, '['),
+    exp(t.IntLit, '1'),
+    exp(t.Punctuation, ']'),
+    exp(t.Operator, '-'),
+    exp(t.FloatLit, '.1'),
+    exp(t.Punctuation, ';'),
+    exp(t.Punctuation, '}'),
+    exp(t.Punctuation, '}'),
+    exp(t.Keyword, 'let'),
+    exp(t.Ident, 'add'),
+    exp(t.Punctuation, '='),
+    exp(t.Keyword, 'fn'),
+    exp(t.Punctuation, '('),
+    exp(t.Ident, 'x'),
+    exp(t.Punctuation, ':'),
+    exp(t.Ident, 'int'),
+    exp(t.Punctuation, ','),
+    exp(t.Ident, 'y'),
+    exp(t.Punctuation, ':'),
+    exp(t.Ident, 'int'),
+    exp(t.Punctuation, ')'),
+    exp(t.Ident, 'int'),
+    exp(t.Punctuation, '{'),
+    exp(t.Ident, 'x'),
+    exp(t.Operator, '+'),
+    exp(t.Ident, 'y'),
+    exp(t.Punctuation, '}'),
   ],
 );
 

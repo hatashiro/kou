@@ -1,17 +1,24 @@
 import { compose } from '@typed/compose';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { tokenize } from '../src/lexer';
 import { parse } from '../src/parser';
 import * as a from '../src/parser/ast';
 
 console.log(chalk.bold('Running parser tests...'));
 
-type NodeExpectation<T> = [
-  a.NodeConstructor<any>,
+type NodeExpectation = [
+  a.NodeConstructor<any, any>,
   any,
   number | undefined,
   number | undefined
 ];
+
+const exp = (
+  Cons: a.NodeConstructor<any, any>,
+  value: any = null,
+  row?: number,
+  column?: number,
+): NodeExpectation => [Cons, value, row, column];
 
 function valueEqual(actual: any, expected: any): boolean {
   if (actual instanceof a.Node) {
@@ -32,10 +39,15 @@ function valueEqual(actual: any, expected: any): boolean {
 }
 
 function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
-  let Con, value, row, column;
-  if (expected) {
-    [Con, value, row, column] = expected;
+  if (!expected) {
+    throw new Error(
+      `Expected undefined, found ${actual.constructor['name']}(${actual.row}, ${
+        actual.column
+      }, ${JSON.stringify(actual.value)})`,
+    );
   }
+
+  let [Con, value, row, column] = expected;
 
   if (
     expected &&
@@ -54,13 +66,9 @@ function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
     actualPos = `${actual.row}, ${actual.column}, `;
   }
   throw new Error(
-    `Expected ${
-      expected
-        ? `${Con['name']}(${expectedPos}${JSON.stringify(value)})`
-        : 'undefined'
-    }, found ${actual.constructor['name']}(${actualPos}${JSON.stringify(
-      actual.value,
-    )})`,
+    `Expected ${Con['name']}(${expectedPos}${JSON.stringify(value)}), found ${
+      actual.constructor['name']
+    }(${actualPos}${JSON.stringify(actual.value)})`,
   );
 }
 
@@ -72,7 +80,7 @@ function programTest(
   sourceToShow: string = input,
 ) {
   try {
-    astEqual(compile(input), [a.Module, expected]);
+    astEqual(compile(input), exp(a.Module, expected));
   } catch (err) {
     console.error(chalk.blue.bold('Source:'));
     console.error(sourceToShow);
@@ -97,14 +105,11 @@ function typeTest(source: string, expected: NodeExpectation) {
     {
       imports: [],
       decls: [
-        [
-          a.Decl,
-          {
-            name: [a.Ident, 'x'],
-            type: expected,
-            expr: [a.LitExpr, [a.BoolLit, 'true']],
-          },
-        ],
+        exp(a.Decl, {
+          name: exp(a.Ident, 'x'),
+          type: expected,
+          expr: exp(a.LitExpr, exp(a.BoolLit, 'true')),
+        }),
       ],
     },
     source,
@@ -117,14 +122,11 @@ function exprTest(source: string, expected: NodeExpectation) {
     {
       imports: [],
       decls: [
-        [
-          a.Decl,
-          {
-            name: [a.Ident, 'x'],
-            type: null,
-            expr: expected,
-          },
-        ],
+        exp(a.Decl, {
+          name: exp(a.Ident, 'x'),
+          type: null,
+          expr: expected,
+        }),
       ],
     },
     source,
@@ -132,56 +134,47 @@ function exprTest(source: string, expected: NodeExpectation) {
 }
 
 importTest('import "test.kou" (test_name)', [
-  [
-    a.Import,
-    {
-      path: [a.StrLit, '"test.kou"'],
-      elems: [
-        {
-          name: [a.Ident, 'test_name'],
-          as: null,
-        },
-      ],
-    },
-  ],
+  exp(a.Import, {
+    path: exp(a.StrLit, '"test.kou"'),
+    elems: [
+      {
+        name: exp(a.Ident, 'test_name'),
+        as: null,
+      },
+    ],
+  }),
 ]);
 
 importTest('import "test.kou" (test_name as test_alias)', [
-  [
-    a.Import,
-    {
-      path: [a.StrLit, '"test.kou"'],
-      elems: [
-        {
-          name: [a.Ident, 'test_name'],
-          as: [a.Ident, 'test_alias'],
-        },
-      ],
-    },
-  ],
+  exp(a.Import, {
+    path: exp(a.StrLit, '"test.kou"'),
+    elems: [
+      {
+        name: exp(a.Ident, 'test_name'),
+        as: exp(a.Ident, 'test_alias'),
+      },
+    ],
+  }),
 ]);
 
 importTest('import "test.kou" (test_name as test_alias, hoge, foo as bar)', [
-  [
-    a.Import,
-    {
-      path: [a.StrLit, '"test.kou"'],
-      elems: [
-        {
-          name: [a.Ident, 'test_name'],
-          as: [a.Ident, 'test_alias'],
-        },
-        {
-          name: [a.Ident, 'hoge'],
-          as: null,
-        },
-        {
-          name: [a.Ident, 'foo'],
-          as: [a.Ident, 'bar'],
-        },
-      ],
-    },
-  ],
+  exp(a.Import, {
+    path: exp(a.StrLit, '"test.kou"'),
+    elems: [
+      {
+        name: exp(a.Ident, 'test_name'),
+        as: exp(a.Ident, 'test_alias'),
+      },
+      {
+        name: exp(a.Ident, 'hoge'),
+        as: null,
+      },
+      {
+        name: exp(a.Ident, 'foo'),
+        as: exp(a.Ident, 'bar'),
+      },
+    ],
+  }),
 ]);
 
 importTest(
@@ -190,38 +183,32 @@ import "file1.kou" (test_name as test_alias)
 import "file2.kou" (test_name as test_alias, hoge, foo as bar)
 `,
   [
-    [
-      a.Import,
-      {
-        path: [a.StrLit, '"file1.kou"'],
-        elems: [
-          {
-            name: [a.Ident, 'test_name'],
-            as: [a.Ident, 'test_alias'],
-          },
-        ],
-      },
-    ],
-    [
-      a.Import,
-      {
-        path: [a.StrLit, '"file2.kou"'],
-        elems: [
-          {
-            name: [a.Ident, 'test_name'],
-            as: [a.Ident, 'test_alias'],
-          },
-          {
-            name: [a.Ident, 'hoge'],
-            as: null,
-          },
-          {
-            name: [a.Ident, 'foo'],
-            as: [a.Ident, 'bar'],
-          },
-        ],
-      },
-    ],
+    exp(a.Import, {
+      path: exp(a.StrLit, '"file1.kou"'),
+      elems: [
+        {
+          name: exp(a.Ident, 'test_name'),
+          as: exp(a.Ident, 'test_alias'),
+        },
+      ],
+    }),
+    exp(a.Import, {
+      path: exp(a.StrLit, '"file2.kou"'),
+      elems: [
+        {
+          name: exp(a.Ident, 'test_name'),
+          as: exp(a.Ident, 'test_alias'),
+        },
+        {
+          name: exp(a.Ident, 'hoge'),
+          as: null,
+        },
+        {
+          name: exp(a.Ident, 'foo'),
+          as: exp(a.Ident, 'bar'),
+        },
+      ],
+    }),
   ],
 );
 
@@ -231,439 +218,364 @@ let simple = 10
 let typed: str = "hello, world"
 `,
   [
-    [
-      a.Decl,
-      {
-        name: [a.Ident, 'simple'],
-        type: null,
-        expr: [a.LitExpr, [a.IntLit, '10']],
-      },
-    ],
-    [
-      a.Decl,
-      {
-        name: [a.Ident, 'typed'],
-        type: [a.StrType, null],
-        expr: [a.LitExpr, [a.StrLit, '"hello, world"']],
-      },
-    ],
+    exp(a.Decl, {
+      name: exp(a.Ident, 'simple'),
+      type: null,
+      expr: exp(a.LitExpr, exp(a.IntLit, '10')),
+    }),
+    exp(a.Decl, {
+      name: exp(a.Ident, 'typed'),
+      type: exp(a.StrType),
+      expr: exp(a.LitExpr, exp(a.StrLit, '"hello, world"')),
+    }),
   ],
 );
 
-typeTest('int', [a.IntType, null]);
-typeTest('float', [a.FloatType, null]);
-typeTest('str', [a.StrType, null]);
-typeTest('bool', [a.BoolType, null]);
-typeTest('char', [a.CharType, null]);
-typeTest('void', [a.VoidType, null]);
-typeTest('[int]', [a.ListType, [a.IntType, null]]);
-typeTest('[[str]]', [a.ListType, [a.ListType, [a.StrType, null]]]);
-typeTest('[[[bool]]]', [
-  a.ListType,
-  [a.ListType, [a.ListType, [a.BoolType, null]]],
-]);
-typeTest('(int, float)', [
-  a.TupleType,
-  {
+typeTest('int', exp(a.IntType));
+typeTest('float', exp(a.FloatType));
+typeTest('str', exp(a.StrType));
+typeTest('bool', exp(a.BoolType));
+typeTest('char', exp(a.CharType));
+typeTest('void', exp(a.VoidType));
+typeTest('[int]', exp(a.ListType, exp(a.IntType)));
+typeTest('[[str]]', exp(a.ListType, exp(a.ListType, exp(a.StrType))));
+typeTest(
+  '[[[bool]]]',
+  exp(a.ListType, exp(a.ListType, exp(a.ListType, exp(a.BoolType)))),
+);
+typeTest(
+  '(int, float)',
+  exp(a.TupleType, {
     size: 2,
-    items: [[a.IntType, null], [a.FloatType, null]],
-  },
-]);
-typeTest('(int, float, str)', [
-  a.TupleType,
-  {
+    items: [exp(a.IntType), exp(a.FloatType)],
+  }),
+);
+typeTest(
+  '(int, float, str)',
+  exp(a.TupleType, {
     size: 3,
-    items: [[a.IntType, null], [a.FloatType, null], [a.StrType, null]],
-  },
-]);
-typeTest('[(int, str)]', [
-  a.ListType,
-  [
-    a.TupleType,
-    {
+    items: [exp(a.IntType), exp(a.FloatType), exp(a.StrType)],
+  }),
+);
+typeTest(
+  '[(int, str)]',
+  exp(
+    a.ListType,
+    exp(a.TupleType, {
       size: 2,
-      items: [[a.IntType, null], [a.StrType, null]],
-    },
-  ],
-]);
-typeTest('(int, [float], (str, bool, char))', [
-  a.TupleType,
-  {
+      items: [exp(a.IntType), exp(a.StrType)],
+    }),
+  ),
+);
+typeTest(
+  '(int, [float], (str, bool, char))',
+  exp(a.TupleType, {
     size: 3,
     items: [
-      [a.IntType, null],
-      [a.ListType, [a.FloatType, null]],
-      [
-        a.TupleType,
-        {
-          size: 3,
-          items: [[a.StrType, null], [a.BoolType, null], [a.CharType, null]],
-        },
-      ],
-    ],
-  },
-]);
-typeTest('(int)', [a.TupleType, { size: 1, items: [[a.IntType, null]] }]);
-typeTest('()', [a.TupleType, { size: 0, items: [] }]);
-typeTest('int -> bool', [
-  a.FuncType,
-  { param: [a.IntType, null], return: [a.BoolType, null] },
-]);
-typeTest('(str, char) -> (str, int, (char))', [
-  a.FuncType,
-  {
-    param: [
-      a.TupleType,
-      {
-        size: 2,
-        items: [[a.StrType, null], [a.CharType, null]],
-      },
-    ],
-    return: [
-      a.TupleType,
-      {
+      exp(a.IntType),
+      exp(a.ListType, exp(a.FloatType)),
+      exp(a.TupleType, {
         size: 3,
-        items: [
-          [a.StrType, null],
-          [a.IntType, null],
-          [a.TupleType, { size: 1, items: [[a.CharType, null]] }],
-        ],
-      },
+        items: [exp(a.StrType), exp(a.BoolType), exp(a.CharType)],
+      }),
     ],
-  },
-]);
-typeTest('bool -> [str] -> str', [
-  a.FuncType,
-  {
-    param: [a.BoolType, null],
-    return: [
-      a.FuncType,
-      {
-        param: [a.ListType, [a.StrType, null]],
-        return: [a.StrType, null],
-      },
-    ],
-  },
-]);
-typeTest('str -> str -> str -> str', [
-  a.FuncType,
-  {
-    param: [a.StrType, null],
-    return: [
-      a.FuncType,
-      {
-        param: [a.StrType, null],
-        return: [
-          a.FuncType,
-          {
-            param: [a.StrType, null],
-            return: [a.StrType, null],
-          },
-        ],
-      },
-    ],
-  },
-]);
-typeTest('() -> void', [
-  a.FuncType,
-  {
-    param: [a.TupleType, { size: 0, items: [] }],
-    return: [a.VoidType, null],
-  },
-]);
+  }),
+);
+typeTest('(int)', exp(a.TupleType, { size: 1, items: [exp(a.IntType)] }));
+typeTest('()', exp(a.TupleType, { size: 0, items: [] }));
+typeTest(
+  'int -> bool',
+  exp(a.FuncType, { param: exp(a.IntType), return: exp(a.BoolType) }),
+);
+typeTest(
+  '(str, char) -> (str, int, (char))',
+  exp(a.FuncType, {
+    param: exp(a.TupleType, {
+      size: 2,
+      items: [exp(a.StrType), exp(a.CharType)],
+    }),
+    return: exp(a.TupleType, {
+      size: 3,
+      items: [
+        exp(a.StrType),
+        exp(a.IntType),
+        exp(a.TupleType, { size: 1, items: [exp(a.CharType)] }),
+      ],
+    }),
+  }),
+);
+typeTest(
+  'bool -> [str] -> str',
+  exp(a.FuncType, {
+    param: exp(a.BoolType),
+    return: exp(a.FuncType, {
+      param: exp(a.ListType, exp(a.StrType)),
+      return: exp(a.StrType),
+    }),
+  }),
+);
+typeTest(
+  'str -> str -> str -> str',
+  exp(a.FuncType, {
+    param: exp(a.StrType),
+    return: exp(a.FuncType, {
+      param: exp(a.StrType),
+      return: exp(a.FuncType, {
+        param: exp(a.StrType),
+        return: exp(a.StrType),
+      }),
+    }),
+  }),
+);
+typeTest(
+  '() -> void',
+  exp(a.FuncType, {
+    param: exp(a.TupleType, { size: 0, items: [] }),
+    return: exp(a.VoidType),
+  }),
+);
 
-exprTest('1234', [a.LitExpr, [a.IntLit, '1234']]);
-exprTest('1.234', [a.LitExpr, [a.FloatLit, '1.234']]);
-exprTest('"hello, world"', [a.LitExpr, [a.StrLit, '"hello, world"']]);
-exprTest('true', [a.LitExpr, [a.BoolLit, 'true']]);
-exprTest('false', [a.LitExpr, [a.BoolLit, 'false']]);
-exprTest("'c'", [a.LitExpr, [a.CharLit, "'c'"]]);
+exprTest('1234', exp(a.LitExpr, exp(a.IntLit, '1234')));
+exprTest('1.234', exp(a.LitExpr, exp(a.FloatLit, '1.234')));
+exprTest('"hello, world"', exp(a.LitExpr, exp(a.StrLit, '"hello, world"')));
+exprTest('true', exp(a.LitExpr, exp(a.BoolLit, 'true')));
+exprTest('false', exp(a.LitExpr, exp(a.BoolLit, 'false')));
+exprTest("'c'", exp(a.LitExpr, exp(a.CharLit, "'c'")));
 
-exprTest('some_var', [a.IdentExpr, [a.Ident, 'some_var']]);
+exprTest('some_var', exp(a.IdentExpr, exp(a.Ident, 'some_var')));
 
-exprTest('-1234', [
-  a.UnaryExpr,
-  { op: [a.UnaryOp, '-'], right: [a.LitExpr, [a.IntLit, '1234']] },
-]);
-exprTest('+1234', [
-  a.UnaryExpr,
-  { op: [a.UnaryOp, '+'], right: [a.LitExpr, [a.IntLit, '1234']] },
-]);
-exprTest('-+1234', [
-  a.UnaryExpr,
-  {
-    op: [a.UnaryOp, '-'],
-    right: [
-      a.UnaryExpr,
-      { op: [a.UnaryOp, '+'], right: [a.LitExpr, [a.IntLit, '1234']] },
-    ],
-  },
-]);
-exprTest('!true', [
-  a.UnaryExpr,
-  { op: [a.UnaryOp, '!'], right: [a.LitExpr, [a.BoolLit, 'true']] },
-]);
-exprTest('!!!!false', [
-  a.UnaryExpr,
-  {
-    op: [a.UnaryOp, '!'],
-    right: [
-      a.UnaryExpr,
-      {
-        op: [a.UnaryOp, '!'],
-        right: [
-          a.UnaryExpr,
-          {
-            op: [a.UnaryOp, '!'],
-            right: [
-              a.UnaryExpr,
-              {
-                op: [a.UnaryOp, '!'],
-                right: [a.LitExpr, [a.BoolLit, 'false']],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-]);
-exprTest('+some_int', [
-  a.UnaryExpr,
-  { op: [a.UnaryOp, '+'], right: [a.IdentExpr, [a.Ident, 'some_int']] },
-]);
+exprTest(
+  '-1234',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '-'),
+    right: exp(a.LitExpr, exp(a.IntLit, '1234')),
+  }),
+);
+exprTest(
+  '+1234',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '+'),
+    right: exp(a.LitExpr, exp(a.IntLit, '1234')),
+  }),
+);
+exprTest(
+  '-+1234',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '-'),
+    right: exp(a.UnaryExpr, {
+      op: exp(a.UnaryOp, '+'),
+      right: exp(a.LitExpr, exp(a.IntLit, '1234')),
+    }),
+  }),
+);
+exprTest(
+  '!true',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '!'),
+    right: exp(a.LitExpr, exp(a.BoolLit, 'true')),
+  }),
+);
+exprTest(
+  '!!!!false',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '!'),
+    right: exp(a.UnaryExpr, {
+      op: exp(a.UnaryOp, '!'),
+      right: exp(a.UnaryExpr, {
+        op: exp(a.UnaryOp, '!'),
+        right: exp(a.UnaryExpr, {
+          op: exp(a.UnaryOp, '!'),
+          right: exp(a.LitExpr, exp(a.BoolLit, 'false')),
+        }),
+      }),
+    }),
+  }),
+);
+exprTest(
+  '+some_int',
+  exp(a.UnaryExpr, {
+    op: exp(a.UnaryOp, '+'),
+    right: exp(a.IdentExpr, exp(a.Ident, 'some_int')),
+  }),
+);
 
-exprTest('1 + 2', [
-  a.BinaryExpr,
-  {
-    op: [a.AddOp, '+'],
-    left: [a.LitExpr, [a.IntLit, '1']],
-    right: [a.LitExpr, [a.IntLit, '2']],
-  },
-]);
-exprTest('1 + 2 * 3', [
-  a.BinaryExpr,
-  {
-    op: [a.AddOp, '+'],
-    left: [a.LitExpr, [a.IntLit, '1']],
-    right: [
-      a.BinaryExpr,
-      {
-        op: [a.MulOp, '*'],
-        left: [a.LitExpr, [a.IntLit, '2']],
-        right: [a.LitExpr, [a.IntLit, '3']],
-      },
-    ],
-  },
-]);
-exprTest('1 * 2 + 3', [
-  a.BinaryExpr,
-  {
-    op: [a.AddOp, '+'],
-    left: [
-      a.BinaryExpr,
-      {
-        op: [a.MulOp, '*'],
-        left: [a.LitExpr, [a.IntLit, '1']],
-        right: [a.LitExpr, [a.IntLit, '2']],
-      },
-    ],
-    right: [a.LitExpr, [a.IntLit, '3']],
-  },
-]);
-exprTest('(1 + 2) * 3', [
-  a.BinaryExpr,
-  {
-    op: [a.MulOp, '*'],
-    left: [
-      a.TupleExpr,
-      {
-        size: 1,
-        items: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '1']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-        ],
-      },
-    ],
-    right: [a.LitExpr, [a.IntLit, '3']],
-  },
-]);
-exprTest('1 * (2 + 3)', [
-  a.BinaryExpr,
-  {
-    op: [a.MulOp, '*'],
-    left: [a.LitExpr, [a.IntLit, '1']],
-    right: [
-      a.TupleExpr,
-      {
-        size: 1,
-        items: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '2']],
-              right: [a.LitExpr, [a.IntLit, '3']],
-            },
-          ],
-        ],
-      },
-    ],
-  },
-]);
-exprTest('(1 + 2 * 3 + 4 > 5) || (true && false == false || true)', [
-  a.BinaryExpr,
-  {
-    op: [a.BoolOp, '||'],
-    left: [
-      a.TupleExpr,
-      {
-        size: 1,
-        items: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.CompOp, '>'],
-              left: [
-                a.BinaryExpr,
-                {
-                  op: [a.AddOp, '+'],
-                  left: [
-                    a.BinaryExpr,
-                    {
-                      op: [a.AddOp, '+'],
-                      left: [a.LitExpr, [a.IntLit, '1']],
-                      right: [
-                        a.BinaryExpr,
-                        {
-                          op: [a.MulOp, '*'],
-                          left: [a.LitExpr, [a.IntLit, '2']],
-                          right: [a.LitExpr, [a.IntLit, '3']],
-                        },
-                      ],
-                    },
-                  ],
-                  right: [a.LitExpr, [a.IntLit, '4']],
-                },
-              ],
-              right: [a.LitExpr, [a.IntLit, '5']],
-            },
-          ],
-        ],
-      },
-    ],
-    right: [
-      a.TupleExpr,
-      {
-        size: 1,
-        items: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.EqOp, '=='],
-              left: [
-                a.BinaryExpr,
-                {
-                  op: [a.BoolOp, '&&'],
-                  left: [a.LitExpr, [a.BoolLit, 'true']],
-                  right: [a.LitExpr, [a.BoolLit, 'false']],
-                },
-              ],
-              right: [
-                a.BinaryExpr,
-                {
-                  op: [a.BoolOp, '||'],
-                  left: [a.LitExpr, [a.BoolLit, 'false']],
-                  right: [a.LitExpr, [a.BoolLit, 'true']],
-                },
-              ],
-            },
-          ],
-        ],
-      },
-    ],
-  },
-]);
+exprTest(
+  '1 + 2',
+  exp(a.BinaryExpr, {
+    op: exp(a.AddOp, '+'),
+    left: exp(a.LitExpr, exp(a.IntLit, '1')),
+    right: exp(a.LitExpr, exp(a.IntLit, '2')),
+  }),
+);
+exprTest(
+  '1 + 2 * 3',
+  exp(a.BinaryExpr, {
+    op: exp(a.AddOp, '+'),
+    left: exp(a.LitExpr, exp(a.IntLit, '1')),
+    right: exp(a.BinaryExpr, {
+      op: exp(a.MulOp, '*'),
+      left: exp(a.LitExpr, exp(a.IntLit, '2')),
+      right: exp(a.LitExpr, exp(a.IntLit, '3')),
+    }),
+  }),
+);
+exprTest(
+  '1 * 2 + 3',
+  exp(a.BinaryExpr, {
+    op: exp(a.AddOp, '+'),
+    left: exp(a.BinaryExpr, {
+      op: exp(a.MulOp, '*'),
+      left: exp(a.LitExpr, exp(a.IntLit, '1')),
+      right: exp(a.LitExpr, exp(a.IntLit, '2')),
+    }),
+    right: exp(a.LitExpr, exp(a.IntLit, '3')),
+  }),
+);
+exprTest(
+  '(1 + 2) * 3',
+  exp(a.BinaryExpr, {
+    op: exp(a.MulOp, '*'),
+    left: exp(a.TupleExpr, {
+      size: 1,
+      items: [
+        exp(a.BinaryExpr, {
+          op: exp(a.AddOp, '+'),
+          left: exp(a.LitExpr, exp(a.IntLit, '1')),
+          right: exp(a.LitExpr, exp(a.IntLit, '2')),
+        }),
+      ],
+    }),
+    right: exp(a.LitExpr, exp(a.IntLit, '3')),
+  }),
+);
+exprTest(
+  '1 * (2 + 3)',
+  exp(a.BinaryExpr, {
+    op: exp(a.MulOp, '*'),
+    left: exp(a.LitExpr, exp(a.IntLit, '1')),
+    right: exp(a.TupleExpr, {
+      size: 1,
+      items: [
+        exp(a.BinaryExpr, {
+          op: exp(a.AddOp, '+'),
+          left: exp(a.LitExpr, exp(a.IntLit, '2')),
+          right: exp(a.LitExpr, exp(a.IntLit, '3')),
+        }),
+      ],
+    }),
+  }),
+);
+exprTest(
+  '(1 + 2 * 3 + 4 > 5) || (true && false == false || true)',
+  exp(a.BinaryExpr, {
+    op: exp(a.BoolOp, '||'),
+    left: exp(a.TupleExpr, {
+      size: 1,
+      items: [
+        exp(a.BinaryExpr, {
+          op: exp(a.CompOp, '>'),
+          left: exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.BinaryExpr, {
+              op: exp(a.AddOp, '+'),
+              left: exp(a.LitExpr, exp(a.IntLit, '1')),
+              right: exp(a.BinaryExpr, {
+                op: exp(a.MulOp, '*'),
+                left: exp(a.LitExpr, exp(a.IntLit, '2')),
+                right: exp(a.LitExpr, exp(a.IntLit, '3')),
+              }),
+            }),
+            right: exp(a.LitExpr, exp(a.IntLit, '4')),
+          }),
+          right: exp(a.LitExpr, exp(a.IntLit, '5')),
+        }),
+      ],
+    }),
+    right: exp(a.TupleExpr, {
+      size: 1,
+      items: [
+        exp(a.BinaryExpr, {
+          op: exp(a.EqOp, '=='),
+          left: exp(a.BinaryExpr, {
+            op: exp(a.BoolOp, '&&'),
+            left: exp(a.LitExpr, exp(a.BoolLit, 'true')),
+            right: exp(a.LitExpr, exp(a.BoolLit, 'false')),
+          }),
+          right: exp(a.BinaryExpr, {
+            op: exp(a.BoolOp, '||'),
+            left: exp(a.LitExpr, exp(a.BoolLit, 'false')),
+            right: exp(a.LitExpr, exp(a.BoolLit, 'true')),
+          }),
+        }),
+      ],
+    }),
+  }),
+);
 
-exprTest('()', [a.TupleExpr, { size: 0, items: [] }]);
-exprTest('(1)', [
-  a.TupleExpr,
-  { size: 1, items: [[a.LitExpr, [a.IntLit, '1']]] },
-]);
-exprTest('(-1234, !!x, ("hello", true))', [
-  a.TupleExpr,
-  {
+exprTest('()', exp(a.TupleExpr, { size: 0, items: [] }));
+exprTest(
+  '(1)',
+  exp(a.TupleExpr, { size: 1, items: [exp(a.LitExpr, exp(a.IntLit, '1'))] }),
+);
+exprTest(
+  '(-1234, !!x, ("hello", true))',
+  exp(a.TupleExpr, {
     size: 3,
     items: [
-      [
-        a.UnaryExpr,
-        { op: [a.UnaryOp, '-'], right: [a.LitExpr, [a.IntLit, '1234']] },
-      ],
-      [
-        a.UnaryExpr,
-        {
-          op: [a.UnaryOp, '!'],
-          right: [
-            a.UnaryExpr,
-            { op: [a.UnaryOp, '!'], right: [a.IdentExpr, [a.Ident, 'x']] },
-          ],
-        },
-      ],
-      [
-        a.TupleExpr,
-        {
-          size: 2,
-          items: [
-            [a.LitExpr, [a.StrLit, '"hello"']],
-            [a.LitExpr, [a.BoolLit, 'true']],
-          ],
-        },
-      ],
+      exp(a.UnaryExpr, {
+        op: exp(a.UnaryOp, '-'),
+        right: exp(a.LitExpr, exp(a.IntLit, '1234')),
+      }),
+      exp(a.UnaryExpr, {
+        op: exp(a.UnaryOp, '!'),
+        right: exp(a.UnaryExpr, {
+          op: exp(a.UnaryOp, '!'),
+          right: exp(a.IdentExpr, exp(a.Ident, 'x')),
+        }),
+      }),
+      exp(a.TupleExpr, {
+        size: 2,
+        items: [
+          exp(a.LitExpr, exp(a.StrLit, '"hello"')),
+          exp(a.LitExpr, exp(a.BoolLit, 'true')),
+        ],
+      }),
     ],
-  },
-]);
+  }),
+);
 
-exprTest('[]', [a.ListExpr, []]);
-exprTest('[1, 2, 3]', [
-  a.ListExpr,
-  [
-    [a.LitExpr, [a.IntLit, '1']],
-    [a.LitExpr, [a.IntLit, '2']],
-    [a.LitExpr, [a.IntLit, '3']],
-  ],
-]);
-exprTest('[a, b, c]', [
-  a.ListExpr,
-  [
-    [a.IdentExpr, [a.Ident, 'a']],
-    [a.IdentExpr, [a.Ident, 'b']],
-    [a.IdentExpr, [a.Ident, 'c']],
-  ],
-]);
+exprTest('[]', exp(a.ListExpr, []));
+exprTest(
+  '[1, 2, 3]',
+  exp(a.ListExpr, [
+    exp(a.LitExpr, exp(a.IntLit, '1')),
+    exp(a.LitExpr, exp(a.IntLit, '2')),
+    exp(a.LitExpr, exp(a.IntLit, '3')),
+  ]),
+);
+exprTest(
+  '[a, b, c]',
+  exp(a.ListExpr, [
+    exp(a.IdentExpr, exp(a.Ident, 'a')),
+    exp(a.IdentExpr, exp(a.Ident, 'b')),
+    exp(a.IdentExpr, exp(a.Ident, 'c')),
+  ]),
+);
 
-exprTest('fn () void {}', [
-  a.FuncExpr,
-  {
+exprTest(
+  'fn () void {}',
+  exp(a.FuncExpr, {
     params: {
       size: 0,
       items: [],
     },
-    returnType: [a.VoidType, null],
-    body: [
-      a.Block,
-      {
-        bodies: [],
-        returnVoid: true,
-      },
-    ],
-  },
-]);
+    returnType: exp(a.VoidType),
+    body: exp(a.Block, {
+      bodies: [],
+      returnVoid: true,
+    }),
+  }),
+);
 exprTest(
   `
 fn (x int, y int) int {
@@ -672,56 +584,38 @@ fn (x int, y int) int {
   result
 }
 `,
-  [
-    a.FuncExpr,
-    {
-      params: {
-        size: 2,
-        items: [
-          { name: [a.Ident, 'x'], type: [a.IntType, null] },
-          { name: [a.Ident, 'y'], type: [a.IntType, null] },
-        ],
-      },
-      returnType: [a.IntType, null],
-      body: [
-        a.Block,
-        {
-          bodies: [
-            [
-              a.Decl,
-              {
-                name: [a.Ident, 'result'],
-                type: null,
-                expr: [
-                  a.BinaryExpr,
-                  {
-                    op: [a.AddOp, '+'],
-                    left: [a.IdentExpr, [a.Ident, 'x']],
-                    right: [a.IdentExpr, [a.Ident, 'y']],
-                  },
-                ],
-              },
-            ],
-            [
-              a.CallExpr,
-              {
-                func: [a.IdentExpr, [a.Ident, 'print']],
-                args: [
-                  a.TupleExpr,
-                  {
-                    size: 1,
-                    items: [[a.IdentExpr, [a.Ident, 'result']]],
-                  },
-                ],
-              },
-            ],
-            [a.IdentExpr, [a.Ident, 'result']],
-          ],
-          returnVoid: false,
-        },
+  exp(a.FuncExpr, {
+    params: {
+      size: 2,
+      items: [
+        { name: exp(a.Ident, 'x'), type: exp(a.IntType) },
+        { name: exp(a.Ident, 'y'), type: exp(a.IntType) },
       ],
     },
-  ],
+    returnType: exp(a.IntType),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.Decl, {
+          name: exp(a.Ident, 'result'),
+          type: null,
+          expr: exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+            right: exp(a.IdentExpr, exp(a.Ident, 'y')),
+          }),
+        }),
+        exp(a.CallExpr, {
+          func: exp(a.IdentExpr, exp(a.Ident, 'print')),
+          args: exp(a.TupleExpr, {
+            size: 1,
+            items: [exp(a.IdentExpr, exp(a.Ident, 'result'))],
+          }),
+        }),
+        exp(a.IdentExpr, exp(a.Ident, 'result')),
+      ],
+      returnVoid: false,
+    }),
+  }),
 );
 exprTest(
   `
@@ -731,385 +625,280 @@ fn (x int, y int) int {
   result;
 }
 `,
-  [
-    a.FuncExpr,
-    {
-      params: {
-        size: 2,
-        items: [
-          { name: [a.Ident, 'x'], type: [a.IntType, null] },
-          { name: [a.Ident, 'y'], type: [a.IntType, null] },
-        ],
-      },
-      returnType: [a.IntType, null],
-      body: [
-        a.Block,
-        {
-          bodies: [
-            [
-              a.Decl,
-              {
-                name: [a.Ident, 'result'],
-                type: null,
-                expr: [
-                  a.BinaryExpr,
-                  {
-                    op: [a.AddOp, '+'],
-                    left: [a.IdentExpr, [a.Ident, 'x']],
-                    right: [a.IdentExpr, [a.Ident, 'y']],
-                  },
-                ],
-              },
-            ],
-            [
-              a.CallExpr,
-              {
-                func: [a.IdentExpr, [a.Ident, 'print']],
-                args: [
-                  a.TupleExpr,
-                  {
-                    size: 1,
-                    items: [[a.IdentExpr, [a.Ident, 'result']]],
-                  },
-                ],
-              },
-            ],
-            [a.IdentExpr, [a.Ident, 'result']],
-          ],
-          returnVoid: true,
-        },
-      ],
-    },
-  ],
-);
-exprTest('fn (ignored [bool], negated int) int { -negated }', [
-  a.FuncExpr,
-  {
+  exp(a.FuncExpr, {
     params: {
       size: 2,
       items: [
-        { name: [a.Ident, 'ignored'], type: [a.ListType, [a.BoolType, null]] },
-        { name: [a.Ident, 'negated'], type: [a.IntType, null] },
+        { name: exp(a.Ident, 'x'), type: exp(a.IntType) },
+        { name: exp(a.Ident, 'y'), type: exp(a.IntType) },
       ],
     },
-    returnType: [a.IntType, null],
-    body: [
-      a.Block,
-      {
-        bodies: [
-          [
-            a.UnaryExpr,
-            {
-              op: [a.UnaryOp, '-'],
-              right: [a.IdentExpr, [a.Ident, 'negated']],
-            },
-          ],
-        ],
-        returnVoid: false,
-      },
-    ],
-  },
-]);
+    returnType: exp(a.IntType),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.Decl, {
+          name: exp(a.Ident, 'result'),
+          type: null,
+          expr: exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+            right: exp(a.IdentExpr, exp(a.Ident, 'y')),
+          }),
+        }),
+        exp(a.CallExpr, {
+          func: exp(a.IdentExpr, exp(a.Ident, 'print')),
+          args: exp(a.TupleExpr, {
+            size: 1,
+            items: [exp(a.IdentExpr, exp(a.Ident, 'result'))],
+          }),
+        }),
+        exp(a.IdentExpr, exp(a.Ident, 'result')),
+      ],
+      returnVoid: true,
+    }),
+  }),
+);
+exprTest(
+  'fn (ignored [bool], negated int) int { -negated }',
+  exp(a.FuncExpr, {
+    params: {
+      size: 2,
+      items: [
+        {
+          name: exp(a.Ident, 'ignored'),
+          type: exp(a.ListType, exp(a.BoolType)),
+        },
+        { name: exp(a.Ident, 'negated'), type: exp(a.IntType) },
+      ],
+    },
+    returnType: exp(a.IntType),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.UnaryExpr, {
+          op: exp(a.UnaryOp, '-'),
+          right: exp(a.IdentExpr, exp(a.Ident, 'negated')),
+        }),
+      ],
+      returnVoid: false,
+    }),
+  }),
+);
 exprTest(
   `
 fn (i int) () -> int {
   fn () int { i }
 }`,
-  [
-    a.FuncExpr,
-    {
-      params: {
-        size: 1,
-        items: [{ name: [a.Ident, 'i'], type: [a.IntType, null] }],
-      },
-      returnType: [
-        a.FuncType,
-        {
-          param: [
-            a.TupleType,
-            {
-              size: 0,
-              items: [],
-            },
-          ],
-          return: [a.IntType, null],
-        },
-      ],
-      body: [
-        a.Block,
-        {
-          bodies: [
-            [
-              a.FuncExpr,
-              {
-                params: {
-                  size: 0,
-                  items: [],
-                },
-                returnType: [a.IntType, null],
-                body: [
-                  a.Block,
-                  {
-                    bodies: [[a.IdentExpr, [a.Ident, 'i']]],
-                    returnVoid: false,
-                  },
-                ],
-              },
-            ],
-          ],
-          returnVoid: false,
-        },
-      ],
+  exp(a.FuncExpr, {
+    params: {
+      size: 1,
+      items: [{ name: exp(a.Ident, 'i'), type: exp(a.IntType) }],
     },
-  ],
-);
-
-exprTest('func()', [
-  a.CallExpr,
-  {
-    func: [a.IdentExpr, [a.Ident, 'func']],
-    args: [
-      a.TupleExpr,
-      {
+    returnType: exp(a.FuncType, {
+      param: exp(a.TupleType, {
         size: 0,
         items: [],
-      },
-    ],
-  },
-]);
-exprTest('func2("hello", 1 + 2, true)', [
-  a.CallExpr,
-  {
-    func: [a.IdentExpr, [a.Ident, 'func2']],
-    args: [
-      a.TupleExpr,
-      {
-        size: 3,
-        items: [
-          [a.LitExpr, [a.StrLit, '"hello"']],
-          [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '1']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-          [a.LitExpr, [a.BoolLit, 'true']],
-        ],
-      },
-    ],
-  },
-]);
-exprTest('func3("hello")(1 + 2, true)', [
-  a.CallExpr,
-  {
-    func: [
-      a.CallExpr,
-      {
-        func: [a.IdentExpr, [a.Ident, 'func3']],
-        args: [
-          a.TupleExpr,
-          {
-            size: 1,
-            items: [[a.LitExpr, [a.StrLit, '"hello"']]],
+      }),
+      return: exp(a.IntType),
+    }),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.FuncExpr, {
+          params: {
+            size: 0,
+            items: [],
           },
-        ],
-      },
-    ],
-    args: [
-      a.TupleExpr,
-      {
-        size: 2,
-        items: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '1']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-          [a.LitExpr, [a.BoolLit, 'true']],
-        ],
-      },
-    ],
-  },
-]);
-exprTest('(fn (x int, y int) int { x + y })(10, 20)', [
-  a.CallExpr,
-  {
-    func: [
-      a.TupleExpr,
-      {
+          returnType: exp(a.IntType),
+          body: exp(a.Block, {
+            bodies: [exp(a.IdentExpr, exp(a.Ident, 'i'))],
+            returnVoid: false,
+          }),
+        }),
+      ],
+      returnVoid: false,
+    }),
+  }),
+);
+
+exprTest(
+  'func()',
+  exp(a.CallExpr, {
+    func: exp(a.IdentExpr, exp(a.Ident, 'func')),
+    args: exp(a.TupleExpr, {
+      size: 0,
+      items: [],
+    }),
+  }),
+);
+exprTest(
+  'func2("hello", 1 + 2, true)',
+  exp(a.CallExpr, {
+    func: exp(a.IdentExpr, exp(a.Ident, 'func2')),
+    args: exp(a.TupleExpr, {
+      size: 3,
+      items: [
+        exp(a.LitExpr, exp(a.StrLit, '"hello"')),
+        exp(a.BinaryExpr, {
+          op: exp(a.AddOp, '+'),
+          left: exp(a.LitExpr, exp(a.IntLit, '1')),
+          right: exp(a.LitExpr, exp(a.IntLit, '2')),
+        }),
+        exp(a.LitExpr, exp(a.BoolLit, 'true')),
+      ],
+    }),
+  }),
+);
+exprTest(
+  'func3("hello")(1 + 2, true)',
+  exp(a.CallExpr, {
+    func: exp(a.CallExpr, {
+      func: exp(a.IdentExpr, exp(a.Ident, 'func3')),
+      args: exp(a.TupleExpr, {
         size: 1,
-        items: [
-          [
-            a.FuncExpr,
-            {
-              params: {
-                size: 2,
-                items: [
-                  {
-                    name: [a.Ident, 'x'],
-                    type: [a.IntType, null],
-                  },
-                  {
-                    name: [a.Ident, 'y'],
-                    type: [a.IntType, null],
-                  },
-                ],
+        items: [exp(a.LitExpr, exp(a.StrLit, '"hello"'))],
+      }),
+    }),
+    args: exp(a.TupleExpr, {
+      size: 2,
+      items: [
+        exp(a.BinaryExpr, {
+          op: exp(a.AddOp, '+'),
+          left: exp(a.LitExpr, exp(a.IntLit, '1')),
+          right: exp(a.LitExpr, exp(a.IntLit, '2')),
+        }),
+        exp(a.LitExpr, exp(a.BoolLit, 'true')),
+      ],
+    }),
+  }),
+);
+exprTest(
+  '(fn (x int, y int) int { x + y })(10, 20)',
+  exp(a.CallExpr, {
+    func: exp(a.TupleExpr, {
+      size: 1,
+      items: [
+        exp(a.FuncExpr, {
+          params: {
+            size: 2,
+            items: [
+              {
+                name: exp(a.Ident, 'x'),
+                type: exp(a.IntType),
               },
-              returnType: [a.IntType, null],
-              body: [
-                a.Block,
-                {
-                  bodies: [
-                    [
-                      a.BinaryExpr,
-                      {
-                        op: [a.AddOp, '+'],
-                        left: [a.IdentExpr, [a.Ident, 'x']],
-                        right: [a.IdentExpr, [a.Ident, 'y']],
-                      },
-                    ],
-                  ],
-                  returnVoid: false,
-                },
-              ],
-            },
-          ],
-        ],
-      },
-    ],
-    args: [
-      a.TupleExpr,
-      {
-        size: 2,
-        items: [[a.LitExpr, [a.IntLit, '10']], [a.LitExpr, [a.IntLit, '20']]],
-      },
-    ],
-  },
-]);
-exprTest('fn (x int, y int) int { x + y }(10, 20)', [
-  a.CallExpr,
-  {
-    func: [
-      a.FuncExpr,
-      {
-        params: {
-          size: 2,
-          items: [
-            {
-              name: [a.Ident, 'x'],
-              type: [a.IntType, null],
-            },
-            {
-              name: [a.Ident, 'y'],
-              type: [a.IntType, null],
-            },
-          ],
-        },
-        returnType: [a.IntType, null],
-        body: [
-          a.Block,
-          {
+              {
+                name: exp(a.Ident, 'y'),
+                type: exp(a.IntType),
+              },
+            ],
+          },
+          returnType: exp(a.IntType),
+          body: exp(a.Block, {
             bodies: [
-              [
-                a.BinaryExpr,
-                {
-                  op: [a.AddOp, '+'],
-                  left: [a.IdentExpr, [a.Ident, 'x']],
-                  right: [a.IdentExpr, [a.Ident, 'y']],
-                },
-              ],
+              exp(a.BinaryExpr, {
+                op: exp(a.AddOp, '+'),
+                left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+                right: exp(a.IdentExpr, exp(a.Ident, 'y')),
+              }),
             ],
             returnVoid: false,
-          },
-        ],
-      },
-    ],
-    args: [
-      a.TupleExpr,
-      {
-        size: 2,
-        items: [[a.LitExpr, [a.IntLit, '10']], [a.LitExpr, [a.IntLit, '20']]],
-      },
-    ],
-  },
-]);
-
-exprTest('arr[idx]', [
-  a.IndexExpr,
-  {
-    target: [a.IdentExpr, [a.Ident, 'arr']],
-    index: [a.IdentExpr, [a.Ident, 'idx']],
-  },
-]);
-exprTest('[1, 2, 3][2]', [
-  a.IndexExpr,
-  {
-    target: [
-      a.ListExpr,
-      [
-        [a.LitExpr, [a.IntLit, '1']],
-        [a.LitExpr, [a.IntLit, '2']],
-        [a.LitExpr, [a.IntLit, '3']],
+          }),
+        }),
       ],
-    ],
-    index: [a.LitExpr, [a.IntLit, '2']],
-  },
-]);
-exprTest('func()[idx % 3]("hello")[2][1]', [
-  a.IndexExpr,
-  {
-    target: [
-      a.IndexExpr,
-      {
-        target: [
-          a.CallExpr,
+    }),
+    args: exp(a.TupleExpr, {
+      size: 2,
+      items: [
+        exp(a.LitExpr, exp(a.IntLit, '10')),
+        exp(a.LitExpr, exp(a.IntLit, '20')),
+      ],
+    }),
+  }),
+);
+exprTest(
+  'fn (x int, y int) int { x + y }(10, 20)',
+  exp(a.CallExpr, {
+    func: exp(a.FuncExpr, {
+      params: {
+        size: 2,
+        items: [
           {
-            func: [
-              a.IndexExpr,
-              {
-                target: [
-                  a.CallExpr,
-                  {
-                    func: [a.IdentExpr, [a.Ident, 'func']],
-                    args: [
-                      a.TupleExpr,
-                      {
-                        size: 0,
-                        items: [],
-                      },
-                    ],
-                  },
-                ],
-                index: [
-                  a.BinaryExpr,
-                  {
-                    op: [a.MulOp, '%'],
-                    left: [a.IdentExpr, [a.Ident, 'idx']],
-                    right: [a.LitExpr, [a.IntLit, '3']],
-                  },
-                ],
-              },
-            ],
-            args: [
-              a.TupleExpr,
-              {
-                size: 1,
-                items: [[a.LitExpr, [a.StrLit, '"hello"']]],
-              },
-            ],
+            name: exp(a.Ident, 'x'),
+            type: exp(a.IntType),
+          },
+          {
+            name: exp(a.Ident, 'y'),
+            type: exp(a.IntType),
           },
         ],
-        index: [a.LitExpr, [a.IntLit, '2']],
       },
-    ],
-    index: [a.LitExpr, [a.IntLit, '1']],
-  },
-]);
+      returnType: exp(a.IntType),
+      body: exp(a.Block, {
+        bodies: [
+          exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+            right: exp(a.IdentExpr, exp(a.Ident, 'y')),
+          }),
+        ],
+        returnVoid: false,
+      }),
+    }),
+    args: exp(a.TupleExpr, {
+      size: 2,
+      items: [
+        exp(a.LitExpr, exp(a.IntLit, '10')),
+        exp(a.LitExpr, exp(a.IntLit, '20')),
+      ],
+    }),
+  }),
+);
+
+exprTest(
+  'arr[idx]',
+  exp(a.IndexExpr, {
+    target: exp(a.IdentExpr, exp(a.Ident, 'arr')),
+    index: exp(a.IdentExpr, exp(a.Ident, 'idx')),
+  }),
+);
+exprTest(
+  '[1, 2, 3][2]',
+  exp(a.IndexExpr, {
+    target: exp(a.ListExpr, [
+      exp(a.LitExpr, exp(a.IntLit, '1')),
+      exp(a.LitExpr, exp(a.IntLit, '2')),
+      exp(a.LitExpr, exp(a.IntLit, '3')),
+    ]),
+    index: exp(a.LitExpr, exp(a.IntLit, '2')),
+  }),
+);
+exprTest(
+  'func()[idx % 3]("hello")[2][1]',
+  exp(a.IndexExpr, {
+    target: exp(a.IndexExpr, {
+      target: exp(a.CallExpr, {
+        func: exp(a.IndexExpr, {
+          target: exp(a.CallExpr, {
+            func: exp(a.IdentExpr, exp(a.Ident, 'func')),
+            args: exp(a.TupleExpr, {
+              size: 0,
+              items: [],
+            }),
+          }),
+          index: exp(a.BinaryExpr, {
+            op: exp(a.MulOp, '%'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'idx')),
+            right: exp(a.LitExpr, exp(a.IntLit, '3')),
+          }),
+        }),
+        args: exp(a.TupleExpr, {
+          size: 1,
+          items: [exp(a.LitExpr, exp(a.StrLit, '"hello"'))],
+        }),
+      }),
+      index: exp(a.LitExpr, exp(a.IntLit, '2')),
+    }),
+    index: exp(a.LitExpr, exp(a.IntLit, '1')),
+  }),
+);
 
 exprTest(
   `
@@ -1119,34 +908,25 @@ if 1 + 2 > 3 {
   "world"
 }
 `,
-  [
-    a.CondExpr,
-    {
-      if: [
-        a.BinaryExpr,
-        {
-          op: [a.CompOp, '>'],
-          left: [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '1']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-          right: [a.LitExpr, [a.IntLit, '3']],
-        },
-      ],
-      then: [
-        a.Block,
-        { bodies: [[a.LitExpr, [a.StrLit, '"hello"']]], returnVoid: false },
-      ],
-      else: [
-        a.Block,
-        { bodies: [[a.LitExpr, [a.StrLit, '"world"']]], returnVoid: false },
-      ],
-    },
-  ],
+  exp(a.CondExpr, {
+    if: exp(a.BinaryExpr, {
+      op: exp(a.CompOp, '>'),
+      left: exp(a.BinaryExpr, {
+        op: exp(a.AddOp, '+'),
+        left: exp(a.LitExpr, exp(a.IntLit, '1')),
+        right: exp(a.LitExpr, exp(a.IntLit, '2')),
+      }),
+      right: exp(a.LitExpr, exp(a.IntLit, '3')),
+    }),
+    then: exp(a.Block, {
+      bodies: [exp(a.LitExpr, exp(a.StrLit, '"hello"'))],
+      returnVoid: false,
+    }),
+    else: exp(a.Block, {
+      bodies: [exp(a.LitExpr, exp(a.StrLit, '"world"'))],
+      returnVoid: false,
+    }),
+  }),
 );
 exprTest(
   `
@@ -1155,130 +935,85 @@ if 1 + 2 > 3 {
 } else {
 }
 `,
-  [
-    a.CondExpr,
-    {
-      if: [
-        a.BinaryExpr,
-        {
-          op: [a.CompOp, '>'],
-          left: [
-            a.BinaryExpr,
-            {
-              op: [a.AddOp, '+'],
-              left: [a.LitExpr, [a.IntLit, '1']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-          right: [a.LitExpr, [a.IntLit, '3']],
-        },
+  exp(a.CondExpr, {
+    if: exp(a.BinaryExpr, {
+      op: exp(a.CompOp, '>'),
+      left: exp(a.BinaryExpr, {
+        op: exp(a.AddOp, '+'),
+        left: exp(a.LitExpr, exp(a.IntLit, '1')),
+        right: exp(a.LitExpr, exp(a.IntLit, '2')),
+      }),
+      right: exp(a.LitExpr, exp(a.IntLit, '3')),
+    }),
+    then: exp(a.Block, {
+      bodies: [
+        exp(a.CallExpr, {
+          func: exp(a.IdentExpr, exp(a.Ident, 'print')),
+          args: exp(a.TupleExpr, {
+            size: 1,
+            items: [exp(a.LitExpr, exp(a.StrLit, '"hello, world"'))],
+          }),
+        }),
       ],
-      then: [
-        a.Block,
-        {
-          bodies: [
-            [
-              a.CallExpr,
-              {
-                func: [a.IdentExpr, [a.Ident, 'print']],
-                args: [
-                  a.TupleExpr,
-                  {
-                    size: 1,
-                    items: [[a.LitExpr, [a.StrLit, '"hello, world"']]],
-                  },
-                ],
-              },
-            ],
-          ],
-          returnVoid: true,
-        },
-      ],
-      else: [a.Block, { bodies: [], returnVoid: true }],
-    },
-  ],
+      returnVoid: true,
+    }),
+    else: exp(a.Block, { bodies: [], returnVoid: true }),
+  }),
 );
 
-exprTest('for x in [1, 2, 3] { x * 2 }', [
-  a.LoopExpr,
-  {
-    for: [a.Ident, 'x'],
-    in: [
-      a.ListExpr,
-      [
-        [a.LitExpr, [a.IntLit, '1']],
-        [a.LitExpr, [a.IntLit, '2']],
-        [a.LitExpr, [a.IntLit, '3']],
+exprTest(
+  'for x in [1, 2, 3] { x * 2 }',
+  exp(a.LoopExpr, {
+    for: exp(a.Ident, 'x'),
+    in: exp(a.ListExpr, [
+      exp(a.LitExpr, exp(a.IntLit, '1')),
+      exp(a.LitExpr, exp(a.IntLit, '2')),
+      exp(a.LitExpr, exp(a.IntLit, '3')),
+    ]),
+    do: exp(a.Block, {
+      bodies: [
+        exp(a.BinaryExpr, {
+          op: exp(a.MulOp, '*'),
+          left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+          right: exp(a.LitExpr, exp(a.IntLit, '2')),
+        }),
       ],
-    ],
-    do: [
-      a.Block,
-      {
-        bodies: [
-          [
-            a.BinaryExpr,
-            {
-              op: [a.MulOp, '*'],
-              left: [a.IdentExpr, [a.Ident, 'x']],
-              right: [a.LitExpr, [a.IntLit, '2']],
-            },
-          ],
-        ],
-        returnVoid: false,
-      },
-    ],
-  },
-]);
+      returnVoid: false,
+    }),
+  }),
+);
 exprTest(
   `
 for x in [1, 2, 3] {
   print(x * 2);
 }
 `,
-  [
-    a.LoopExpr,
-    {
-      for: [a.Ident, 'x'],
-      in: [
-        a.ListExpr,
-        [
-          [a.LitExpr, [a.IntLit, '1']],
-          [a.LitExpr, [a.IntLit, '2']],
-          [a.LitExpr, [a.IntLit, '3']],
-        ],
-      ],
-      do: [
-        a.Block,
-        {
-          bodies: [
-            [
-              a.CallExpr,
-              {
-                func: [a.IdentExpr, [a.Ident, 'print']],
-                args: [
-                  a.TupleExpr,
-                  {
-                    size: 1,
-                    items: [
-                      [
-                        a.BinaryExpr,
-                        {
-                          op: [a.MulOp, '*'],
-                          left: [a.IdentExpr, [a.Ident, 'x']],
-                          right: [a.LitExpr, [a.IntLit, '2']],
-                        },
-                      ],
-                    ],
-                  },
-                ],
-              },
+  exp(a.LoopExpr, {
+    for: exp(a.Ident, 'x'),
+    in: exp(a.ListExpr, [
+      exp(a.LitExpr, exp(a.IntLit, '1')),
+      exp(a.LitExpr, exp(a.IntLit, '2')),
+      exp(a.LitExpr, exp(a.IntLit, '3')),
+    ]),
+    do: exp(a.Block, {
+      bodies: [
+        exp(a.CallExpr, {
+          func: exp(a.IdentExpr, exp(a.Ident, 'print')),
+          args: exp(a.TupleExpr, {
+            size: 1,
+            items: [
+              exp(a.BinaryExpr, {
+                op: exp(a.MulOp, '*'),
+                left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+                right: exp(a.LitExpr, exp(a.IntLit, '2')),
+              }),
             ],
-          ],
-          returnVoid: true,
-        },
+          }),
+        }),
       ],
-    },
-  ],
+      returnVoid: true,
+    }),
+  }),
 );
 
 console.log(chalk.green.bold('Passed!'));

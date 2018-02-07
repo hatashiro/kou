@@ -1,4 +1,4 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { compose } from '@typed/compose';
 import * as a from '../src/parser/ast';
 import { tokenize } from '../src/lexer/';
@@ -15,12 +15,18 @@ import {
 console.log(chalk.bold('Running typechecker tests...'));
 
 // simple type instances
-const intType = new a.IntType();
-const floatType = new a.FloatType();
-const charType = new a.CharType();
-const strType = new a.StrType();
-const boolType = new a.BoolType();
-const voidType = new a.VoidType();
+const intType = new a.IntType(-1, -1);
+const floatType = new a.FloatType(-1, -1);
+const charType = new a.CharType(-1, -1);
+const strType = new a.StrType(-1, -1);
+const boolType = new a.BoolType(-1, -1);
+const voidType = new a.VoidType(-1, -1);
+
+// complex type constructors
+const tupleType = (v: a.Tuple<a.Type<any>>) => new a.TupleType(v, -1, -1);
+const listType = (v: a.Type<any>) => new a.ListType(v, -1, -1);
+const funcType = (v: { param: a.Type<any>; return: a.Type<any> }) =>
+  new a.FuncType(v, -1, -1);
 
 const compile = compose(desugarBefore, parse, tokenize);
 
@@ -115,7 +121,7 @@ exprTypeTest(
 exprTypeTest(
   '(123, hello, true)',
   ctx([{ hello: strType }]),
-  new a.TupleType({
+  tupleType({
     size: 3,
     items: [intType, strType, boolType],
   }),
@@ -123,7 +129,7 @@ exprTypeTest(
 exprTypeTest(
   '(123, hello, false)',
   ctx([{ hello: strType }]),
-  new a.TupleType({
+  tupleType({
     size: 4,
     items: [intType, strType, boolType, charType],
   }),
@@ -132,7 +138,7 @@ exprTypeTest(
 exprTypeTest(
   '(1234, hello, true)',
   ctx([{ hello: strType }]),
-  new a.TupleType({
+  tupleType({
     size: 3,
     items: [intType, charType, boolType],
   }),
@@ -140,29 +146,25 @@ exprTypeTest(
 );
 
 // list
-exprTypeTest('[1, 2, 3, 4]', ctx(), new a.ListType(intType));
-exprTypeTest('[]', ctx(), new a.ListType(intType));
-exprTypeTest('[]', ctx(), new a.ListType(strType));
+exprTypeTest('[1, 2, 3, 4]', ctx(), listType(intType));
+exprTypeTest('[]', ctx(), listType(intType));
+exprTypeTest('[]', ctx(), listType(strType));
+exprTypeTest('[[1], [2, 3, 4], []]', ctx(), listType(listType(intType)));
 exprTypeTest(
-  '[[1], [2, 3, 4], []]',
-  ctx(),
-  new a.ListType(new a.ListType(intType)),
+  '[some_ident, 4]',
+  ctx([{ some_ident: intType }]),
+  listType(intType),
 );
 exprTypeTest(
   '[some_ident, 4]',
   ctx([{ some_ident: intType }]),
-  new a.ListType(intType),
-);
-exprTypeTest(
-  '[some_ident, 4]',
-  ctx([{ some_ident: intType }]),
-  new a.ListType(strType),
+  listType(strType),
   'Type mismatch: expected [str], found [int]',
 );
 exprTypeTest(
   '[some_ident, "str", 4]',
   ctx([{ some_ident: intType }]),
-  new a.ListType(intType),
+  listType(intType),
   'Type mismatch: expected int, found str',
 );
 
@@ -170,7 +172,7 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int) bool { true }',
   ctx(),
-  new a.FuncType({
+  funcType({
     param: intType,
     return: boolType,
   }),
@@ -178,8 +180,8 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int, b str) bool { true }',
   ctx(),
-  new a.FuncType({
-    param: new a.TupleType({
+  funcType({
+    param: tupleType({
       size: 2,
       items: [intType, strType],
     }),
@@ -189,12 +191,12 @@ exprTypeTest(
 exprTypeTest(
   "fn (a int, b str) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
-  new a.FuncType({
-    param: new a.TupleType({
+  funcType({
+    param: tupleType({
       size: 2,
       items: [intType, strType],
     }),
-    return: new a.FuncType({
+    return: funcType({
       param: boolType,
       return: charType,
     }),
@@ -203,12 +205,12 @@ exprTypeTest(
 exprTypeTest(
   "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
-  new a.FuncType({
-    param: new a.FuncType({
+  funcType({
+    param: funcType({
       param: strType,
       return: intType,
     }),
-    return: new a.FuncType({
+    return: funcType({
       param: boolType,
       return: charType,
     }),
@@ -217,18 +219,18 @@ exprTypeTest(
 exprTypeTest(
   "fn (a float, b str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
-  new a.FuncType({
-    param: new a.TupleType({
+  funcType({
+    param: tupleType({
       size: 2,
       items: [
         floatType,
-        new a.FuncType({
+        funcType({
           param: strType,
           return: intType,
         }),
       ],
     }),
-    return: new a.FuncType({
+    return: funcType({
       param: boolType,
       return: charType,
     }),
@@ -237,8 +239,8 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int, b str) bool { false }',
   ctx(),
-  new a.FuncType({
-    param: new a.TupleType({
+  funcType({
+    param: tupleType({
       size: 2,
       items: [charType, strType],
     }),
@@ -249,12 +251,12 @@ exprTypeTest(
 exprTypeTest(
   "fn (a int, b str) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
-  new a.FuncType({
-    param: new a.TupleType({
+  funcType({
+    param: tupleType({
       size: 2,
       items: [intType, strType],
     }),
-    return: new a.FuncType({
+    return: funcType({
       param: boolType,
       return: boolType,
     }),
@@ -264,12 +266,12 @@ exprTypeTest(
 exprTypeTest(
   "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } }",
   ctx(),
-  new a.FuncType({
-    param: new a.FuncType({
+  funcType({
+    param: funcType({
       param: strType,
       return: boolType,
     }),
-    return: new a.FuncType({
+    return: funcType({
       param: boolType,
       return: charType,
     }),
@@ -279,7 +281,7 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int) bool {}',
   ctx(),
-  new a.FuncType({
+  funcType({
     param: intType,
     return: boolType,
   }),
@@ -288,7 +290,7 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int) bool { a }',
   ctx(),
-  new a.FuncType({
+  funcType({
     param: intType,
     return: boolType,
   }),
@@ -297,7 +299,7 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int) void { a }',
   ctx(),
-  new a.FuncType({
+  funcType({
     param: intType,
     return: voidType,
   }),
@@ -306,7 +308,7 @@ exprTypeTest(
 exprTypeTest(
   'fn (a int) void { a; }',
   ctx(),
-  new a.FuncType({
+  funcType({
     param: intType,
     return: voidType,
   }),
@@ -318,7 +320,7 @@ exprTypeTest('fn (a str) char { \'a\' } ("hello")', ctx(), charType);
 exprTypeTest(
   "fn (a str -> int) bool -> char { fn (c bool) char { 'a' } } (fn (a str) int { 1 })",
   ctx(),
-  new a.FuncType({
+  funcType({
     param: boolType,
     return: charType,
   }),
@@ -327,23 +329,23 @@ exprTypeTest(
   'f1(f2)',
   ctx([
     {
-      f1: new a.FuncType({
-        param: new a.FuncType({
+      f1: funcType({
+        param: funcType({
           param: strType,
           return: boolType,
         }),
-        return: new a.FuncType({
+        return: funcType({
           param: boolType,
           return: charType,
         }),
       }),
-      f2: new a.FuncType({
+      f2: funcType({
         param: strType,
         return: boolType,
       }),
     },
   ]),
-  new a.FuncType({
+  funcType({
     param: boolType,
     return: charType,
   }),
@@ -389,14 +391,14 @@ blockTypeTest(
 `,
   ctx([
     {
-      f: new a.FuncType({
+      f: funcType({
         param: intType,
         return: boolType,
       }),
     },
     { g: intType },
     {
-      h: new a.FuncType({
+      h: funcType({
         param: boolType,
         return: charType,
       }),
@@ -414,14 +416,14 @@ blockTypeTest(
 `,
   ctx([
     {
-      f: new a.FuncType({
+      f: funcType({
         param: intType,
         return: boolType,
       }),
     },
     { g: intType },
     {
-      h: new a.FuncType({
+      h: funcType({
         param: boolType,
         return: charType,
       }),
@@ -431,7 +433,7 @@ blockTypeTest(
 );
 
 // index expr
-exprTypeTest('list[3]', ctx([{ list: new a.ListType(intType) }]), intType);
+exprTypeTest('list[3]', ctx([{ list: listType(intType) }]), intType);
 exprTypeTest('"hello"[3]', ctx(), charType);
 exprTypeTest('("hello", false, 123)[0]', ctx(), strType);
 exprTypeTest('("hello", false, 123)[1]', ctx(), boolType);
@@ -446,7 +448,7 @@ exprTypeTest(
   'list[no_int]',
   ctx([
     {
-      list: new a.ListType(intType),
+      list: listType(intType),
       no_int: charType,
     },
   ]),
@@ -488,7 +490,7 @@ exprTypeTest(
   'if f(123) { "hello" } else { "world" }',
   ctx([
     {
-      f: new a.FuncType({ param: intType, return: boolType }),
+      f: funcType({ param: intType, return: boolType }),
     },
   ]),
   strType,
@@ -522,38 +524,38 @@ exprTypeTest(
   'for x in [1, 2, 3] { f(x) }',
   ctx([
     {
-      f: new a.FuncType({ param: intType, return: boolType }),
+      f: funcType({ param: intType, return: boolType }),
     },
   ]),
-  new a.ListType(boolType),
+  listType(boolType),
 );
 exprTypeTest(
   'for x in [1, 2, 3] { f(x); }',
   ctx([
     {
-      f: new a.FuncType({ param: intType, return: boolType }),
+      f: funcType({ param: intType, return: boolType }),
     },
   ]),
-  new a.ListType(voidType),
+  listType(voidType),
 );
 exprTypeTest(
   'for x in [1, 2, 3] { f(x) }',
   ctx([
     {
-      f: new a.FuncType({ param: charType, return: boolType }),
+      f: funcType({ param: charType, return: boolType }),
     },
   ]),
-  new a.ListType(boolType),
+  listType(boolType),
   'Function parameter type mismatch: expected char, found int',
 );
 exprTypeTest(
   'for x in 123 { f(x) }',
   ctx([
     {
-      f: new a.FuncType({ param: intType, return: boolType }),
+      f: funcType({ param: intType, return: boolType }),
     },
   ]),
-  new a.ListType(boolType),
+  listType(boolType),
   'Loop target should be a list: found int',
 );
 
@@ -715,7 +717,7 @@ let main = fn () void {
   print("hello, world!");
 }
 `,
-  ctx([{ print: new a.FuncType({ param: strType, return: voidType }) }]),
+  ctx([{ print: funcType({ param: strType, return: voidType }) }]),
 );
 
 typeCheckTest(
@@ -734,8 +736,8 @@ let main = fn () void {
 `,
   ctx([
     {
-      print: new a.FuncType({ param: strType, return: voidType }),
-      i2s: new a.FuncType({ param: intType, return: strType }),
+      print: funcType({ param: strType, return: voidType }),
+      i2s: funcType({ param: intType, return: strType }),
     },
   ]),
 );
@@ -760,8 +762,8 @@ let main = fn () void {
 `,
   ctx([
     {
-      print: new a.FuncType({ param: strType, return: voidType }),
-      i2s: new a.FuncType({ param: intType, return: strType }),
+      print: funcType({ param: strType, return: voidType }),
+      i2s: funcType({ param: intType, return: strType }),
     },
   ]),
 );
@@ -786,8 +788,8 @@ let main = fn () void {
 `,
   ctx([
     {
-      print: new a.FuncType({ param: strType, return: voidType }),
-      i2s: new a.FuncType({ param: intType, return: strType }),
+      print: funcType({ param: strType, return: voidType }),
+      i2s: funcType({ param: intType, return: strType }),
     },
   ]),
   'Function parameter type mismatch: expected (int, str), found int at 15:13',

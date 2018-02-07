@@ -1,12 +1,11 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import * as a from '../src/parser/ast';
 import { desugarBefore, desugarAfter } from '../src/desugarer';
 
 console.log(chalk.bold('Running desugarer tests...'));
 
-function n<T>(Node: a.NodeConstructor<T>, value: T): a.Node<T> {
-  // -1, -1 for testing
-  return new Node(value, -1, -1);
+function n(Cons: a.NodeConstructor<any, any>, value: any): a.Node<any> {
+  return new Cons(value, -1, -1);
 }
 
 function valueEqual(actual: any, expected: any): boolean {
@@ -53,7 +52,7 @@ function moduleDesugarTest(
   input: a.Module,
   expected: a.Module,
 ) {
-  let desugar;
+  let desugar: (input: a.Module) => a.Module;
   switch (path) {
     case 'before':
       desugar = desugarBefore;
@@ -64,6 +63,8 @@ function moduleDesugarTest(
     case 'both':
       desugar = x => desugarAfter(desugarBefore(x));
       break;
+    default:
+      throw new Error('unreachable');
   }
 
   try {
