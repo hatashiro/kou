@@ -37,6 +37,16 @@ function exprTypeTest(
   shouldThrow?: string,
 ) {
   const moduleStr = `let x = ${exprStr}`;
+
+  function failWith(errMsg: string) {
+    console.error(chalk.blue.bold('Test:'));
+    console.error(exprStr);
+    console.error();
+    console.error(chalk.red.bold('Error:'));
+    console.error(errMsg);
+    process.exit(1);
+  }
+
   try {
     const mod = compile(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
@@ -50,12 +60,11 @@ function exprTypeTest(
       return;
     }
 
-    console.error(chalk.blue.bold('Test:'));
-    console.error(exprStr);
-    console.error();
-    console.error(chalk.red.bold('Error:'));
-    console.error(err);
-    process.exit(1);
+    failWith(err);
+  }
+
+  if (shouldThrow) {
+    failWith(`No error was thrown for '${shouldThrow}'`);
   }
 }
 
@@ -456,7 +465,7 @@ exprTypeTest(
   'Index type mismatch: expected int, found char',
 );
 exprTypeTest(
-  '"hello"[3]',
+  '"hello"[no_int]',
   ctx([{ no_int: charType }]),
   charType,
   'Index type mismatch: expected int, found char',
@@ -691,6 +700,15 @@ function typeCheckTest(
 ) {
   const compile = compose(typeCheck(context), desugarBefore, parse, tokenize);
 
+  function failWith(errMsg: string) {
+    console.error(chalk.blue.bold('Test:'));
+    console.error(program);
+    console.error();
+    console.error(chalk.red.bold('Error:'));
+    console.error(errMsg);
+    process.exit(1);
+  }
+
   try {
     compile(program);
   } catch (err) {
@@ -702,12 +720,11 @@ function typeCheckTest(
       return;
     }
 
-    console.error(chalk.blue.bold('Test:'));
-    console.error(program);
-    console.error();
-    console.error(chalk.red.bold('Error:'));
-    console.error(err);
-    process.exit(1);
+    failWith(err);
+  }
+
+  if (shouldThrow) {
+    failWith(`No error was thrown for '${shouldThrow}'`);
   }
 }
 
