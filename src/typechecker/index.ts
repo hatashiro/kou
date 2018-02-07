@@ -442,7 +442,7 @@ export function checkBlockType(
   ctx.enterScope();
   initialDefs.forEach(def => ctx.push(def));
 
-  let exprType: a.Type<any> = voidType;
+  let exprType: a.Type<any> = new a.VoidType(block.row, block.column);
   block.value.bodies.forEach(body => {
     if (body instanceof a.Decl) {
       registerDeclType(body, ctx);
