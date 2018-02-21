@@ -101,7 +101,7 @@ export const typeCheck = (ctx: TypeContext) => (mod: a.Module): a.Module => {
   return mod;
 };
 
-function copyWithPos<T, TY extends a.Type<T>>(
+function cloneType<T, TY extends a.Type<T>>(
   orig: TY,
   { row, column }: { row: number; column: number },
 ): TY {
@@ -225,7 +225,7 @@ export function checkExprType(
       );
     }
 
-    return copyWithPos(funcType.value.return, expr);
+    return cloneType(funcType.value.return, expr);
   } else if (expr instanceof a.IndexExpr) {
     const targetType = checkExprType(expr.value.target, ctx);
     if (targetType instanceof a.ListType) {
@@ -315,7 +315,7 @@ export function checkExprType(
         // tag the operator with type
         expr.value.op.ty = ty;
 
-        return copyWithPos(ty.return, expr);
+        return cloneType(ty.return, expr);
       } catch {
         // ignore, try the next
       }
@@ -346,7 +346,7 @@ export function checkExprType(
         // tag the operator with type
         expr.value.op.ty = ty;
 
-        return copyWithPos(ty.return, expr);
+        return cloneType(ty.return, expr);
       } catch {
         throw new TypeError(
           rightActualTy,
