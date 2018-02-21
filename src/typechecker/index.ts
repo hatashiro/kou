@@ -128,7 +128,7 @@ export function checkExprType(
   } else if (expr instanceof a.IdentExpr) {
     const ty = ctx.getTypeOf(expr.value);
     if (ty) {
-      return ty;
+      return cloneType(ty, expr);
     } else {
       throw new TypeError(
         {
@@ -231,7 +231,7 @@ export function checkExprType(
     if (targetType instanceof a.ListType) {
       const indexType = checkExprType(expr.value.index, ctx);
       if (indexType instanceof a.IntType) {
-        return targetType.value;
+        return cloneType(targetType.value, expr);
       } else {
         throw new TypeError(indexType, intType, 'Index type mismatch');
       }
@@ -247,7 +247,7 @@ export function checkExprType(
       if (index instanceof a.LitExpr && index.value instanceof a.IntLit) {
         const lit = index.value;
         if (lit.parsedValue < targetType.value.size) {
-          return targetType.value.items[lit.parsedValue];
+          return cloneType(targetType.value.items[lit.parsedValue], expr);
         } else {
           throw new TypeError(
             { row: lit.row, column: lit.column, name: lit.value },
