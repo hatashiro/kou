@@ -15,7 +15,8 @@
     "test": "npm run check-format && npm run build && ts-node --no-cache --type-check test",
     "release": "npm run build && npm publish",
     "precommit": "npm run check-format",
-    "prepush": "npm run test"
+    "prepush": "npm run test",
+    "postinstall": "./scripts/build-wabt.sh"
   },
   "repository": {
     "type": "git",
