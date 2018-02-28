@@ -54,3 +54,17 @@ export function orStr(words: Array<string>): string {
 export function tempFile(ext: string): string {
   return fileSync({ mode: 0o644, postfix: `.${ext}` }).name;
 }
+
+export type Arity1<T, U> = (x: T) => U;
+
+export class Compose<T, U> {
+  constructor(public f: Arity1<T, U>) {}
+
+  static then<T, U>(f: Arity1<T, U>): Compose<T, U> {
+    return new Compose(f);
+  }
+
+  then<V>(g: Arity1<U, V>): Compose<T, V> {
+    return new Compose((x: T) => g(this.f(x)));
+  }
+}

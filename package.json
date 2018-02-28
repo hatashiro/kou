@@ -38,7 +38,6 @@
     "typescript": "^2.8.0-dev.20180228"
   },
   "dependencies": {
-    "@typed/compose": "^1.0.0",
     "@types/node": "^9.4.6",
     "@types/tmp": "0.0.33",
     "chalk": "^2.3.0",

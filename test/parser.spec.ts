@@ -1,8 +1,8 @@
-import { compose } from '@typed/compose';
 import chalk from 'chalk';
 import { tokenize } from '../src/lexer';
 import { parse } from '../src/parser';
 import * as a from '../src/parser/ast';
+import { Compose } from '../src/util';
 
 console.log(chalk.bold('Running parser tests...'));
 
@@ -72,7 +72,7 @@ function astEqual(actual: a.Node<any>, expected?: NodeExpectation) {
   );
 }
 
-const compile = compose(parse, tokenize);
+const compile = Compose.then(tokenize).then(parse).f;
 
 function programTest(
   input: string,

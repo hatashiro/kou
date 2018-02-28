@@ -1,9 +1,9 @@
 import chalk from 'chalk';
-import { compose } from '@typed/compose';
 import * as a from '../src/parser/ast';
 import { tokenize } from '../src/lexer/';
 import { parse } from '../src/parser/';
 import { desugarBefore } from '../src/desugarer/';
+import { Compose } from '../src/util';
 import {
   TypeContext,
   checkExprType,
@@ -29,7 +29,9 @@ const listType = (v: a.Type<any>) => new a.ListType(v, -1, -1);
 const funcType = (v: { param: a.Type<any>; return: a.Type<any> }) =>
   new a.FuncType(v, -1, -1);
 
-const compile = compose(desugarBefore, parse, tokenize);
+const compileAST = Compose.then(tokenize)
+  .then(parse)
+  .then(desugarBefore);
 
 function exprTypeTest(
   exprStr: string,
@@ -49,7 +51,7 @@ function exprTypeTest(
   }
 
   try {
-    const mod = compile(moduleStr);
+    const mod = compileAST.f(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
@@ -76,7 +78,7 @@ function blockTypeTest(
 ) {
   const moduleStr = `let x = fn () ${expectedType.name} ${blockStr}`;
   try {
-    const mod = compile(moduleStr);
+    const mod = compileAST.f(moduleStr);
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
     const actualType = checkBlockType(fn.value.body, ctx);
     typeEqual(actualType, expectedType);
@@ -699,7 +701,7 @@ function typeCheckTest(
   context: TypeContext,
   shouldThrow?: string,
 ) {
-  const compile = compose(typeCheck(context), desugarBefore, parse, tokenize);
+  const compile = compileAST.then(typeCheck(context)).f;
 
   function failWith(errMsg: string) {
     console.error(chalk.blue.bold('Test:'));

@@ -1,11 +1,10 @@
-import { compose } from '@typed/compose';
 import * as a from '../parser/ast';
 import { visitor } from '../parser/visitor';
 
 export function desugarBefore(mod: a.Module): a.Module {
   const v = visitor({
-    visitExpr: compose(unwrap1TupleExpr),
-    visitType: compose(unwrap1TupleType),
+    visitExpr: unwrap1TupleExpr,
+    visitType: unwrap1TupleType,
   });
 
   return v.visitModule(mod);
@@ -13,7 +12,7 @@ export function desugarBefore(mod: a.Module): a.Module {
 
 export function desugarAfter(mod: a.Module): a.Module {
   const v = visitor({
-    visitExpr: compose(removeUnaryPlus),
+    visitExpr: removeUnaryPlus,
   });
 
   return v.visitModule(mod);

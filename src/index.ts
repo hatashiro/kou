@@ -1,21 +1,18 @@
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { compose } from '@typed/compose';
 
 import { tokenize, LexError } from './lexer';
 import { parse, ParseError } from './parser';
 import { desugarBefore, desugarAfter } from './desugarer';
 import { typeCheck, TypeContext, TypeError } from './typechecker';
+import { Compose } from './util';
 
-const compile = compose(
-  // FIXME: codegen
-  desugarAfter,
-  typeCheck(new TypeContext()), // FIXME: stdlib
-  desugarBefore,
-  parse,
-  tokenize,
-);
+const compile = Compose.then(tokenize)
+  .then(parse)
+  .then(desugarBefore)
+  .then(typeCheck(new TypeContext()))
+  .then(desugarAfter).f;
 
 function exitWithErrors(errors: Array<string>) {
   errors.forEach(err => console.error(err));
