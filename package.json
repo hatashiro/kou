@@ -13,9 +13,13 @@
     "format:dry": "npm run prettier -- -l",
     "test": "ts-node --no-cache --type-check test",
     "release": "npm run build && npm publish",
-    "precommit": "npm run format:dry",
-    "prepush": "npm run build && npm run test",
     "postinstall": "./scripts/build-wabt.sh"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run format:dry",
+      "pre-push": "npm run build && npm test"
+    }
   },
   "repository": {
     "type": "git",
@@ -28,7 +32,7 @@
   },
   "homepage": "https://github.com/utatti/kou",
   "devDependencies": {
-    "husky": "^0.14.3",
+    "husky": "^0.15.0-rc.8",
     "prettier": "^1.8.2",
     "ts-node": "^4.0.1",
     "typescript": "^2.6.1"
