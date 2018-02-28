@@ -1,64 +1,64 @@
 import * as a from './ast';
-
-type Visit<T, U = T> = (orig: T) => U;
+import { Arity1 } from '../util';
 
 export type Visitor = {
-  visitModule: Visit<a.Module>;
-  visitImport: Visit<a.Import>;
-  visitBlock: Visit<a.Block>;
-  visitLiteral: Visit<a.Literal<any>>;
-  visitExpr: Visit<a.Expr<any>>;
-  visitDecl: Visit<a.Decl>;
-  visitIdent: Visit<a.Ident>;
-  visitBinaryOp: Visit<a.BinaryOp<any>>;
-  visitUnaryOp: Visit<a.UnaryOp>;
-  visitType: Visit<a.Type<any>>;
+  visitModule: Arity1<a.Module>;
+  visitImport: Arity1<a.Import>;
+  visitBlock: Arity1<a.Block>;
+  visitLiteral: Arity1<a.Literal<any>>;
+  visitExpr: Arity1<a.Expr<any>>;
+  visitDecl: Arity1<a.Decl>;
+  visitIdent: Arity1<a.Ident>;
+  visitBinaryOp: Arity1<a.BinaryOp<any>>;
+  visitUnaryOp: Arity1<a.UnaryOp>;
+  visitType: Arity1<a.Type<any>>;
 
-  beforeVisitModule: Visit<a.Module, void>;
-  beforeVisitImport: Visit<a.Import, void>;
-  beforeVisitBlock: Visit<a.Block, void>;
-  beforeVisitLiteral: Visit<a.Literal<any>, void>;
-  beforeVisitExpr: Visit<a.Expr<any>, void>;
-  beforeVisitDecl: Visit<a.Decl, void>;
-  beforeVisitIdent: Visit<a.Ident, void>;
-  beforeVisitBinaryOp: Visit<a.BinaryOp<any>, void>;
-  beforeVisitUnaryOp: Visit<a.UnaryOp, void>;
-  beforeVisitType: Visit<a.Type<any>, void>;
+  beforeVisitModule: Arity1<a.Module>;
+  beforeVisitImport: Arity1<a.Import>;
+  beforeVisitBlock: Arity1<a.Block>;
+  beforeVisitLiteral: Arity1<a.Literal<any>>;
+  beforeVisitExpr: Arity1<a.Expr<any>>;
+  beforeVisitDecl: Arity1<a.Decl>;
+  beforeVisitIdent: Arity1<a.Ident>;
+  beforeVisitBinaryOp: Arity1<a.BinaryOp<any>>;
+  beforeVisitUnaryOp: Arity1<a.UnaryOp>;
+  beforeVisitType: Arity1<a.Type<any>>;
 };
 
-export type VisitorOptions = { [K in keyof Visitor]?: Visitor[K] };
+export type VisitorOptions = {
+  [K in keyof Visitor]?: Visitor[K] extends Arity1<infer T>
+    ? Arity1<T, T | void>
+    : never
+};
 
-const idVisit = <T>(orig: T) => orig;
-const voidVisit = <T>(orig: T) => {};
+const wrapOption = <T>(f?: Arity1<T, T | void>): Arity1<T> =>
+  f ? (x: T) => f(x) || x : (x: T) => x;
 
 // factory function for Visitor
 export function visitor(opts: VisitorOptions): Visitor {
-  const v: Visitor = Object.assign(
-    {
-      visitModule: idVisit,
-      visitImport: idVisit,
-      visitBlock: idVisit,
-      visitLiteral: idVisit,
-      visitExpr: idVisit,
-      visitDecl: idVisit,
-      visitIdent: idVisit,
-      visitBinaryOp: idVisit,
-      visitUnaryOp: idVisit,
-      visitType: idVisit,
+  const v: Visitor = {
+    visitModule: wrapOption(opts.visitModule),
+    visitImport: wrapOption(opts.visitImport),
+    visitBlock: wrapOption(opts.visitBlock),
+    visitLiteral: wrapOption(opts.visitLiteral),
+    visitExpr: wrapOption(opts.visitExpr),
+    visitDecl: wrapOption(opts.visitDecl),
+    visitIdent: wrapOption(opts.visitIdent),
+    visitBinaryOp: wrapOption(opts.visitBinaryOp),
+    visitUnaryOp: wrapOption(opts.visitUnaryOp),
+    visitType: wrapOption(opts.visitType),
 
-      beforeVisitModule: voidVisit,
-      beforeVisitImport: voidVisit,
-      beforeVisitBlock: voidVisit,
-      beforeVisitLiteral: voidVisit,
-      beforeVisitExpr: voidVisit,
-      beforeVisitDecl: voidVisit,
-      beforeVisitIdent: voidVisit,
-      beforeVisitBinaryOp: voidVisit,
-      beforeVisitUnaryOp: voidVisit,
-      beforeVisitType: voidVisit,
-    },
-    opts,
-  );
+    beforeVisitModule: wrapOption(opts.beforeVisitModule),
+    beforeVisitImport: wrapOption(opts.beforeVisitImport),
+    beforeVisitBlock: wrapOption(opts.beforeVisitBlock),
+    beforeVisitLiteral: wrapOption(opts.beforeVisitLiteral),
+    beforeVisitExpr: wrapOption(opts.beforeVisitExpr),
+    beforeVisitDecl: wrapOption(opts.beforeVisitDecl),
+    beforeVisitIdent: wrapOption(opts.beforeVisitIdent),
+    beforeVisitBinaryOp: wrapOption(opts.beforeVisitBinaryOp),
+    beforeVisitUnaryOp: wrapOption(opts.beforeVisitUnaryOp),
+    beforeVisitType: wrapOption(opts.beforeVisitType),
+  };
 
   return {
     visitModule(node) {
@@ -171,15 +171,15 @@ export function visitor(opts: VisitorOptions): Visitor {
       return v.visitType(node);
     },
 
-    beforeVisitModule: voidVisit,
-    beforeVisitImport: voidVisit,
-    beforeVisitBlock: voidVisit,
-    beforeVisitLiteral: voidVisit,
-    beforeVisitExpr: voidVisit,
-    beforeVisitDecl: voidVisit,
-    beforeVisitIdent: voidVisit,
-    beforeVisitBinaryOp: voidVisit,
-    beforeVisitUnaryOp: voidVisit,
-    beforeVisitType: voidVisit,
+    beforeVisitModule: v.beforeVisitModule,
+    beforeVisitImport: v.beforeVisitImport,
+    beforeVisitBlock: v.beforeVisitBlock,
+    beforeVisitLiteral: v.beforeVisitLiteral,
+    beforeVisitExpr: v.beforeVisitExpr,
+    beforeVisitDecl: v.beforeVisitDecl,
+    beforeVisitIdent: v.beforeVisitIdent,
+    beforeVisitBinaryOp: v.beforeVisitBinaryOp,
+    beforeVisitUnaryOp: v.beforeVisitUnaryOp,
+    beforeVisitType: v.beforeVisitType,
   };
 }

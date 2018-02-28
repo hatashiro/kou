@@ -55,7 +55,7 @@ export function tempFile(ext: string): string {
   return fileSync({ mode: 0o644, postfix: `.${ext}` }).name;
 }
 
-export type Arity1<T, U> = (x: T) => U;
+export type Arity1<T, U = T> = (x: T) => U;
 
 export class Compose<T, U> {
   constructor(public f: Arity1<T, U>) {}
