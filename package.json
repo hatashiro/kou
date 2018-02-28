@@ -34,11 +34,12 @@
   "devDependencies": {
     "husky": "^0.15.0-rc.8",
     "prettier": "^1.8.2",
-    "ts-node": "^4.0.1",
-    "typescript": "^2.6.1"
+    "ts-node": "^5.0.0",
+    "typescript": "^2.8.0-dev.20180228"
   },
   "dependencies": {
     "@typed/compose": "^1.0.0",
+    "@types/node": "^9.4.6",
     "@types/tmp": "0.0.33",
     "chalk": "^2.3.0",
     "previewable-iterator": "^0.1.1",
