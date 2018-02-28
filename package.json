@@ -39,7 +39,9 @@
   },
   "dependencies": {
     "@typed/compose": "^1.0.0",
+    "@types/tmp": "0.0.33",
     "chalk": "^2.3.0",
-    "previewable-iterator": "^0.1.1"
+    "previewable-iterator": "^0.1.1",
+    "tmp": "0.0.33"
   }
 }
