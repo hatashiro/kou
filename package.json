@@ -11,10 +11,10 @@
     "prettier": "prettier --parser typescript --single-quote --trailing-comma all '{src,test}/**/*.ts'",
     "format": "npm run prettier -- --write",
     "format:dry": "npm run prettier -- -l",
-    "test": "npm run format:dry && npm run build && ts-node --no-cache --type-check test",
+    "test": "ts-node --no-cache --type-check test",
     "release": "npm run build && npm publish",
     "precommit": "npm run format:dry",
-    "prepush": "npm run test",
+    "prepush": "npm run build && npm run test",
     "postinstall": "./scripts/build-wabt.sh"
   },
   "repository": {
