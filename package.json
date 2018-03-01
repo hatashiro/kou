@@ -40,6 +40,7 @@
   "dependencies": {
     "@types/node": "^9.4.6",
     "@types/tmp": "0.0.33",
+    "@types/webassembly-js-api": "0.0.1",
     "chalk": "^2.3.0",
     "previewable-iterator": "^0.1.1",
     "tmp": "0.0.33"
