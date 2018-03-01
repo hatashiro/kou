@@ -12,9 +12,9 @@ console.log(chalk.bold('Running codegen tests...'));
 const compile = Compose.then(tokenize)
   .then(parse)
   .then(desugarBefore)
-  .then(typeCheck(new TypeContext()))
+  .then(mod => typeCheck(mod, new TypeContext()))
   .then(desugarAfter)
-  .then(genWASM('test')).f;
+  .then(mod => genWASM(mod, 'test')).f;
 
 async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
   const wasmModule = compile(moduleStr);

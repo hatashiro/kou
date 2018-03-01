@@ -1,8 +1,9 @@
 import * as a from '../parser/ast';
 import { wat2wasm } from '../wasm';
 
-export const genWASM = (exportName: string) => (mod: a.Module): Buffer =>
-  wat2wasm(genWAT(mod, exportName));
+export function genWASM(mod: a.Module, exportName: string): Buffer {
+  return wat2wasm(genWAT(mod, exportName));
+}
 
 export function genWAT(mod: a.Module, exportName: string): string {
   // FIXME

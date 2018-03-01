@@ -11,7 +11,7 @@ import { Compose } from './util';
 const compile = Compose.then(tokenize)
   .then(parse)
   .then(desugarBefore)
-  .then(typeCheck(new TypeContext()))
+  .then(mod => typeCheck(mod, new TypeContext()))
   .then(desugarAfter).f;
 
 function exitWithErrors(errors: Array<string>) {

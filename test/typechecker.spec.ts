@@ -31,7 +31,7 @@ const funcType = (v: { param: a.Type<any>; return: a.Type<any> }) =>
 
 const compileAST = Compose.then(tokenize)
   .then(parse)
-  .then(desugarBefore);
+  .then(desugarBefore).f;
 
 function exprTypeTest(
   exprStr: string,
@@ -51,7 +51,7 @@ function exprTypeTest(
   }
 
   try {
-    const mod = compileAST.f(moduleStr);
+    const mod = compileAST(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
     typeEqual(actualType, expectedType);
   } catch (err) {
@@ -78,7 +78,7 @@ function blockTypeTest(
 ) {
   const moduleStr = `let x = fn () ${expectedType.name} ${blockStr}`;
   try {
-    const mod = compileAST.f(moduleStr);
+    const mod = compileAST(moduleStr);
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
     const actualType = checkBlockType(fn.value.body, ctx);
     typeEqual(actualType, expectedType);
@@ -701,8 +701,6 @@ function typeCheckTest(
   context: TypeContext,
   shouldThrow?: string,
 ) {
-  const compile = compileAST.then(typeCheck(context)).f;
-
   function failWith(errMsg: string) {
     console.error(chalk.blue.bold('Test:'));
     console.error(program);
@@ -713,7 +711,7 @@ function typeCheckTest(
   }
 
   try {
-    compile(program);
+    typeCheck(compileAST(program), context);
   } catch (err) {
     if (
       shouldThrow &&

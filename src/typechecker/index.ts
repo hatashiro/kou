@@ -85,7 +85,7 @@ export class TypeError extends Error {
   }
 }
 
-export const typeCheck = (ctx: TypeContext) => (mod: a.Module): a.Module => {
+export function typeCheck(mod: a.Module, ctx: TypeContext) {
   ctx.enterScope();
 
   // FIXME: process imports
@@ -99,7 +99,7 @@ export const typeCheck = (ctx: TypeContext) => (mod: a.Module): a.Module => {
   ctx.leaveScope();
 
   return mod;
-};
+}
 
 function cloneType<T, TY extends a.Type<T>>(
   orig: TY,
