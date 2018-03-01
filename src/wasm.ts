@@ -14,3 +14,10 @@ export function wat2wasm(watStr: string): Buffer {
   execSync(`${bin.wat2wasm} ${watFile} -o ${wasmFile}`);
   return readFileSync(wasmFile);
 }
+
+export async function runWASM(wasmModule: Buffer, main: string): Promise<any> {
+  // FIXME: stdlib
+  const imports = {};
+  const { instance } = await WebAssembly.instantiate(wasmModule, imports);
+  return instance.exports[main]();
+}
