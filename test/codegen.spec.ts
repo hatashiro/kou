@@ -30,7 +30,13 @@ async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
   }
 }
 
-// FIXME
-moduleRunTest('', 1234);
+moduleRunTest(
+  `
+let test = fn () float {
+  1234.
+}
+`,
+  1234,
+);
 
 console.log(chalk.green.bold('Passed!'));
