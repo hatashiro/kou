@@ -96,7 +96,6 @@ function* codegenFunction(
   yield* codegenType(func.value.returnType);
   yield ')';
 
-  // FIXME: body
   yield* codegenBlock(func.value.body, false, ctx);
 
   ctx.leaveScope();
