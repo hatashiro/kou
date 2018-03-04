@@ -97,7 +97,7 @@ function* codegenFunction(
   yield ')';
 
   // FIXME: body
-  yield `(f64.const 1234)`;
+  yield* codegenBlock(func.value.body, false, ctx);
 
   ctx.leaveScope();
 
@@ -120,4 +120,51 @@ function* codegenType(ty: a.Type<any>): Iterable<string> {
   }
 
   // FIXME: complex types
+}
+
+function* codegenBlock(
+  block: a.Block,
+  createWASMBlock: boolean,
+  ctx: CodeGenContext,
+): Iterable<string> {
+  for (const body of block.value.bodies) {
+    if (body instanceof a.Expr) {
+      // expr
+      yield* codegenExpr(body, ctx);
+    } else {
+      // local decl
+      yield* codegenLocalDecl(body, ctx);
+    }
+  }
+
+  if (block.value.returnVoid) {
+    yield '(return)';
+  }
+}
+
+function* codegenExpr(
+  expr: a.Expr<any>,
+  ctx: CodeGenContext,
+): Iterable<string> {
+  if (expr instanceof a.LitExpr) {
+    yield* codegenLiteral(expr.value, ctx);
+  }
+  // FIXME
+}
+
+function* codegenLiteral(
+  lit: a.Literal<any>,
+  ctx: CodeGenContext,
+): Iterable<string> {
+  if (lit instanceof a.FloatLit) {
+    yield `(f64.const ${lit.value})`;
+  }
+  // FIXME
+}
+
+function* codegenLocalDecl(
+  decl: a.Decl,
+  ctx: CodeGenContext,
+): Iterable<string> {
+  // FIXME
 }
