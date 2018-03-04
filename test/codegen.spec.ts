@@ -39,4 +39,13 @@ let test = fn () float {
   1234,
 );
 
+moduleRunTest(
+  `
+let test = fn () void {
+  1234.;
+}
+`,
+  undefined,
+);
+
 console.log(chalk.green.bold('Passed!'));
