@@ -4,7 +4,7 @@ import { desugarBefore, desugarAfter } from '../src/desugarer';
 
 console.log(chalk.bold('Running desugarer tests...'));
 
-function n(Cons: a.NodeConstructor<any, any>, value: any): a.Node<any> {
+function n(Cons: any, value: any): any {
   return new Cons(value, -1, -1);
 }
 
