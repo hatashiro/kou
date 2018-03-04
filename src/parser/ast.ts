@@ -163,7 +163,9 @@ export class Block extends Node<{
   returnVoid: boolean;
 }> {}
 
-export abstract class Expr<T> extends Node<T> {}
+export abstract class Expr<T> extends Node<T> {
+  type: Type<any> | null = null; // 'type' is set in typechecker
+}
 
 export class BinaryExpr extends Expr<{
   left: Expr<any>;

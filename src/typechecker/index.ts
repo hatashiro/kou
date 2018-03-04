@@ -113,6 +113,25 @@ export function checkExprType(
   ctx: TypeContext,
   checkFuncBody: boolean = true,
 ): a.Type<any> {
+  if (expr.type) {
+    return expr.type;
+  }
+
+  const ty = checkExprTypeWithoutCache(expr, ctx, checkFuncBody);
+
+  // do not cache the result for FuncExpr without body check
+  if (!(expr instanceof a.FuncExpr && !checkFuncBody)) {
+    expr.type = ty;
+  }
+
+  return ty;
+}
+
+function checkExprTypeWithoutCache(
+  expr: a.Expr<any>,
+  ctx: TypeContext,
+  checkFuncBody: boolean = true,
+): a.Type<any> {
   if (expr instanceof a.LitExpr) {
     if (expr.value instanceof a.IntLit) {
       return new a.IntType(expr.row, expr.column);
