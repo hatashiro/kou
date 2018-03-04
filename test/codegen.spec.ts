@@ -48,4 +48,31 @@ let test = fn () void {
   undefined,
 );
 
+moduleRunTest(
+  `
+let test = fn () int {
+  1234
+}
+`,
+  1234,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  true
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () char {
+  '\\n'
+}
+`,
+  '\n'.codePointAt(0),
+);
+
 console.log(chalk.green.bold('Passed!'));

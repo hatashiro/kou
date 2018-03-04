@@ -156,10 +156,17 @@ function* codegenLiteral(
   lit: a.Literal<any>,
   ctx: CodegenContext,
 ): Iterable<string> {
-  if (lit instanceof a.FloatLit) {
+  if (lit instanceof a.IntLit) {
+    yield `(i32.const ${lit.value})`;
+  } else if (lit instanceof a.FloatLit) {
     yield `(f64.const ${lit.value})`;
+  } else if (lit instanceof a.StrLit) {
+    // FIXME: string literal
+  } else if (lit instanceof a.CharLit) {
+    yield `(i32.const ${lit.parsedValue.codePointAt(0)})`;
+  } else if (lit instanceof a.BoolLit) {
+    yield `(i32.const ${lit.parsedValue ? 1 : 0})`;
   }
-  // FIXME
 }
 
 function* codegenLocalDecl(
