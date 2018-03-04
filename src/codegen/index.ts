@@ -6,7 +6,7 @@ export function genWASM(mod: a.Module, exportName: string): Buffer {
 }
 
 export function genWAT(mod: a.Module, exportName: string): string {
-  const ctx = new CodeGenContext();
+  const ctx = new CodegenContext();
   let result = '';
   for (const thunk of codegenModule(mod, exportName, ctx)) {
     result += thunk;
@@ -14,7 +14,7 @@ export function genWAT(mod: a.Module, exportName: string): string {
   return result;
 }
 
-class CodeGenContext {
+class CodegenContext {
   private globalNameMap: Map<string, string> = new Map();
   private localNameMaps: Array<Map<string, string>> = [];
 
@@ -50,7 +50,7 @@ class CodeGenContext {
 function* codegenModule(
   mod: a.Module,
   exportName: string,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   yield '(module';
 
@@ -67,7 +67,7 @@ function* codegenModule(
 
 function* codegenGlobalDecl(
   decl: a.Decl,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   if (decl.value.expr instanceof a.FuncExpr) {
     yield* codegenFunction(decl.value.name.value, decl.value.expr, ctx);
@@ -79,7 +79,7 @@ function* codegenGlobalDecl(
 function* codegenFunction(
   origName: string,
   func: a.FuncExpr,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   const name = ctx.pushName(origName);
 
@@ -125,7 +125,7 @@ function* codegenType(ty: a.Type<any>): Iterable<string> {
 function* codegenBlock(
   block: a.Block,
   createWASMBlock: boolean,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   for (const body of block.value.bodies) {
     if (body instanceof a.Expr) {
@@ -144,7 +144,7 @@ function* codegenBlock(
 
 function* codegenExpr(
   expr: a.Expr<any>,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   if (expr instanceof a.LitExpr) {
     yield* codegenLiteral(expr.value, ctx);
@@ -154,7 +154,7 @@ function* codegenExpr(
 
 function* codegenLiteral(
   lit: a.Literal<any>,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   if (lit instanceof a.FloatLit) {
     yield `(f64.const ${lit.value})`;
@@ -164,7 +164,7 @@ function* codegenLiteral(
 
 function* codegenLocalDecl(
   decl: a.Decl,
-  ctx: CodeGenContext,
+  ctx: CodegenContext,
 ): Iterable<string> {
   // FIXME
 }
