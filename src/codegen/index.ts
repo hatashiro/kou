@@ -93,7 +93,7 @@ function* codegenFunction(
   }
 
   yield '(result ';
-  yield* codegenType(func.value.returnType);
+  yield* codegenType(func.value.returnType, ctx);
   yield ')';
 
   yield* codegenBlock(func.value.body, false, ctx);
@@ -103,7 +103,7 @@ function* codegenFunction(
   yield ')';
 }
 
-function* codegenType(ty: a.Type<any>): Iterable<string> {
+function* codegenType(ty: a.Type<any>, ctx: CodegenContext): Iterable<string> {
   if (ty instanceof a.IntType) {
     yield 'i32';
   } else if (ty instanceof a.FloatType) {
@@ -128,7 +128,7 @@ function* codegenBlock(
 ): Iterable<string> {
   for (const body of block.value.bodies) {
     if (body instanceof a.Decl) {
-      yield* codegenLocalDecl(body, ctx, true);
+      yield* codegenLocalVar(body, true, ctx);
     }
   }
 
@@ -138,7 +138,7 @@ function* codegenBlock(
       yield* codegenExpr(body, ctx);
     } else {
       // local decl
-      yield* codegenLocalDecl(body, ctx, false);
+      yield* codegenLocalVar(body, false, ctx);
     }
   }
 
@@ -180,15 +180,15 @@ function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
   yield `(get_local $${name})`;
 }
 
-function* codegenLocalDecl(
+function* codegenLocalVar(
   decl: a.Decl,
-  ctx: CodegenContext,
   init: boolean,
+  ctx: CodegenContext,
 ): Iterable<string> {
   if (init) {
     const name = ctx.pushName(decl.value.name.value);
     yield `(local $${name} `;
-    yield* codegenType(decl.value.expr.type!);
+    yield* codegenType(decl.value.expr.type!, ctx);
     yield ')';
   } else {
     const name = ctx.getWATName(decl.value.name.value);
