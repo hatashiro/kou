@@ -126,4 +126,32 @@ let test = test_impl
   123,
 );
 
+moduleRunTest(
+  `
+let test_impl = fn (x float) float {
+  1234;
+  x
+}
+
+let test = fn () float {
+  test_impl(123.)
+}
+`,
+  123,
+);
+
+moduleRunTest(
+  `
+let test_impl = fn (x float, y int) int {
+  x;
+  y
+}
+
+let test = fn () int {
+  test_impl(123., test_impl(123., 1234))
+}
+`,
+  1234,
+);
+
 console.log(chalk.green.bold('Passed!'));

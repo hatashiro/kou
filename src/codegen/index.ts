@@ -104,8 +104,10 @@ function* codegenFunction(
   ctx.enterScope();
 
   for (const param of func.value.params.items) {
-    // FIXME: param
-    // (param $name <type>)
+    yield '(param';
+    yield `$${ctx.pushName(param.name.value)}`;
+    yield* codegenType(param.type, ctx);
+    yield ')';
   }
 
   yield '(result';
@@ -169,6 +171,8 @@ function* codegenExpr(
     yield* codegenLiteral(expr.value, ctx);
   } else if (expr instanceof a.IdentExpr) {
     yield* codegenIdent(expr.value, ctx);
+  } else if (expr instanceof a.CallExpr) {
+    yield* codegenCallExpr(expr, ctx);
   }
   // FIXME
 }
@@ -198,6 +202,27 @@ function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
     name = ctx.getGlobalWATName(ident.value);
     yield `(get_global $${name})`;
   }
+}
+
+function* codegenCallExpr(
+  call: a.CallExpr,
+  ctx: CodegenContext,
+): Iterable<string> {
+  if (!(call.value.func instanceof a.IdentExpr)) {
+    // do not support
+    return;
+  }
+
+  if (call.value.args instanceof a.TupleExpr) {
+    for (const arg of call.value.args.value.items) {
+      yield* codegenExpr(arg, ctx);
+    }
+  } else {
+    yield* codegenExpr(call.value.args, ctx);
+  }
+
+  const funcName = ctx.getGlobalWATName(call.value.func.value.value);
+  yield `(call $${funcName})`;
 }
 
 function* codegenLocalVar(
