@@ -9,7 +9,7 @@ export function genWAT(mod: a.Module, exportName: string): string {
   const ctx = new CodegenContext();
   let result = '';
   for (const thunk of codegenModule(mod, exportName, ctx)) {
-    result += thunk;
+    result += thunk + ' ';
   }
   return result;
 }
@@ -108,7 +108,7 @@ function* codegenFunction(
     // (param $name <type>)
   }
 
-  yield '(result ';
+  yield '(result';
   yield* codegenType(func.value.returnType, ctx);
   yield ')';
 
@@ -207,7 +207,7 @@ function* codegenLocalVar(
 ): Iterable<string> {
   if (init) {
     const name = ctx.pushName(decl.value.name.value);
-    yield `(local $${name} `;
+    yield `(local $${name}`;
     yield* codegenType(decl.value.expr.type!, ctx);
     yield ')';
   } else {
@@ -222,7 +222,7 @@ function* codegenGlobalVar(
   ctx: CodegenContext,
 ): Iterable<string> {
   const name = ctx.pushName(decl.value.name.value);
-  yield `(global $${name} `;
+  yield `(global $${name}`;
   const expr = decl.value.expr;
   yield* codegenType(expr.type!, ctx);
 
