@@ -17,14 +17,16 @@ export function genWAT(mod: a.Module, exportName: string): string {
 class CodegenContext {
   private globalNameMap: Map<string, string> = new Map();
   private localNameMaps: Array<Map<string, string>> = [];
-  private globalAliasMap: Map<string, string> = new Map();
+  private aliasMaps: Array<Map<string, string>> = [new Map()];
 
   enterScope() {
     this.localNameMaps.unshift(new Map());
+    this.aliasMaps.unshift(new Map());
   }
 
   leaveScope() {
     this.localNameMaps.shift();
+    this.aliasMaps.shift();
   }
 
   pushName(origName: string): string {
@@ -38,7 +40,7 @@ class CodegenContext {
   }
 
   pushAlias(fromName: string, toName: string) {
-    this.globalAliasMap.set(fromName, toName);
+    this.aliasMaps[0]!.set(fromName, toName);
   }
 
   getLocalWATName(origName: string): string | null {
@@ -53,7 +55,13 @@ class CodegenContext {
   }
 
   getGlobalWATName(origName: string): string | null {
-    const aliasedName = this.globalAliasMap.get(origName);
+    let aliasedName = null;
+    for (const map of this.aliasMaps) {
+      aliasedName = map.get(origName);
+      if (aliasedName) {
+        break;
+      }
+    }
     return this.globalNameMap.get(aliasedName || origName) || null;
   }
 }
@@ -230,15 +238,24 @@ function* codegenLocalVar(
   init: boolean,
   ctx: CodegenContext,
 ): Iterable<string> {
-  if (init) {
-    const name = ctx.pushName(decl.value.name.value);
-    yield `(local $${name}`;
-    yield* codegenType(decl.value.expr.type!, ctx);
-    yield ')';
+  const origName = decl.value.name.value;
+  const expr = decl.value.expr;
+
+  if (expr instanceof a.IdentExpr && expr.type instanceof a.FuncType) {
+    if (!init) {
+      ctx.pushAlias(origName, ctx.getGlobalWATName(expr.value.value)!);
+    }
   } else {
-    const name = ctx.getLocalWATName(decl.value.name.value);
-    yield* codegenExpr(decl.value.expr, ctx);
-    yield `(set_local $${name})`;
+    if (init) {
+      const name = ctx.pushName(origName);
+      yield `(local $${name}`;
+      yield* codegenType(expr.type!, ctx);
+      yield ')';
+    } else {
+      const name = ctx.getLocalWATName(origName);
+      yield* codegenExpr(expr, ctx);
+      yield `(set_local $${name})`;
+    }
   }
 }
 

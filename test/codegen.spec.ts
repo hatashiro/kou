@@ -154,4 +154,20 @@ let test = fn () int {
   1234,
 );
 
+moduleRunTest(
+  `
+let test_impl = fn (x float, y int) int {
+  x;
+  y
+}
+
+let test = fn () int {
+  let f = test_impl;
+  let g = f;
+  g(123., f(123., 1234))
+}
+`,
+  1234,
+);
+
 console.log(chalk.green.bold('Passed!'));
