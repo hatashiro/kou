@@ -170,4 +170,20 @@ let test = fn () int {
   1234,
 );
 
+moduleRunTest(
+  `
+let test_impl = fn (x float, y int) int {
+  x;
+  y
+}
+
+let x = test_impl(123., 1234)
+
+let test = fn () int {
+  x
+}
+`,
+  1234,
+);
+
 console.log(chalk.green.bold('Passed!'));

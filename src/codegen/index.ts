@@ -19,6 +19,8 @@ class CodegenContext {
   private localNameMaps: Array<Map<string, string>> = [];
   private aliasMaps: Array<Map<string, string>> = [new Map()];
 
+  public globalInitializers: Array<{ watName: string; expr: a.Expr<any> }> = [];
+
   enterScope() {
     this.localNameMaps.unshift(new Map());
     this.aliasMaps.unshift(new Map());
@@ -41,6 +43,11 @@ class CodegenContext {
 
   pushAlias(fromName: string, toName: string) {
     this.aliasMaps[0]!.set(fromName, toName);
+  }
+
+  pushInitializer(watName: string, expr: a.Expr<any>) {
+    // name here is a WAT name
+    this.globalInitializers.push({ watName, expr });
   }
 
   getLocalWATName(origName: string): string | null {
@@ -79,9 +86,27 @@ function* codegenModule(
     yield* codegenGlobalDecl(decl, ctx);
   }
 
+  yield* codegenStartFunc(ctx);
+
   yield `(export "${exportName}" (func $${ctx.getGlobalWATName(exportName)}))`;
 
   yield ')';
+}
+
+function* codegenStartFunc(ctx: CodegenContext): Iterable<string> {
+  if (ctx.globalInitializers.length === 0) {
+    return;
+  }
+
+  yield '(func $/start';
+
+  for (const { watName, expr } of ctx.globalInitializers) {
+    yield* codegenExpr(expr, ctx);
+    yield `(set_global $${watName})`;
+  }
+
+  yield ')';
+  yield '(start $/start)';
 }
 
 function* codegenGlobalDecl(
@@ -95,7 +120,6 @@ function* codegenGlobalDecl(
     // function name alias
     ctx.pushAlias(decl.value.name.value, expr.value.value);
   } else {
-    // literal
     yield* codegenGlobalVar(decl, ctx);
   }
 }
@@ -202,6 +226,24 @@ function* codegenLiteral(
   }
 }
 
+function* codegenInitialValForType(
+  lit: a.Type<any>,
+  ctx: CodegenContext,
+): Iterable<string> {
+  if (lit instanceof a.IntType) {
+    yield `(i32.const 0)`;
+  } else if (lit instanceof a.FloatType) {
+    yield `(f64.const 0)`;
+  } else if (lit instanceof a.StrType) {
+    // FIXME: string literal
+  } else if (lit instanceof a.CharType) {
+    yield `(i32.const 0)`;
+  } else if (lit instanceof a.BoolType) {
+    yield `(i32.const 0)`;
+  }
+  // FIXME: complex types
+}
+
 function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
   let name = ctx.getLocalWATName(ident.value);
   if (name) {
@@ -266,12 +308,16 @@ function* codegenGlobalVar(
   const name = ctx.pushName(decl.value.name.value);
   yield `(global $${name}`;
   const expr = decl.value.expr;
-  yield* codegenType(expr.type!, ctx);
-
   if (expr instanceof a.LitExpr) {
+    yield* codegenType(expr.type!, ctx);
     yield* codegenLiteral(expr.value, ctx);
   } else {
-    // FIXME: needs start function with (start ...)
+    yield '(mut';
+    yield* codegenType(expr.type!, ctx);
+    yield ')';
+    yield* codegenInitialValForType(expr.type!, ctx);
+    ctx.pushInitializer(name, expr);
   }
+
   yield ')';
 }
