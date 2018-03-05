@@ -232,4 +232,32 @@ let test = fn () bool {
   0,
 );
 
+moduleRunTest(
+  `
+let a = 1234.
+let f = fn () float {
+  a;
+  123.
+}
+let id = fn (x float) float { x }
+let c = fn (b bool) float {
+  let x = 1.23;
+  if (!b) {
+    let x = a;
+    x
+  } else {
+    let y = x;
+    let x = y;
+    let f = id;
+    f(x)
+  }
+}
+let test = fn () float {
+  c(false);
+  c(true)
+}
+`,
+  1.23,
+);
+
 console.log(chalk.green.bold('Passed!'));

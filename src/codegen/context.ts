@@ -5,26 +5,63 @@ export class CodegenContext {
   private localNameMaps: Array<Map<string, string>> = [];
   private aliasMaps: Array<Map<string, string>> = [new Map()];
 
+  private scopeIDStack: Array<number> = [];
+  private incrScopeID: number = 0;
+
   public globalInitializers: Array<{ watName: string; expr: a.Expr<any> }> = [];
 
-  enterScope() {
+  private enterScope() {
     this.localNameMaps.unshift(new Map());
     this.aliasMaps.unshift(new Map());
   }
 
-  leaveScope() {
+  private leaveScope() {
     this.localNameMaps.shift();
     this.aliasMaps.shift();
   }
 
+  enterFunction() {
+    this.enterScope();
+    this.resetScopeID();
+  }
+
+  leaveFunction() {
+    this.leaveScope();
+  }
+
+  enterBlock() {
+    this.enterScope();
+    this.incrScopeID++;
+    this.scopeIDStack.unshift(this.incrScopeID);
+  }
+
+  leaveBlock() {
+    this.leaveScope();
+    this.scopeIDStack.shift();
+  }
+
+  resetScopeID() {
+    this.scopeIDStack = [];
+    this.incrScopeID = 0;
+  }
+
+  private withScopeID(name: string): string {
+    if (this.scopeIDStack.length === 0) {
+      return name;
+    } else {
+      return `${name}/${this.scopeIDStack[0]}`;
+    }
+  }
+
+  convertLocalName(origName: string): string {
+    return this.withScopeID(origName);
+  }
+
   pushName(origName: string): string {
     const nameMap = this.localNameMaps[0] || this.globalNameMap;
-
-    // FIXME: add a logic to convert the original name
-    const name = origName;
-
-    nameMap.set(origName, name);
-    return name;
+    const watName = this.convertLocalName(origName);
+    nameMap.set(origName, watName);
+    return watName;
   }
 
   pushAlias(fromName: string, toName: string) {

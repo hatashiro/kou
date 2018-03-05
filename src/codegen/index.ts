@@ -75,7 +75,7 @@ function* codegenFunction(
 
   yield `(func $${name}`;
 
-  ctx.enterScope();
+  ctx.enterFunction();
 
   for (const param of func.value.params.items) {
     yield '(param';
@@ -88,9 +88,9 @@ function* codegenFunction(
   yield* codegenType(func.value.returnType, ctx);
   yield ')';
 
-  yield* codegenBlock(func.value.body, false, ctx);
+  yield* codegenBlock(func.value.body, true, ctx);
 
-  ctx.leaveScope();
+  ctx.leaveFunction();
 
   yield ')';
 }
@@ -115,13 +115,14 @@ function* codegenType(ty: a.Type<any>, ctx: CodegenContext): Iterable<string> {
 
 function* codegenBlock(
   block: a.Block,
-  createWASMBlock: boolean,
+  isFunction: boolean,
   ctx: CodegenContext,
 ): Iterable<string> {
-  for (const body of block.value.bodies) {
-    if (body instanceof a.Decl) {
-      yield* codegenLocalVar(body, true, ctx);
-    }
+  if (isFunction) {
+    yield* codegenLocalVarDef(block, ctx);
+    ctx.resetScopeID();
+  } else {
+    ctx.enterBlock();
   }
 
   for (const body of block.value.bodies) {
@@ -130,11 +131,30 @@ function* codegenBlock(
       yield* codegenExpr(body, ctx);
     } else {
       // local decl
-      yield* codegenLocalVar(body, false, ctx);
+      yield* codegenLocalVarAssign(body, ctx);
     }
   }
 
-  yield '(return)';
+  if (isFunction) {
+    yield '(return)';
+  } else {
+    ctx.leaveBlock();
+  }
+}
+
+function* codegenBlockType(
+  block: a.Block,
+  ctx: CodegenContext,
+): Iterable<string> {
+  if (block.value.returnVoid) {
+    yield '';
+  } else {
+    // the last body should be an expr;
+    const lastExpr: a.Expr<any> = block.value.bodies[
+      block.value.bodies.length - 1
+    ] as any;
+    yield* codegenType(lastExpr.type!, ctx);
+  }
 }
 
 function* codegenExpr(
@@ -149,6 +169,8 @@ function* codegenExpr(
     yield* codegenCallExpr(expr, ctx);
   } else if (expr instanceof a.UnaryExpr) {
     yield* codegenUnaryExpr(expr, ctx);
+  } else if (expr instanceof a.CondExpr) {
+    yield* codegenCondExpr(expr, ctx);
   }
   // FIXME
 }
@@ -249,29 +271,74 @@ function* codegenUnaryExpr(
   // '+' should be removed already in desugarer
 }
 
-function* codegenLocalVar(
+function* codegenCondExpr(
+  cond: a.CondExpr,
+  ctx: CodegenContext,
+): Iterable<string> {
+  yield* codegenExpr(cond.value.if, ctx);
+  yield '(if';
+
+  yield '(result';
+  yield* codegenBlockType(cond.value.then, ctx);
+  yield ')';
+
+  yield '(then';
+  yield* codegenBlock(cond.value.then, false, ctx);
+  yield ')';
+
+  yield '(else';
+  yield* codegenBlock(cond.value.else, false, ctx);
+  yield ')';
+
+  yield ')';
+}
+
+function* codegenLocalVarDef(
+  block: a.Block,
+  ctx: CodegenContext,
+): Iterable<string> {
+  for (const body of block.value.bodies) {
+    if (body instanceof a.Decl) {
+      const origName = body.value.name.value;
+      const expr = body.value.expr;
+
+      // ignore function alias
+      if (expr instanceof a.IdentExpr && expr.type instanceof a.FuncType) {
+        continue;
+      }
+
+      const name = ctx.convertLocalName(origName);
+      yield `(local $${name}`;
+      yield* codegenType(expr.type!, ctx);
+      yield ')';
+    } else if (body instanceof a.CondExpr) {
+      ctx.enterBlock();
+      yield* codegenLocalVarDef(body.value.then, ctx);
+      ctx.leaveBlock();
+      ctx.enterBlock();
+      yield* codegenLocalVarDef(body.value.else, ctx);
+      ctx.leaveBlock();
+    } else if (body instanceof a.LoopExpr) {
+      ctx.enterBlock();
+      yield* codegenLocalVarDef(body.value.do, ctx);
+      ctx.leaveBlock();
+    }
+  }
+}
+
+function* codegenLocalVarAssign(
   decl: a.Decl,
-  init: boolean,
   ctx: CodegenContext,
 ): Iterable<string> {
   const origName = decl.value.name.value;
   const expr = decl.value.expr;
 
   if (expr instanceof a.IdentExpr && expr.type instanceof a.FuncType) {
-    if (!init) {
-      ctx.pushAlias(origName, ctx.getGlobalWATName(expr.value.value)!);
-    }
+    ctx.pushAlias(origName, ctx.getGlobalWATName(expr.value.value)!);
   } else {
-    if (init) {
-      const name = ctx.pushName(origName);
-      yield `(local $${name}`;
-      yield* codegenType(expr.type!, ctx);
-      yield ')';
-    } else {
-      const name = ctx.getLocalWATName(origName);
-      yield* codegenExpr(expr, ctx);
-      yield `(set_local $${name})`;
-    }
+    yield* codegenExpr(expr, ctx);
+    const name = ctx.pushName(origName);
+    yield `(set_local $${name})`;
   }
 }
 
