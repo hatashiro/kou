@@ -5,13 +5,13 @@ import { parse } from '../src/parser/';
 import { desugarBefore } from '../src/desugarer/';
 import { Compose } from '../src/util';
 import {
-  TypeContext,
   checkExprType,
   checkBlockType,
   typeEqual,
   typeCheck,
-  TypeError,
 } from '../src/typechecker/';
+import { TypeContext } from '../src/typechecker/context';
+import { TypeError } from '../src/typechecker/error';
 
 console.log(chalk.bold('Running typechecker tests...'));
 

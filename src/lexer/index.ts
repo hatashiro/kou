@@ -13,6 +13,7 @@ import {
   Ident,
   EOF,
 } from './token';
+import { LexError } from './error';
 import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
 
 class LexerInput extends PreviewableIterable<string> {
@@ -36,18 +37,6 @@ class LexerInput extends PreviewableIterable<string> {
       this.nextColumn += 1;
     }
     return { done, value };
-  }
-}
-
-export class LexError extends Error {
-  name: string = 'LexError';
-
-  constructor(
-    public row: number,
-    public column: number,
-    public unexpected: string,
-  ) {
-    super(`Unexpected ${unexpected} at ${row}:${column}`);
   }
 }
 

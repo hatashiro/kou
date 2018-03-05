@@ -1,5 +1,7 @@
 import * as a from '../parser/ast';
 import { orStr } from '../util';
+import { TypeContext, IdentTypeDef } from './context';
+import { TypeError } from './error';
 
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {}
@@ -12,78 +14,6 @@ const charType = new a.CharType(-1, -1);
 const strType = new a.StrType(-1, -1);
 const boolType = new a.BoolType(-1, -1);
 const voidType = new a.VoidType(-1, -1);
-
-type IdentTypeDef = {
-  ident: a.Ident;
-  type: a.Type<any>;
-};
-
-export class TypeContext {
-  private scopes: Array<Map<string, a.Type<any>>>;
-
-  constructor() {
-    this.scopes = [new Map()];
-  }
-
-  get currentScope() {
-    return this.scopes[0];
-  }
-
-  enterScope() {
-    this.scopes.unshift(new Map());
-  }
-
-  leaveScope() {
-    this.scopes.shift();
-  }
-
-  push({ ident, type: ty }: IdentTypeDef) {
-    const name = ident.value;
-    if (this.currentScope.has(name)) {
-      throw new TypeError(
-        ident,
-        undefined,
-        `identifier '${name}' has already been declared`,
-        'SemanticError',
-      );
-    } else {
-      this.currentScope.set(name, ty);
-    }
-  }
-
-  getTypeOf(ident: a.Ident): a.Type<any> | null {
-    for (const scope of this.scopes) {
-      const ty = scope.get(ident.value);
-      if (ty) {
-        return ty;
-      }
-    }
-    return null;
-  }
-}
-
-export class TypeError extends Error {
-  name: 'TypeError' | 'SemanticError';
-  row: number;
-  column: number;
-
-  constructor(
-    public actual: { row: number; column: number; name: string },
-    public expected?: { name: string },
-    message: string = 'Type mismatch',
-    name: 'TypeError' | 'SemanticError' = 'TypeError',
-  ) {
-    super(
-      `${message}: ${expected ? `expected ${expected.name}, ` : ''}found ${
-        actual.name
-      } at ${actual.row}:${actual.column}`,
-    );
-
-    this.name = name;
-    this.row = actual.row;
-    this.column = actual.column;
-  }
-}
 
 export function typeCheck(mod: a.Module, ctx: TypeContext) {
   ctx.enterScope();

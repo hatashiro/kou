@@ -2,10 +2,14 @@ import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-import { tokenize, LexError } from './lexer';
-import { parse, ParseError } from './parser';
+import { tokenize } from './lexer';
+import { LexError } from './lexer/error';
+import { parse } from './parser';
+import { ParseError } from './parser/error';
 import { desugarBefore, desugarAfter } from './desugarer';
-import { typeCheck, TypeContext, TypeError } from './typechecker';
+import { typeCheck } from './typechecker';
+import { TypeContext } from './typechecker/context';
+import { TypeError } from './typechecker/error';
 import { Compose } from './util';
 
 const compile = Compose.then(tokenize)

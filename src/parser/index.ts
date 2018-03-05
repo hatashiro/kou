@@ -50,31 +50,10 @@ import {
   CondExpr,
   LoopExpr,
 } from './ast';
+import { ParseError } from './error';
 
 type ParserInput = PreviewableIterable<t.Token<any>>;
 type Parser<T> = (input: ParserInput) => T;
-
-export class ParseError extends Error {
-  name: string = 'ParseError';
-
-  constructor(
-    public row: number,
-    public column: number,
-    public unexpected: { name: string; rep?: string },
-    public expected?: { name: string; rep?: string },
-  ) {
-    super();
-
-    const str = ({ name, rep }: { name: string; rep?: string }) =>
-      name + (rep ? ` ${rep}` : '');
-
-    let message = `Unexpected ${str(unexpected)} at ${row}:${column}`;
-    if (expected) {
-      message += `, expected ${str(expected)}`;
-    }
-    this.message = message;
-  }
-}
 
 export function parse(tokens: Iterable<t.Token<any>>): Module {
   const input = previewable(tokens);
