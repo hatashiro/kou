@@ -327,14 +327,11 @@ function checkExprTypeWithoutCache(
   } else if (expr instanceof a.UnaryExpr) {
     const opTypes = unaryOpTypes(expr.value.op);
     const rightActualTy = checkExprType(expr.value.right, ctx);
-    for (const ty of opTypes) {
+    for (const { right, ret } of opTypes) {
       try {
-        typeEqual(rightActualTy, ty.right);
+        typeEqual(rightActualTy, right);
 
-        // tag the operator with type
-        expr.value.op.ty = ty;
-
-        return cloneType(ty.return, expr);
+        return cloneType(ret, expr);
       } catch {
         // ignore, try the next
       }
@@ -351,25 +348,22 @@ function checkExprTypeWithoutCache(
     const leftActualTy = checkExprType(expr.value.left, ctx);
     const opTypes = binaryOpTypes(expr.value.op, leftActualTy);
     const rightActualTy = checkExprType(expr.value.right, ctx);
-    for (const ty of opTypes) {
+    for (const { left, right, ret } of opTypes) {
       try {
-        typeEqual(leftActualTy, ty.left);
+        typeEqual(leftActualTy, left);
       } catch {
         // ignore, try the next
         continue;
       }
 
       try {
-        typeEqual(rightActualTy, ty.right);
+        typeEqual(rightActualTy, right);
 
-        // tag the operator with type
-        expr.value.op.ty = ty;
-
-        return cloneType(ty.return, expr);
+        return cloneType(ret, expr);
       } catch {
         throw new TypeError(
           rightActualTy,
-          ty.right,
+          right,
           `Right-hand operand type mismatch for '${expr.value.op.value}'`,
         );
       }
@@ -391,9 +385,11 @@ function checkExprTypeWithoutCache(
   });
 }
 
-function unaryOpTypes(op: a.UnaryOp): Array<a.UnaryOpType> {
+function unaryOpTypes(
+  op: a.UnaryOp,
+): Array<{ right: a.Type<any>; ret: a.Type<any> }> {
   // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({ right: ty, return: ty });
+  const res = (ty: a.Type<any>) => ({ right: ty, ret: ty });
 
   switch (op.value) {
     case '+':
@@ -408,12 +404,12 @@ function unaryOpTypes(op: a.UnaryOp): Array<a.UnaryOpType> {
 function binaryOpTypes(
   op: a.BinaryOp<any>,
   leftActualTy: a.Type<any>,
-): Array<a.BinaryOpType> {
+): Array<{ left: a.Type<any>; right: a.Type<any>; ret: a.Type<any> }> {
   // helper for op with same operand/return types
   const res = (ty: a.Type<any>, ret: a.Type<any> = ty) => ({
     left: ty,
     right: ty,
-    return: ret,
+    ret: ret,
   });
 
   if (op instanceof a.EqOp) {
