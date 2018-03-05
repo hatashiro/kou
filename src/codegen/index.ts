@@ -17,6 +17,7 @@ export function genWAT(mod: a.Module, exportName: string): string {
 class CodegenContext {
   private globalNameMap: Map<string, string> = new Map();
   private localNameMaps: Array<Map<string, string>> = [];
+  private globalAliasMap: Map<string, string> = new Map();
 
   enterScope() {
     this.localNameMaps.unshift(new Map());
@@ -36,14 +37,24 @@ class CodegenContext {
     return name;
   }
 
-  getWATName(origName: string): string | undefined {
+  pushAlias(fromName: string, toName: string) {
+    this.globalAliasMap.set(fromName, toName);
+  }
+
+  getLocalWATName(origName: string): string | null {
     for (const map of this.localNameMaps) {
       const name = map.get(origName);
       if (name) {
         return name;
       }
     }
-    return this.globalNameMap.get(origName);
+
+    return null;
+  }
+
+  getGlobalWATName(origName: string): string | null {
+    const aliasedName = this.globalAliasMap.get(origName);
+    return this.globalNameMap.get(aliasedName || origName) || null;
   }
 }
 
@@ -60,7 +71,7 @@ function* codegenModule(
     yield* codegenGlobalDecl(decl, ctx);
   }
 
-  yield `(export "${exportName}" (func $${ctx.getWATName(exportName)}))`;
+  yield `(export "${exportName}" (func $${ctx.getGlobalWATName(exportName)}))`;
 
   yield ')';
 }
@@ -69,10 +80,15 @@ function* codegenGlobalDecl(
   decl: a.Decl,
   ctx: CodegenContext,
 ): Iterable<string> {
-  if (decl.value.expr instanceof a.FuncExpr) {
+  const expr = decl.value.expr;
+  if (expr instanceof a.FuncExpr) {
     yield* codegenFunction(decl.value.name.value, decl.value.expr, ctx);
+  } else if (expr instanceof a.IdentExpr && expr.type instanceof a.FuncType) {
+    // function name alias
+    ctx.pushAlias(decl.value.name.value, expr.value.value);
   } else {
-    // FIXME: global variable decl
+    // literal
+    yield* codegenGlobalVar(decl, ctx);
   }
 }
 
@@ -175,9 +191,13 @@ function* codegenLiteral(
 }
 
 function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
-  // FIXME: process global
-  const name = ctx.getWATName(ident.value);
-  yield `(get_local $${name})`;
+  let name = ctx.getLocalWATName(ident.value);
+  if (name) {
+    yield `(get_local $${name})`;
+  } else {
+    name = ctx.getGlobalWATName(ident.value);
+    yield `(get_global $${name})`;
+  }
 }
 
 function* codegenLocalVar(
@@ -191,8 +211,25 @@ function* codegenLocalVar(
     yield* codegenType(decl.value.expr.type!, ctx);
     yield ')';
   } else {
-    const name = ctx.getWATName(decl.value.name.value);
+    const name = ctx.getLocalWATName(decl.value.name.value);
     yield* codegenExpr(decl.value.expr, ctx);
     yield `(set_local $${name})`;
   }
+}
+
+function* codegenGlobalVar(
+  decl: a.Decl,
+  ctx: CodegenContext,
+): Iterable<string> {
+  const name = ctx.pushName(decl.value.name.value);
+  yield `(global $${name} `;
+  const expr = decl.value.expr;
+  yield* codegenType(expr.type!, ctx);
+
+  if (expr instanceof a.LitExpr) {
+    yield* codegenLiteral(expr.value, ctx);
+  } else {
+    // FIXME: needs start function with (start ...)
+  }
+  yield ')';
 }

@@ -87,6 +87,7 @@ let test = fn () int {
 `,
   1234,
 );
+
 moduleRunTest(
   `
 let test = fn () int {
@@ -95,6 +96,32 @@ let test = fn () int {
   let y = 123;
   y
 }
+`,
+  123,
+);
+
+moduleRunTest(
+  `
+let x = 1234
+let y = 123
+let test = fn () int {
+  x;
+  y
+}
+`,
+  123,
+);
+
+moduleRunTest(
+  `
+let test_impl = fn () int {
+  let x = 1234;
+  x;
+  let y = 123;
+  y
+}
+
+let test = test_impl
 `,
   123,
 );
