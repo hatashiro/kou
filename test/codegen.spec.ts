@@ -17,15 +17,18 @@ const compile = Compose.then(tokenize)
   .then(mod => genWASM(mod, 'test')).f;
 
 async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
-  const wasmModule = compile(moduleStr);
-  const result = await runWASM(wasmModule, 'test');
-
-  if (result !== expected) {
+  try {
+    const wasmModule = compile(moduleStr);
+    const result = await runWASM(wasmModule, 'test');
+    if (result !== expected) {
+      throw new Error(`expected ${expected}, but the result was ${result}`);
+    }
+  } catch (err) {
     console.error(chalk.blue.bold('Test:'));
     console.error(moduleStr);
     console.error();
     console.error(chalk.red.bold('Error:'));
-    console.error(`expected ${expected}, but the result was ${result}`);
+    console.error(err.message);
     process.exit(1);
   }
 }
