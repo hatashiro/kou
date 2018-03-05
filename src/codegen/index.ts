@@ -205,6 +205,8 @@ function* codegenExpr(
     yield* codegenIdent(expr.value, ctx);
   } else if (expr instanceof a.CallExpr) {
     yield* codegenCallExpr(expr, ctx);
+  } else if (expr instanceof a.UnaryExpr) {
+    yield* codegenUnaryExpr(expr, ctx);
   }
   // FIXME
 }
@@ -273,6 +275,36 @@ function* codegenCallExpr(
 
   const funcName = ctx.getGlobalWATName(call.value.func.value.value);
   yield `(call $${funcName})`;
+}
+
+function* codegenUnaryExpr(
+  unary: a.UnaryExpr,
+  ctx: CodegenContext,
+): Iterable<string> {
+  const op = unary.value.op;
+  const right = unary.value.right;
+
+  // used for '-'
+  let prefix = '';
+  if (right.type instanceof a.IntType) {
+    prefix = 'i32';
+  } else if (right.type instanceof a.FloatType) {
+    prefix = 'f64';
+  }
+
+  if (op.value === '-') {
+    yield `(${prefix}.const 0)`;
+  }
+
+  yield* codegenExpr(right, ctx);
+
+  if (op.value === '-') {
+    yield `(${prefix}.sub)`;
+  } else if (op.value === '!') {
+    yield '(i32.eqz)';
+  }
+
+  // '+' should be removed already in desugarer
 }
 
 function* codegenLocalVar(

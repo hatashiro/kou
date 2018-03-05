@@ -186,4 +186,49 @@ let test = fn () int {
   1234,
 );
 
+moduleRunTest(
+  `
+let test = fn () int {
+  -100
+}
+`,
+  -100,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  +100.123
+}
+`,
+  100.123,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  -100.123
+}
+`,
+  -100.123,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  !false
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  !true
+}
+`,
+  0,
+);
+
 console.log(chalk.green.bold('Passed!'));
