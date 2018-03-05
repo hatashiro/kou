@@ -127,18 +127,22 @@ function* codegenBlock(
   ctx: CodegenContext,
 ): Iterable<string> {
   for (const body of block.value.bodies) {
+    if (body instanceof a.Decl) {
+      yield* codegenLocalDecl(body, ctx, true);
+    }
+  }
+
+  for (const body of block.value.bodies) {
     if (body instanceof a.Expr) {
       // expr
       yield* codegenExpr(body, ctx);
     } else {
       // local decl
-      yield* codegenLocalDecl(body, ctx);
+      yield* codegenLocalDecl(body, ctx, false);
     }
   }
 
-  if (block.value.returnVoid) {
-    yield '(return)';
-  }
+  yield '(return)';
 }
 
 function* codegenExpr(
@@ -147,6 +151,8 @@ function* codegenExpr(
 ): Iterable<string> {
   if (expr instanceof a.LitExpr) {
     yield* codegenLiteral(expr.value, ctx);
+  } else if (expr instanceof a.IdentExpr) {
+    yield* codegenIdent(expr.value, ctx);
   }
   // FIXME
 }
@@ -168,9 +174,25 @@ function* codegenLiteral(
   }
 }
 
+function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
+  // FIXME: process global
+  const name = ctx.getWATName(ident.value);
+  yield `(get_local $${name})`;
+}
+
 function* codegenLocalDecl(
   decl: a.Decl,
   ctx: CodegenContext,
+  init: boolean,
 ): Iterable<string> {
-  // FIXME
+  if (init) {
+    const name = ctx.pushName(decl.value.name.value);
+    yield `(local $${name} `;
+    yield* codegenType(decl.value.expr.type!);
+    yield ')';
+  } else {
+    const name = ctx.getWATName(decl.value.name.value);
+    yield* codegenExpr(decl.value.expr, ctx);
+    yield `(set_local $${name})`;
+  }
 }

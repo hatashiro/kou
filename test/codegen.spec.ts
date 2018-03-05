@@ -75,4 +75,25 @@ let test = fn () char {
   '\n'.codePointAt(0),
 );
 
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 1234;
+  x
+}
+`,
+  1234,
+);
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 1234;
+  x;
+  let y = 123;
+  y
+}
+`,
+  123,
+);
+
 console.log(chalk.green.bold('Passed!'));
