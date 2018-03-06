@@ -18,11 +18,26 @@ Please refer to [SPEC.md](SPEC.md).
 - [x] Parser
 - [x] Desugarer
 - [x] Type checker
-- [ ] Code generator for wasm
+- [x] Code generator for wasm
+  - [x] Basic codegen
+  - [ ] Complex types and expressions
 - [ ] Module system
 - [ ] JS interop
 - [ ] IO
 - [ ] Bootstrapping
+
+## Install
+
+``` shell
+npm i -g kou
+```
+
+## Usage
+
+``` shell
+# TODO
+kou
+```
 
 ## License
 
