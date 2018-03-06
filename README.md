@@ -34,9 +34,22 @@ npm i -g kou
 
 ## Usage
 
+Compile:
+
 ``` shell
-# TODO
-kou
+kouc hello.kou -o hello.wasm
+
+# For the detailed usage
+kouc --help
+```
+
+Run in CLI:
+
+``` shell
+kou hello.wasm
+
+# For the detailed usage
+kou --help
 ```
 
 ## License
