@@ -180,7 +180,8 @@ function* codegenLiteral(
   if (lit instanceof a.IntLit) {
     yield `(i32.const ${lit.value})`;
   } else if (lit instanceof a.FloatLit) {
-    yield `(f64.const ${lit.value})`;
+    const rep = lit.value.startsWith('.') ? '0' + lit.value : lit.value;
+    yield `(f64.const ${rep})`;
   } else if (lit instanceof a.StrLit) {
     // FIXME: string literal
   } else if (lit instanceof a.CharLit) {
