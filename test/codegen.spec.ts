@@ -15,7 +15,7 @@ const compile = Compose.then(tokenize)
   .then(desugarBefore)
   .then(mod => typeCheck(mod, new TypeContext()))
   .then(desugarAfter)
-  .then(mod => genWASM(mod, 'test')).f;
+  .then(mod => genWASM(mod, ['test'])).f;
 
 async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
   try {

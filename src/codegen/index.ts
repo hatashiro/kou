@@ -2,20 +2,20 @@ import * as a from '../parser/ast';
 import { wat2wasm } from '../wasm';
 import { CodegenContext } from './context';
 
-export function genWASM(mod: a.Module, exportName: string): Buffer {
-  return wat2wasm(genWAT(mod, exportName));
+export function genWASM(mod: a.Module, exports: Array<string>): Buffer {
+  return wat2wasm(genWAT(mod, exports));
 }
 
 const genToStr = (gen: Iterable<string>) => [...gen].join(' ');
 
-export function genWAT(mod: a.Module, exportName: string): string {
+export function genWAT(mod: a.Module, exports: Array<string>): string {
   const ctx = new CodegenContext();
-  return genToStr(codegenModule(mod, exportName, ctx));
+  return genToStr(codegenModule(mod, exports, ctx));
 }
 
 function* codegenModule(
   mod: a.Module,
-  exportName: string,
+  exports: Array<string>,
   ctx: CodegenContext,
 ): Iterable<string> {
   yield '(module';
@@ -28,7 +28,10 @@ function* codegenModule(
 
   yield* codegenStartFunc(ctx);
 
-  yield `(export "${exportName}" (func $${ctx.getGlobalWATName(exportName)}))`;
+  for (const exportName of exports) {
+    const watName = ctx.getGlobalWATName(exportName);
+    yield `(export "${exportName}" (func $${watName}))`;
+  }
 
   yield ')';
 }
