@@ -1,6 +1,6 @@
 {
   "name": "kou",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A minimal language compiled into wasm bytecode",
   "main": "dist/kouc",
   "bin": {
