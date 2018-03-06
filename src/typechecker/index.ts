@@ -6,15 +6,6 @@ import { TypeError } from './error';
 // AnyType should be used only when it's really needed, e.g. empty list
 class AnyType extends a.Type<null> {}
 
-// simple type factories
-const anyType = new AnyType(null, -1, -1);
-const intType = new a.IntType(-1, -1);
-const floatType = new a.FloatType(-1, -1);
-const charType = new a.CharType(-1, -1);
-const strType = new a.StrType(-1, -1);
-const boolType = new a.BoolType(-1, -1);
-const voidType = new a.VoidType(-1, -1);
-
 export function typeCheck(mod: a.Module, ctx: TypeContext) {
   ctx.enterScope();
 
@@ -101,7 +92,7 @@ function checkExprTypeWithoutCache(
     );
   } else if (expr instanceof a.ListExpr) {
     if (expr.value.length === 0) {
-      return new a.ListType(anyType, expr.row, expr.column);
+      return new a.ListType(new AnyType(null, -1, -1), expr.row, expr.column);
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
@@ -182,14 +173,22 @@ function checkExprTypeWithoutCache(
       if (indexType instanceof a.IntType) {
         return cloneType(targetType.value, expr);
       } else {
-        throw new TypeError(indexType, intType, 'Index type mismatch');
+        throw new TypeError(
+          indexType,
+          a.IntType.instance,
+          'Index type mismatch',
+        );
       }
     } else if (targetType instanceof a.StrType) {
       const indexType = checkExprType(expr.value.index, ctx);
       if (indexType instanceof a.IntType) {
         return new a.CharType(expr.row, expr.column);
       } else {
-        throw new TypeError(indexType, intType, 'Index type mismatch');
+        throw new TypeError(
+          indexType,
+          a.IntType.instance,
+          'Index type mismatch',
+        );
       }
     } else if (targetType instanceof a.TupleType) {
       const index = expr.value.index;
@@ -255,7 +254,7 @@ function checkExprTypeWithoutCache(
       );
     }
   } else if (expr instanceof a.UnaryExpr) {
-    const opTypes = unaryOpTypes(expr.value.op);
+    const opTypes = expr.value.op.getOperandTypes();
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const { right, ret } of opTypes) {
       try {
@@ -276,7 +275,7 @@ function checkExprTypeWithoutCache(
     );
   } else if (expr instanceof a.BinaryExpr) {
     const leftActualTy = checkExprType(expr.value.left, ctx);
-    const opTypes = binaryOpTypes(expr.value.op, leftActualTy);
+    const opTypes = expr.value.op.getOperandTypes(leftActualTy);
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const { left, right, ret } of opTypes) {
       try {
@@ -313,53 +312,6 @@ function checkExprTypeWithoutCache(
     column: expr.column,
     name: 'invalid type',
   });
-}
-
-function unaryOpTypes(
-  op: a.UnaryOp,
-): Array<{ right: a.Type<any>; ret: a.Type<any> }> {
-  // helper for op with same operand/return types
-  const res = (ty: a.Type<any>) => ({ right: ty, ret: ty });
-
-  switch (op.value) {
-    case '+':
-      return [res(intType), res(floatType)];
-    case '-':
-      return [res(intType), res(floatType)];
-    case '!':
-      return [res(boolType)];
-  }
-}
-
-function binaryOpTypes(
-  op: a.BinaryOp<any>,
-  leftActualTy: a.Type<any>,
-): Array<{ left: a.Type<any>; right: a.Type<any>; ret: a.Type<any> }> {
-  // helper for op with same operand/return types
-  const res = (ty: a.Type<any>, ret: a.Type<any> = ty) => ({
-    left: ty,
-    right: ty,
-    ret: ret,
-  });
-
-  if (op instanceof a.EqOp) {
-    return [res(leftActualTy, boolType)];
-  } else if (op instanceof a.CompOp) {
-    return [
-      res(intType, boolType),
-      res(floatType, boolType),
-      res(boolType, boolType),
-      res(charType, boolType),
-      res(strType, boolType),
-    ];
-  } else if (op instanceof a.AddOp) {
-    return [res(intType), res(floatType)];
-  } else if (op instanceof a.MulOp) {
-    return [res(intType), res(floatType)];
-  } else if (op instanceof a.BoolOp) {
-    return [res(boolType)];
-  }
-  throw new TypeError(op, undefined, 'Unreachable: unknown binary operator');
 }
 
 function registerDeclType(decl: a.Decl, ctx: TypeContext) {

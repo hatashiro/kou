@@ -77,11 +77,33 @@ export class Ident extends Node<string> {}
 
 export abstract class Operator<T extends string> extends Node<T> {}
 
+export type UnaryOperandType = { right: Type<any>; ret: Type<any> };
+
 export class UnaryOp extends Operator<'+' | '-' | '!'> {
   static isUnaryOp(token: t.Token<any>) {
     return token.is(t.Operator) && ['+', '-', '!'].includes(token.rep);
   }
+
+  getOperandTypes(): Array<UnaryOperandType> {
+    // helper for op with same operand/return types
+    const res = (ty: Type<any>) => ({ right: ty, ret: ty });
+
+    switch (this.value) {
+      case '+':
+        return [res(IntType.instance), res(FloatType.instance)];
+      case '-':
+        return [res(IntType.instance), res(FloatType.instance)];
+      case '!':
+        return [res(BoolType.instance)];
+    }
+  }
 }
+
+export type BinaryOperandType = {
+  left: Type<any>;
+  right: Type<any>;
+  ret: Type<any>;
+};
 
 export abstract class BinaryOp<T extends string> extends Operator<T> {
   abstract precedence: number;
@@ -109,26 +131,81 @@ export abstract class BinaryOp<T extends string> extends Operator<T> {
       ].includes(token.rep)
     );
   }
+
+  abstract getOperandTypes(left: Type<any>): Array<BinaryOperandType>;
 }
+
+// helper for op with same operand/return types
+const binaryOperand = (ty: Type<any>, ret: Type<any> = ty) => ({
+  left: ty,
+  right: ty,
+  ret: ret,
+});
 
 export class EqOp extends BinaryOp<'==' | '!='> {
   precedence = 0;
+
+  getOperandTypes(left: Type<any>): Array<BinaryOperandType> {
+    return [binaryOperand(left, BoolType.instance)];
+  }
 }
 
 export class CompOp extends BinaryOp<'<' | '<=' | '>' | '>='> {
   precedence = 0;
+
+  getOperandTypes(left: Type<any>): Array<BinaryOperandType> {
+    return [
+      binaryOperand(IntType.instance, BoolType.instance),
+      binaryOperand(FloatType.instance, BoolType.instance),
+      binaryOperand(BoolType.instance, BoolType.instance),
+      binaryOperand(CharType.instance, BoolType.instance),
+      binaryOperand(StrType.instance, BoolType.instance),
+    ];
+  }
 }
 
 export class AddOp extends BinaryOp<'+' | '-' | '|' | '^'> {
   precedence = 1;
+
+  getOperandTypes(left: Type<any>): Array<BinaryOperandType> {
+    switch (this.value) {
+      case '+':
+      case '-':
+        return [
+          binaryOperand(IntType.instance),
+          binaryOperand(FloatType.instance),
+        ];
+      case '|':
+      case '^':
+        return [binaryOperand(IntType.instance)];
+    }
+  }
 }
 
 export class MulOp extends BinaryOp<'*' | '/' | '%' | '&'> {
   precedence = 2;
+
+  getOperandTypes(left: Type<any>): Array<BinaryOperandType> {
+    switch (this.value) {
+      case '*':
+      case '/':
+        return [
+          binaryOperand(IntType.instance),
+          binaryOperand(FloatType.instance),
+        ];
+      case '%':
+      case '&':
+        return [binaryOperand(IntType.instance)];
+    }
+  }
 }
 
 export class BoolOp extends BinaryOp<'||' | '&&'> {
   precedence = 3;
+
+  getOperandTypes(left: Type<any>): Array<BinaryOperandType> {
+    return [binaryOperand(BoolType.instance)];
+  }
 }
 
 export class Module extends Node<{
@@ -236,30 +313,40 @@ export class IntType extends PrimType {
   get name() {
     return 'int';
   }
+
+  static instance: IntType = new IntType(-1, -1);
 }
 
 export class FloatType extends PrimType {
   get name() {
     return 'float';
   }
+
+  static instance: FloatType = new FloatType(-1, -1);
 }
 
 export class StrType extends PrimType {
   get name() {
     return 'str';
   }
+
+  static instance: StrType = new StrType(-1, -1);
 }
 
 export class BoolType extends PrimType {
   get name() {
     return 'bool';
   }
+
+  static instance: BoolType = new BoolType(-1, -1);
 }
 
 export class CharType extends PrimType {
   get name() {
     return 'char';
   }
+
+  static instance: CharType = new CharType(-1, -1);
 }
 
 export class FuncType extends Type<{ param: Type<any>; return: Type<any> }> {
@@ -288,4 +375,6 @@ export class VoidType extends SimpleType {
   get name() {
     return 'void';
   }
+
+  static instance: VoidType = new VoidType(-1, -1);
 }
