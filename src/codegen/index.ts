@@ -167,6 +167,8 @@ function* codegenExpr(
     yield* codegenCallExpr(expr, ctx);
   } else if (expr instanceof a.UnaryExpr) {
     yield* codegenUnaryExpr(expr, ctx);
+  } else if (expr instanceof a.BinaryExpr) {
+    yield* codegenBinaryExpr(expr, ctx);
   } else if (expr instanceof a.CondExpr) {
     yield* codegenCondExpr(expr, ctx);
   }
@@ -263,6 +265,111 @@ function* codegenUnaryExpr(
   }
 
   // '+' should be removed already in desugarer
+}
+
+function* codegenBinaryExpr(
+  binary: a.BinaryExpr,
+  ctx: CodegenContext,
+): Iterable<string> {
+  const op = binary.value.op;
+  const left = binary.value.left;
+  const right = binary.value.right;
+
+  let prefix = genToStr(codegenType(right.type!, ctx));
+  let signed = prefix === 'i32' ? '_s' : '';
+
+  switch (op.value) {
+    case '==':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.eq)`;
+      break;
+    case '!=':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.ne)`;
+      break;
+    case '<':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.lt${signed})`;
+      break;
+    case '<=':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.le${signed})`;
+      break;
+    case '>':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.gt${signed})`;
+      break;
+    case '>=':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.ge${signed})`;
+      break;
+    case '+':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.add)`;
+      break;
+    case '-':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.sub)`;
+      break;
+    case '^':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield '(i32.xor)';
+      break;
+    case '&':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield '(i32.and)';
+      break;
+    case '|':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield '(i32.or)';
+      break;
+    case '*':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.mul)`;
+      break;
+    case '/':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield `(${prefix}.div${signed})`;
+      break;
+    case '%':
+      yield* codegenExpr(left, ctx);
+      yield* codegenExpr(right, ctx);
+      yield '(i32.rem_s)';
+      break;
+    case '&&':
+      // for short circuit evaluation
+      yield* codegenExpr(left, ctx);
+      yield '(if (result i32)';
+      yield '(then';
+      yield* codegenExpr(right, ctx);
+      yield ')';
+      yield '(else (i32.const 0))';
+      yield ')';
+      break;
+    case '||':
+      // for short circuit evaluation
+      yield* codegenExpr(left, ctx);
+      yield '(if (result i32)';
+      yield '(then (i32.const 1))';
+      yield '(else';
+      yield* codegenExpr(right, ctx);
+      yield ')';
+      yield ')';
+      break;
+  }
 }
 
 function* codegenCondExpr(

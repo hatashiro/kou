@@ -260,4 +260,228 @@ let test = fn () float {
   1.23,
 );
 
+moduleRunTest(
+  `
+let test = fn () bool {
+  1234 == 1234
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  1234. == 1234.
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  'a' != 'a'
+}
+`,
+  0,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  'a' < 'b'
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  'a' <= 'a'
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  1.234 > 12.34
+}
+`,
+  0,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  1234 >= 1235
+}
+`,
+  0,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 + 5678
+}
+`,
+  6912,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  1234. + .5678
+}
+`,
+  1234.5678,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 - 5678 + 1
+}
+`,
+  -4443,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  1234. - 5678. + 1.
+}
+`,
+  -4443,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 ^ 5678
+}
+`,
+  4860,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 | 5678
+}
+`,
+  5886,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 & 5678
+}
+`,
+  1026,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 * 5678
+}
+`,
+  7006652,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  1234. * 5678.
+}
+`,
+  7006652,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  -5678 / 1234
+}
+`,
+  -4,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  4. / -2.
+}
+`,
+  -2,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  1234 % 123
+}
+`,
+  4,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  -1234 % -123
+}
+`,
+  -4,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  false && true
+}
+`,
+  0,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  true && (1 == 1)
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let test = fn () bool {
+  true || false
+}
+`,
+  1,
+);
+
+moduleRunTest(
+  `
+let fac = fn (n int) int {
+  if n == 1 {
+    1
+  } else {
+    n * fac(n - 1)
+  }
+}
+
+let test = fn () int {
+  fac(10)
+}
+`,
+  3628800,
+);
+
 console.log(chalk.green.bold('Passed!'));
