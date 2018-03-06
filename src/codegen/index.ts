@@ -6,13 +6,11 @@ export function genWASM(mod: a.Module, exportName: string): Buffer {
   return wat2wasm(genWAT(mod, exportName));
 }
 
+const genToStr = (gen: Iterable<string>) => [...gen].join(' ');
+
 export function genWAT(mod: a.Module, exportName: string): string {
   const ctx = new CodegenContext();
-  let result = '';
-  for (const thunk of codegenModule(mod, exportName, ctx)) {
-    result += thunk + ' ';
-  }
-  return result;
+  return genToStr(codegenModule(mod, exportName, ctx));
 }
 
 function* codegenModule(
@@ -249,12 +247,7 @@ function* codegenUnaryExpr(
   const right = unary.value.right;
 
   // used for '-'
-  let prefix = '';
-  if (right.type instanceof a.IntType) {
-    prefix = 'i32';
-  } else if (right.type instanceof a.FloatType) {
-    prefix = 'f64';
-  }
+  let prefix = genToStr(codegenType(right.type!, ctx));
 
   if (op.value === '-') {
     yield `(${prefix}.const 0)`;
