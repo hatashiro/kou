@@ -41,8 +41,10 @@
     "@types/node": "^9.4.6",
     "@types/tmp": "0.0.33",
     "@types/webassembly-js-api": "0.0.1",
+    "@types/yargs": "^11.0.0",
     "chalk": "^2.3.0",
     "previewable-iterator": "^0.1.1",
-    "tmp": "0.0.33"
+    "tmp": "0.0.33",
+    "yargs": "^11.0.0"
   }
 }
