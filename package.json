@@ -2,9 +2,10 @@
   "name": "kou",
   "version": "0.0.0",
   "description": "A minimal language compiled into wasm bytecode",
-  "main": "index.js",
+  "main": "dist/kouc",
   "bin": {
-    "kou": "bin/kou"
+    "kou": "bin/kou",
+    "kouc": "bin/kouc"
   },
   "scripts": {
     "build": "tsc",
