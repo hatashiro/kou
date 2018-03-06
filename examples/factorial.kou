@@ -1,0 +1,11 @@
+let fac = fn (n int) int {
+  if (n == 1) {
+    1
+  } else {
+    n * fac(n - 1)
+  }
+}
+
+let main = fn () int {
+  fac(10)
+}
