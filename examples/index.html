@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>kou</title>
+    <meta charset="utf-8">
+    <style>
+      body {
+        font-family: sans-serif;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>kou</h1>
+
+    <h2>Upload *.wasm</h2>
+    <p><input id="file" type="file"></p>
+    <p><select id="main"></select>(<input type="text" id="args" placeholder="...args">)</p>
+    <p><button id="run">Run</button></p>
+
+    <h2>Result</h2>
+    <p id="result"></p>
+
+    <script>
+    const $ = document.querySelector.bind(document);
+
+    let instance;
+
+    $('#file').addEventListener('change', e => {
+      const file = e.target.files[0];
+
+      const reader = new FileReader();
+      reader.addEventListener('load', e => {
+        loadWASM(e.target.result);
+      });
+      reader.readAsArrayBuffer(file);
+    });
+
+    async function loadWASM(buffer) {
+      const result = await WebAssembly.instantiate(buffer, {});
+      instance = result.instance;
+
+      $('#main').innerHTML = '';
+      Object.keys(instance.exports).forEach(exportName => {
+        const opt = document.createElement('option');
+        opt.value = exportName;
+        opt.textContent = exportName;
+        $('#main').appendChild(opt);
+      });
+    }
+
+    $('#run').addEventListener('click', () => {
+      const main = $('#main').value;
+      const args = JSON.parse(`[${$('#args').value}]`);
+      $('#result').textContent = instance && instance.exports[main](...args);
+    });
+    </script>
+  </body>
+</html>
