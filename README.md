@@ -10,6 +10,10 @@ A minimal language compiled into wasm bytecode
 
 Please refer to [SPEC.md](SPEC.md).
 
+## Demonstration
+
+[![asciicast](https://asciinema.org/a/tP2sldS271HxxsKwWJ2RJdTHL.png)](https://asciinema.org/a/tP2sldS271HxxsKwWJ2RJdTHL)
+
 ## Milestones
 
 :construction: :construction: :construction:
