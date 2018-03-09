@@ -24,7 +24,7 @@ Please refer to [SPEC.md](SPEC.md).
 - [x] Type checker
 - [x] Code generator for wasm
   - [x] Basic codegen
-  - [ ] Complex types and expressions
+  - [ ] [Complex types and expressions](https://github.com/utatti/kou/issues/1)
 - [ ] Module system
 - [ ] JS interop
 - [ ] IO
