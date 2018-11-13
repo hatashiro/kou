@@ -9,6 +9,8 @@ export abstract class Node<T> {
   }
 }
 
+export type ValType<N extends Node<any>> = N extends Node<infer V> ? V : never;
+
 export interface NodeConstructor<T, N extends Node<T>> {
   new (value: T, row: number, column: number): N;
 }

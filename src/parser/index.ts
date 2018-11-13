@@ -77,11 +77,11 @@ function parseNode<T, N extends Node<T>>(
   };
 }
 
-function consume<T>(
+function consume<Tk extends t.Token<any>>(
   input: ParserInput,
-  TokenCon: t.TokenConstructor<T>,
-  rep?: T,
-): t.Token<T> {
+  TokenCon: t.TokenConstructor<t.RepType<Tk>, Tk>,
+  rep?: t.RepType<Tk>,
+): Tk {
   const token = nextToken(input, true);
 
   if (token.is(TokenCon, rep)) {

@@ -12,6 +12,7 @@ import {
   StrLit,
   Ident,
   EOF,
+  RepType,
 } from './token';
 import { LexError } from './error';
 import { match, isDigit, isAlphabet, isAlphanumeric } from '../util';
@@ -71,7 +72,10 @@ function parseToken(input: LexerInput): Token<any> {
     pos = [input.row, input.column];
   }
 
-  function token<T>(Con: TokenConstructor<T>, rep: T): Token<any> {
+  function token<Tk extends Token<any>>(
+    Con: TokenConstructor<RepType<Tk>, Tk>,
+    rep: RepType<Tk>,
+  ): Tk {
     if (pos) {
       const t = new Con(pos[0], pos[1], rep);
       pos = null;
@@ -81,11 +85,11 @@ function parseToken(input: LexerInput): Token<any> {
     }
   }
 
-  function withPreview(
-    rep: string,
-    A: TokenConstructor<any>,
-    B: TokenConstructor<any> = A,
-  ): Token<any> {
+  function withPreview<Tk1 extends Token<any>, Tk2 extends Token<any>>(
+    rep: any,
+    A: TokenConstructor<any, Tk1>,
+    B: TokenConstructor<any, Tk2> = A as any,
+  ): Tk1 | Tk2 {
     savePos();
     if (input.preview().value === rep[1]) {
       input.next();

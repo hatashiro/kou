@@ -1,15 +1,19 @@
 export class Token<T> {
   constructor(public row: number, public column: number, public rep: T) {}
 
-  is(Con: TokenConstructor<T>, rep?: T): boolean {
+  is<Tk extends Token<T>>(Con: TokenConstructor<T, Tk>, rep?: T): this is Tk {
     return (
       this instanceof Con && (typeof rep === 'undefined' || this.rep === rep)
     );
   }
 }
 
-export interface TokenConstructor<T> {
-  new (row: number, column: number, rep: T): Token<T>;
+export type RepType<Tk extends Token<any>> = Tk extends Token<infer T>
+  ? T
+  : never;
+
+export interface TokenConstructor<T, Tk extends Token<T>> {
+  new (row: number, column: number, rep: T): Tk;
 }
 
 export class Punctuation extends Token<

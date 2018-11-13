@@ -6,19 +6,19 @@ import { Compose } from '../src/util';
 
 console.log(chalk.bold('Running parser tests...'));
 
-type NodeExpectation = [
-  a.NodeConstructor<any, any>,
+type NodeExpectation<N extends a.Node<any> = a.Node<any>> = [
+  a.NodeConstructor<a.ValType<N>, N>,
   any,
   number | undefined,
   number | undefined
 ];
 
-const exp = (
-  Cons: a.NodeConstructor<any, any>,
+const exp = <N extends a.Node<any>>(
+  Cons: a.NodeConstructor<a.ValType<N>, N>,
   value: any = null,
   row?: number,
   column?: number,
-): NodeExpectation => [Cons, value, row, column];
+): NodeExpectation<N> => [Cons, value, row, column];
 
 function valueEqual(actual: any, expected: any): boolean {
   if (actual instanceof a.Node) {

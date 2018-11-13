@@ -4,21 +4,24 @@ import * as t from '../src/lexer/token';
 
 console.log(chalk.bold('Running lexer tests...'));
 
-type TokenExpectation = [
-  t.TokenConstructor<any>,
-  string | null,
+type TokenExpectation<Tk extends t.Token<any> = t.Token<any>> = [
+  t.TokenConstructor<t.RepType<Tk>, Tk>,
+  t.RepType<Tk>,
   number | undefined,
   number | undefined
 ];
 
-const exp = (
-  Cons: t.TokenConstructor<any>,
-  rep: string | null,
+const exp = <Tk extends t.Token<any>>(
+  Cons: t.TokenConstructor<t.RepType<Tk>, Tk>,
+  rep: t.RepType<Tk>,
   row?: number,
   column?: number,
-): TokenExpectation => [Cons, rep, row, column];
+): TokenExpectation<Tk> => [Cons, rep, row, column];
 
-function tokenEqual(token: t.Token<any>, expected?: TokenExpectation) {
+function tokenEqual<T, Tk extends t.Token<T>>(
+  token: Tk,
+  expected?: TokenExpectation<Tk>,
+) {
   if (!expected) {
     throw new Error(
       `Expected undefined, found ${token.constructor['name']}(${token.row}, ${

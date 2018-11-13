@@ -3,7 +3,7 @@ import { fileSync } from 'tmp';
 type Condition<T> = T | ((val: T) => boolean);
 
 function predicate<T>(val: T, cond: Condition<T>): boolean {
-  if (typeof cond === 'function') {
+  if (cond instanceof Function) {
     return cond(val);
   } else {
     return val === cond;
