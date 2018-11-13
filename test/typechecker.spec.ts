@@ -7,7 +7,7 @@ import { Compose } from '../src/util';
 import {
   checkExprType,
   checkBlockType,
-  typeEqual,
+  assertType,
   typeCheck,
 } from '../src/typechecker/';
 import { TypeContext } from '../src/typechecker/context';
@@ -45,7 +45,7 @@ function exprTypeTest(
   try {
     const mod = compileAST(moduleStr);
     const actualType = checkExprType(mod.value.decls[0].value.expr, ctx);
-    typeEqual(actualType, expectedType);
+    assertType(actualType, expectedType);
   } catch (err) {
     if (
       shouldThrow &&
@@ -73,7 +73,7 @@ function blockTypeTest(
     const mod = compileAST(moduleStr);
     const fn = mod.value.decls[0].value.expr as a.FuncExpr;
     const actualType = checkBlockType(fn.value.body, ctx);
-    typeEqual(actualType, expectedType);
+    assertType(actualType, expectedType);
   } catch (err) {
     console.error(chalk.blue.bold('Test:'));
     console.error(blockStr);

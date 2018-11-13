@@ -96,7 +96,7 @@ function checkExprTypeWithoutCache(
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
-      typeEqual(checkExprType(expr.value[i], ctx), ty);
+      assertType(checkExprType(expr.value[i], ctx), ty);
     }
     return new a.ListType(ty, expr.row, expr.column);
   } else if (expr instanceof a.FuncExpr) {
@@ -125,7 +125,7 @@ function checkExprTypeWithoutCache(
       );
 
       try {
-        typeEqual(bodyType, expr.value.returnType);
+        assertType(bodyType, expr.value.returnType);
       } catch {
         let message = 'Function return type mismatch';
 
@@ -156,7 +156,7 @@ function checkExprTypeWithoutCache(
     }
 
     try {
-      typeEqual(argsType, funcType.value.param);
+      assertType(argsType, funcType.value.param);
     } catch {
       throw new TypeError(
         argsType,
@@ -218,7 +218,7 @@ function checkExprTypeWithoutCache(
       );
     }
   } else if (expr instanceof a.CondExpr) {
-    typeEqual(
+    assertType(
       checkExprType(expr.value.if, ctx),
       new a.BoolType(expr.row, expr.column),
     );
@@ -226,7 +226,7 @@ function checkExprTypeWithoutCache(
     const ifBlockType = checkBlockType(expr.value.then, ctx);
     const elseBlockType = checkBlockType(expr.value.else, ctx);
     try {
-      typeEqual(ifBlockType, elseBlockType);
+      assertType(ifBlockType, elseBlockType);
     } catch {
       let message = "'else' block should have the same type as 'if' block";
 
@@ -258,7 +258,7 @@ function checkExprTypeWithoutCache(
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const { right, ret } of opTypes) {
       try {
-        typeEqual(rightActualTy, right);
+        assertType(rightActualTy, right);
 
         return cloneType(ret, expr);
       } catch {
@@ -279,14 +279,14 @@ function checkExprTypeWithoutCache(
     const rightActualTy = checkExprType(expr.value.right, ctx);
     for (const { left, right, ret } of opTypes) {
       try {
-        typeEqual(leftActualTy, left);
+        assertType(leftActualTy, left);
       } catch {
         // ignore, try the next
         continue;
       }
 
       try {
-        typeEqual(rightActualTy, right);
+        assertType(rightActualTy, right);
 
         return cloneType(ret, expr);
       } catch {
@@ -341,7 +341,7 @@ function checkDeclType(decl: a.Decl, ctx: TypeContext) {
     );
   }
 
-  typeEqual(checkExprType(decl.value.expr, ctx), decl.value.type);
+  assertType(checkExprType(decl.value.expr, ctx), decl.value.type);
 }
 
 function containsVoidType(ty: a.Type<any>): boolean {
@@ -383,7 +383,7 @@ export function checkBlockType(
   return ty;
 }
 
-export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
+export function assertType(actual: a.Type<any>, expected: a.Type<any>) {
   // if it's AnyType, it always succeeds
   if (actual instanceof AnyType) {
     return;
@@ -404,8 +404,8 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
   // func type
   if (actual instanceof a.FuncType && expected instanceof a.FuncType) {
     try {
-      typeEqual(actual.value.param, expected.value.param);
-      typeEqual(actual.value.return, expected.value.return);
+      assertType(actual.value.param, expected.value.param);
+      assertType(actual.value.return, expected.value.return);
     } catch {
       throw new TypeError(actual, expected);
     }
@@ -420,7 +420,7 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
 
     for (let i = 0; i < expected.value.size; i++) {
       try {
-        typeEqual(actual.value.items[i], expected.value.items[i]);
+        assertType(actual.value.items[i], expected.value.items[i]);
       } catch {
         throw new TypeError(actual, expected);
       }
@@ -432,7 +432,7 @@ export function typeEqual(actual: a.Type<any>, expected: a.Type<any>) {
   // list type
   if (actual instanceof a.ListType && expected instanceof a.ListType) {
     try {
-      typeEqual(actual.value, expected.value);
+      assertType(actual.value, expected.value);
     } catch {
       throw new TypeError(actual, expected);
     }
