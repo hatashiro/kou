@@ -17,9 +17,33 @@ export function wat2wasm(watStr: string): Buffer {
 
 export const magicNumber = Buffer.from([0x00, 0x61, 0x73, 0x6d]);
 
-export async function runWASM(wasmModule: Buffer, main: string): Promise<any> {
+export function convertMiBToPage(mib: number): number {
+  // 1 page in WASM is 64KiB
+  return (mib * 1024) / 64;
+}
+
+export async function runWASM(
+  wasmModule: Buffer,
+  opts: {
+    main: string;
+    memorySize: number;
+  },
+): Promise<any> {
   // FIXME: stdlib
-  const imports = {};
+
+  const memory = new WebAssembly.Memory({
+    initial: convertMiBToPage(opts.memorySize),
+  });
+
+  const uint32arr = new Uint32Array(memory.buffer);
+  uint32arr[0] = 4; // set current heap pointer, the first 4 bytes are used for the pointer
+
+  const imports = {
+    js: {
+      memory,
+    },
+  };
+
   const { instance } = await WebAssembly.instantiate(wasmModule, imports);
-  return instance.exports[main]();
+  return instance.exports[opts.main]();
 }

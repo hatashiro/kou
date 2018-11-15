@@ -1,26 +1,40 @@
 import * as a from '../parser/ast';
-import { wat2wasm } from '../wasm';
+import { wat2wasm, convertMiBToPage } from '../wasm';
 import { CodegenContext } from './context';
 
-export function genWASM(mod: a.Module, exports: Array<string>): Buffer {
-  return wat2wasm(genWAT(mod, exports));
+export function genWASM(
+  mod: a.Module,
+  opts: { exports: Array<string>; memorySize: number },
+): Buffer {
+  return wat2wasm(genWAT(mod, opts));
 }
 
 const genToStr = (gen: Iterable<string>) => [...gen].join(' ');
 
-export function genWAT(mod: a.Module, exports: Array<string>): string {
-  const ctx = new CodegenContext();
-  return genToStr(codegenModule(mod, exports, ctx));
+export function genWAT(
+  mod: a.Module,
+  opts: { exports: Array<string>; memorySize: number },
+): string {
+  return genToStr(
+    codegenModule(mod, new CodegenContext(), {
+      exports: opts.exports,
+      pageCount: convertMiBToPage(opts.memorySize),
+    }),
+  );
 }
 
 function* codegenModule(
   mod: a.Module,
-  exports: Array<string>,
   ctx: CodegenContext,
+  opts: {
+    exports: Array<string>;
+    pageCount: number;
+  },
 ): Iterable<string> {
   yield '(module';
 
-  // FIXME: imports
+  // imports
+  yield `(import "js" "memory" (memory ${opts.pageCount}))`;
 
   for (const decl of mod.value.decls) {
     yield* codegenGlobalDecl(decl, ctx);
@@ -28,7 +42,7 @@ function* codegenModule(
 
   yield* codegenStartFunc(ctx);
 
-  for (const exportName of exports) {
+  for (const exportName of opts.exports) {
     const watName = ctx.getGlobalWATName(exportName);
     yield `(export "${exportName}" (func $${watName}))`;
   }

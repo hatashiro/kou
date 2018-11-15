@@ -10,17 +10,19 @@ import { runWASM } from '../src/wasm';
 
 console.log(chalk.bold('Running codegen tests...'));
 
+const memorySize = 4; // 4MiB
+
 const compile = Compose.then(tokenize)
   .then(parse)
   .then(desugarBefore)
   .then(mod => typeCheck(mod, new TypeContext()))
   .then(desugarAfter)
-  .then(mod => genWASM(mod, ['test'])).f;
+  .then(mod => genWASM(mod, { exports: ['test'], memorySize })).f;
 
 async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
   try {
     const wasmModule = compile(moduleStr);
-    const result = await runWASM(wasmModule, 'test');
+    const result = await runWASM(wasmModule, { main: 'test', memorySize });
     if (result !== expected) {
       throw new Error(`expected ${expected}, but the result was ${result}`);
     }

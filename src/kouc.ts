@@ -17,6 +17,7 @@ interface Argv {
   out: string | null;
   export: string;
   source: string;
+  memory: number;
 }
 
 function main(argv: Argv) {
@@ -26,7 +27,9 @@ function main(argv: Argv) {
     .then(desugarBefore)
     .then(mod => typeCheck(mod, new TypeContext()))
     .then(desugarAfter)
-    .then(mod => (argv.wat ? genWAT(mod, exports) : genWASM(mod, exports))).f;
+    .then(mod =>
+      (argv.wat ? genWAT : genWASM)(mod, { exports, memorySize: argv.memory }),
+    ).f;
 
   const sourcePath = resolve(argv.source);
 
@@ -83,4 +86,10 @@ main(yargs
     desc: 'Comma-separated list of export names',
     type: 'string',
     default: 'main',
+  })
+  .option('memory', {
+    alias: 'm',
+    desc: 'Memory size in MiB',
+    type: 'number',
+    default: 128,
   }).argv as any);

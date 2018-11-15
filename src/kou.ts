@@ -14,6 +14,7 @@ import { genWASM } from './codegen';
 interface Argv {
   source: string;
   main: string;
+  memory: number;
 }
 
 async function main(argv: Argv) {
@@ -31,7 +32,9 @@ async function main(argv: Argv) {
       .then(desugarBefore)
       .then(mod => typeCheck(mod, new TypeContext()))
       .then(desugarAfter)
-      .then(mod => genWASM(mod, [argv.main])).f;
+      .then(mod =>
+        genWASM(mod, { exports: [argv.main], memorySize: argv.memory }),
+      ).f;
 
     const input = buffer.toString();
     try {
@@ -41,7 +44,10 @@ async function main(argv: Argv) {
     }
   }
 
-  const result = await runWASM(bytecode, argv.main);
+  const result = await runWASM(bytecode, {
+    main: argv.main,
+    memorySize: argv.memory,
+  });
   console.log(result);
 }
 
@@ -52,6 +58,12 @@ main(yargs
     desc: 'An exported function to run',
     type: 'string',
     default: 'main',
+  })
+  .option('memory', {
+    alias: 'm',
+    desc: 'Memory size in MiB',
+    type: 'number',
+    default: 128,
   }).argv as any).catch(err => {
   console.error(err);
   process.exit(1);
