@@ -47,3 +47,70 @@ export async function runWASM(
   const { instance } = await WebAssembly.instantiate(wasmModule, imports);
   return instance.exports[opts.main]();
 }
+
+interface WAT extends Array<string | WAT> {}
+
+export function beautifyWAT(wat: string): string {
+  function parse(input: Array<string>): WAT {
+    input.shift(); // drop '('
+
+    const result: WAT = [];
+    let str = '';
+
+    while (true) {
+      const c = input.shift();
+
+      if (c === ')') {
+        if (str) result.push(str);
+        break;
+      } else if (c === ' ') {
+        if (str) result.push(str);
+        str = '';
+      } else if (c === '(') {
+        input.unshift(c);
+        result.push(parse(input));
+      } else {
+        str += c;
+      }
+    }
+
+    return result;
+  }
+
+  const ast = parse(Array.from(wat));
+
+  function len(wat: WAT): number {
+    return wat.reduce(
+      (res, node) => res + (typeof node === 'string' ? node.length : len(node)),
+      0,
+    );
+  }
+
+  function indent(str: string): string {
+    return str
+      .split('\n')
+      .map(s => '  ' + s)
+      .join('\n');
+  }
+
+  const stringify = (node: string | WAT) =>
+    typeof node === 'string' ? node : beautify(node);
+
+  function beautify(wat: WAT): string {
+    if (len(wat) < 50) {
+      return `(${wat.map(stringify).join(' ')})`;
+    } else {
+      return (
+        `(${wat[0]}\n` +
+        wat
+          .slice(1)
+          .map(stringify)
+          .map(indent)
+          .join('\n') +
+        '\n)'
+      );
+    }
+  }
+
+  return beautify(ast);
+}

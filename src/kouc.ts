@@ -11,6 +11,7 @@ import { TypeContext } from './typechecker/context';
 import { Compose } from './util';
 import { genWAT, genWASM } from './codegen';
 import { exitWithErrors, reportCompileError } from './report-error';
+import { beautifyWAT } from './wasm';
 
 interface Argv {
   wat: boolean;
@@ -53,7 +54,7 @@ function main(argv: Argv) {
 
   // prettify a little
   if (typeof output === 'string') {
-    output = output.replace(/ \)/g, ')').replace(/\( /g, '(');
+    output = beautifyWAT(output);
   }
 
   if (argv.out) {
