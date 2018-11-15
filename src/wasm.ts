@@ -15,6 +15,8 @@ export function wat2wasm(watStr: string): Buffer {
   return readFileSync(wasmFile);
 }
 
+export const magicNumber = Buffer.from([0x00, 0x61, 0x73, 0x6d]);
+
 export async function runWASM(wasmModule: Buffer, main: string): Promise<any> {
   // FIXME: stdlib
   const imports = {};
