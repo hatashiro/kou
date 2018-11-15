@@ -25,6 +25,7 @@ function main(argv: Argv) {
     .then(parse)
     .then(desugarBefore)
     .then(mod => typeCheck(mod, new TypeContext()))
+    .then(desugarAfter)
     .then(mod => (argv.wat ? genWAT(mod, exports) : genWASM(mod, exports))).f;
 
   const sourcePath = resolve(argv.source);
