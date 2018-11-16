@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import * as yargs from 'yargs';
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { beautify } from 's-exify';
 
 import { tokenize } from './lexer';
 import { parse } from './parser';
@@ -11,7 +12,6 @@ import { TypeContext } from './typechecker/context';
 import { Compose } from './util';
 import { genWAT, genWASM } from './codegen';
 import { exitWithErrors, reportCompileError } from './report-error';
-import { beautifyWAT } from './wasm';
 
 interface Argv {
   wat: boolean;
@@ -54,7 +54,7 @@ function main(argv: Argv) {
 
   // prettify a little
   if (typeof output === 'string') {
-    output = beautifyWAT(output);
+    output = beautify(output);
   }
 
   if (argv.out) {
