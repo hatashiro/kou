@@ -26,9 +26,6 @@ const exp = (...nodes: Array<string | SExp>): SExp => nodes;
 const str = (raw: string) => `"${raw.replace('"', '\\"')}"`;
 const wat = (name: string) => `$${name}`;
 const sys = (name: string) => wat(`/${name}`);
-const unreachable = (): any => {
-  throw new Error('Unreachable in CodeGen');
-};
 
 function codegenModule(
   mod: a.Module,
@@ -216,7 +213,7 @@ function codegenLiteral(lit: a.Literal<any>, ctx: CodegenContext): SExp {
   } else if (lit instanceof a.BoolLit) {
     return exp('i32.const', lit.parsedValue ? '1' : '0');
   } else {
-    return unreachable();
+    return exp('unreachable');
   }
 }
 
