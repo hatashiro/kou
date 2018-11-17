@@ -22,13 +22,18 @@ export function convertMiBToPage(mib: number): number {
   return (mib * 1024) / 64;
 }
 
+export type WASMResult = {
+  value: any;
+  memory: WebAssembly.Memory;
+};
+
 export async function runWASM(
   wasmModule: Buffer,
   opts: {
     main: string;
     memorySize: number;
   },
-): Promise<any> {
+): Promise<WASMResult> {
   // FIXME: stdlib
 
   const memory = new WebAssembly.Memory({
@@ -45,5 +50,7 @@ export async function runWASM(
   };
 
   const { instance } = await WebAssembly.instantiate(wasmModule, imports);
-  return instance.exports[opts.main]();
+  const value = instance.exports[opts.main]();
+
+  return { value, memory };
 }

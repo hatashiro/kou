@@ -1,3 +1,4 @@
+import { deepEqual } from 'assert';
 import chalk from 'chalk';
 import { tokenize } from '../src/lexer/';
 import { parse } from '../src/parser/';
@@ -6,7 +7,7 @@ import { typeCheck } from '../src/typechecker/';
 import { TypeContext } from '../src/typechecker/context';
 import { genWASM } from '../src/codegen/';
 import { Compose } from '../src/util';
-import { runWASM } from '../src/wasm';
+import { runWASM, WASMResult } from '../src/wasm';
 
 console.log(chalk.bold('Running codegen tests...'));
 
@@ -19,13 +20,15 @@ const compile = Compose.then(tokenize)
   .then(desugarAfter)
   .then(mod => genWASM(mod, { exports: ['test'], memorySize })).f;
 
-async function moduleRunTest(moduleStr: string, expected: any): Promise<void> {
+async function moduleRunTest(
+  moduleStr: string,
+  expected: any,
+  resultHandler: (result: WASMResult) => any = result => result.value,
+): Promise<void> {
   try {
     const wasmModule = compile(moduleStr);
     const result = await runWASM(wasmModule, { main: 'test', memorySize });
-    if (result !== expected) {
-      throw new Error(`expected ${expected}, but the result was ${result}`);
-    }
+    deepEqual(resultHandler(result), expected);
   } catch (err) {
     console.error(chalk.blue.bold('Test:'));
     console.error(moduleStr);

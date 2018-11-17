@@ -48,7 +48,7 @@ async function main(argv: Argv) {
     main: argv.main,
     memorySize: argv.memory,
   });
-  console.log(result);
+  console.log(result.value);
 }
 
 main(yargs
