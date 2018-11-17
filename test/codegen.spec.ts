@@ -489,4 +489,61 @@ let test = fn () int {
   3628800,
 );
 
+const tuple = (sizes: Array<number>) => ({ value, memory }: WASMResult) => {
+  let offset = value;
+  return sizes.map(size => {
+    const slice = memory.buffer.slice(offset, offset + size);
+    let value;
+    if (size === 8) {
+      // must be float
+      value = new Float64Array(slice)[0];
+    } else {
+      // must be 4, read as int32
+      value = new Int32Array(slice)[0];
+    }
+    offset += size;
+    return value;
+  });
+};
+
+moduleRunTest(
+  `
+let test = fn () (int, float, bool) {
+  (1, 1.5, true)
+}
+  `,
+  [1, 1.5, 1],
+  tuple([4, 8, 4]),
+);
+
+moduleRunTest(
+  `
+let test = fn () () {
+  ()
+}
+  `,
+  0,
+);
+
+moduleRunTest(
+  `
+let f1 = fn () () {
+  ()
+}
+
+let f2 = fn (x bool) bool {
+  !x
+}
+
+let test = fn () ((), bool) {
+  ();
+  ();
+  (1, 2);
+  (f1(), f2(false))
+}
+  `,
+  [0, 1],
+  tuple([4, 4]),
+);
+
 console.log(chalk.green.bold('Passed!'));

@@ -140,8 +140,6 @@ function codegenType(ty: a.Type<any>, ctx: CodegenContext): string {
     return 'i32';
   } else if (ty instanceof a.FloatType) {
     return 'f64';
-  } else if (ty instanceof a.StrType) {
-    return 'i32'; // memory offset
   } else if (ty instanceof a.BoolType) {
     return 'i32'; // 0 or 1
   } else if (ty instanceof a.CharType) {
@@ -149,8 +147,17 @@ function codegenType(ty: a.Type<any>, ctx: CodegenContext): string {
   } else if (ty instanceof a.VoidType) {
     return '';
   } else {
-    // TODO: complex types
-    return '';
+    return 'i32'; // memory offset
+  }
+}
+
+function getByteSizeOfType(ty: a.Type<any>): number {
+  if (ty instanceof a.FloatType) {
+    return 8;
+  } else if (ty instanceof a.VoidType) {
+    return 0;
+  } else {
+    return 4;
   }
 }
 
@@ -208,6 +215,8 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
     yield* codegenBinaryExpr(expr, ctx);
   } else if (expr instanceof a.CondExpr) {
     yield* codegenCondExpr(expr, ctx);
+  } else if (expr instanceof a.TupleExpr) {
+    yield* codegenTupleExpr(expr, ctx);
   } else {
     // TODO: complex exprs
   }
@@ -236,15 +245,12 @@ function codegenInitialValForType(lit: a.Type<any>, ctx: CodegenContext): SExp {
     return exp('i32.const', '0');
   } else if (lit instanceof a.FloatType) {
     return exp('f64.const', '0');
-  } else if (lit instanceof a.StrType) {
-    // TODO: string literal
-    return exp('i32.const', '0');
   } else if (lit instanceof a.CharType) {
     return exp('i32.const', '0');
   } else if (lit instanceof a.BoolType) {
     return exp('i32.const', '0');
   } else {
-    // TODO: complex types
+    // memory address
     return exp('i32.const', '0');
   }
 }
@@ -422,6 +428,68 @@ function* codegenCondExpr(
     exp('then', ...codegenBlock(cond.value.then, false, ctx)),
     exp('else', ...codegenBlock(cond.value.else, false, ctx)),
   );
+}
+
+function* codegenGetCurrentHeapPointer(): Iterable<SExp> {
+  yield exp('i32.const', '0');
+  yield exp('i32.load');
+}
+
+function* codegenSetCurrentHeapPointer(): Iterable<SExp> {
+  yield exp('i32.const', '0');
+  yield* codegenSwapStackTop('i32');
+  yield exp('i32.store');
+}
+
+function* codegenSwapStackTop(ty1: string, ty2: string = ty1): Iterable<SExp> {
+  yield exp('set_global', sys(`reg/${ty1}/1`));
+  yield exp('set_global', sys(`reg/${ty2}/2`));
+  yield exp('get_global', sys(`reg/${ty1}/1`));
+  yield exp('get_global', sys(`reg/${ty2}/2`));
+}
+
+function* codegenMemoryAllocation(size: number): Iterable<SExp> {
+  yield* codegenGetCurrentHeapPointer();
+  yield exp('set_global', sys('reg/addr'));
+  yield exp('get_global', sys('reg/addr'));
+  yield exp('i32.const', String(size));
+  yield exp('i32.add');
+  yield* codegenSetCurrentHeapPointer();
+  yield exp('get_global', sys('reg/addr'));
+}
+
+function* codegenTupleExpr(
+  tuple: a.TupleExpr,
+  ctx: CodegenContext,
+): Iterable<SExp> {
+  if (tuple.value.size === 0) {
+    yield exp('i32.const', '0');
+    return;
+  }
+
+  const tupleType: a.TupleType = tuple.type as any;
+  const sizes = tupleType.value.items.map(getByteSizeOfType);
+  yield* codegenMemoryAllocation(sizes.reduce((x, y) => x + y));
+  yield exp('set_global', sys('reg/addr'));
+
+  yield exp('get_global', sys('reg/addr'));
+  yield exp('set_global', sys('reg/i32/1'));
+  for (let i = 0; i < tuple.value.size; i++) {
+    yield exp('get_global', sys('reg/i32/1'));
+    const expr = tuple.value.items[i];
+    yield* codegenExpr(expr, ctx);
+
+    const ty = codegenType(expr.type!, ctx);
+    yield exp(`${ty}.store`);
+
+    // calculate next offset
+    yield exp('get_global', sys('reg/i32/1'));
+    yield exp('i32.const', String(sizes[i]));
+    yield exp('i32.add');
+    yield exp('set_global', sys('reg/i32/1'));
+  }
+
+  yield exp('get_global', sys('reg/addr'));
 }
 
 function* codegenLocalVarDef(
