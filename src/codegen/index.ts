@@ -47,6 +47,9 @@ function codegenModule(
     ),
   );
 
+  // system registries for language implementation
+  modE.push(...codegenRegistry(ctx));
+
   for (const decl of mod.value.decls) {
     const declE = codegenGlobalDecl(decl, ctx);
     if (declE) modE.push(declE);
@@ -60,6 +63,17 @@ function codegenModule(
   }
 
   return modE;
+}
+
+function* codegenRegistry(ctx: CodegenContext): Iterable<SExp> {
+  const reg = (name: string, ty: string) =>
+    exp('global', sys(name), exp('mut', ty), exp(`${ty}.const`, '0'));
+
+  yield reg('reg/addr', 'i32');
+  yield reg('reg/i32/1', 'i32');
+  yield reg('reg/i32/2', 'i32');
+  yield reg('reg/f64/1', 'f64');
+  yield reg('reg/f64/2', 'f64');
 }
 
 function* codegenStartFunc(ctx: CodegenContext): Iterable<SExp> {
