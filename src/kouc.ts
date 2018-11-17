@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import * as yargs from 'yargs';
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
-import { beautify } from 's-exify';
 
 import { tokenize } from './lexer';
 import { parse } from './parser';
@@ -50,11 +49,6 @@ function main(argv: Argv) {
     output = compile(input);
   } catch (err) {
     return reportCompileError(input, err);
-  }
-
-  // prettify a little
-  if (typeof output === 'string') {
-    output = beautify(output);
   }
 
   if (argv.out) {

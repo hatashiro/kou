@@ -1,6 +1,7 @@
 import * as a from '../parser/ast';
 import { wat2wasm, convertMiBToPage } from '../wasm';
 import { CodegenContext } from './context';
+import { SExp, beautify } from 's-exify';
 
 export function genWASM(
   mod: a.Module,
@@ -9,13 +10,11 @@ export function genWASM(
   return wat2wasm(genWAT(mod, opts));
 }
 
-const genToStr = (gen: Iterable<string>) => [...gen].join(' ');
-
 export function genWAT(
   mod: a.Module,
   opts: { exports: Array<string>; memorySize: number },
 ): string {
-  return genToStr(
+  return beautify(
     codegenModule(mod, new CodegenContext(), {
       exports: opts.exports,
       pageCount: convertMiBToPage(opts.memorySize),
@@ -23,116 +22,132 @@ export function genWAT(
   );
 }
 
-function* codegenModule(
+const exp = (...nodes: Array<string | SExp>): SExp => nodes;
+const str = (raw: string) => `"${raw.replace('"', '\\"')}"`;
+const wat = (name: string) => `$${name}`;
+const sys = (name: string) => wat(`/${name}`);
+const unreachable = (): any => {
+  throw new Error('Unreachable in CodeGen');
+};
+
+function codegenModule(
   mod: a.Module,
   ctx: CodegenContext,
   opts: {
     exports: Array<string>;
     pageCount: number;
   },
-): Iterable<string> {
-  yield '(module';
+): SExp {
+  const modE = exp('module');
 
   // imports
-  yield `(import "js" "memory" (memory ${opts.pageCount}))`;
+  modE.push(
+    exp(
+      'import',
+      str('js'),
+      str('memory'),
+      exp('memory', String(opts.pageCount)),
+    ),
+  );
 
   for (const decl of mod.value.decls) {
-    yield* codegenGlobalDecl(decl, ctx);
+    const declE = codegenGlobalDecl(decl, ctx);
+    if (declE) modE.push(declE);
   }
 
-  yield* codegenStartFunc(ctx);
+  modE.push(...codegenStartFunc(ctx));
 
   for (const exportName of opts.exports) {
-    const watName = ctx.getGlobalWATName(exportName);
-    yield `(export "${exportName}" (func $${watName}))`;
+    const watName = ctx.getGlobalWATName(exportName)!;
+    modE.push(exp('export', str(exportName), exp('func', wat(watName))));
   }
 
-  yield ')';
+  return modE;
 }
 
-function* codegenStartFunc(ctx: CodegenContext): Iterable<string> {
+function* codegenStartFunc(ctx: CodegenContext): Iterable<SExp> {
   if (ctx.globalInitializers.length === 0) {
     return;
   }
 
-  yield '(func $/start';
+  const funcE = exp('func', sys('start'));
 
   for (const { watName, expr } of ctx.globalInitializers) {
-    yield* codegenExpr(expr, ctx);
-    yield `(set_global $${watName})`;
+    funcE.push(...codegenExpr(expr, ctx));
+    funcE.push(exp('set_global', wat(watName)));
   }
 
-  yield ')';
-  yield '(start $/start)';
+  yield funcE;
+  yield exp('start', sys('start'));
 }
 
-function* codegenGlobalDecl(
-  decl: a.Decl,
-  ctx: CodegenContext,
-): Iterable<string> {
+function codegenGlobalDecl(decl: a.Decl, ctx: CodegenContext): SExp | null {
   const expr = decl.value.expr;
   if (expr instanceof a.FuncExpr) {
-    yield* codegenFunction(decl.value.name.value, decl.value.expr, ctx);
+    return codegenFunction(decl.value.name.value, decl.value.expr, ctx);
   } else if (expr instanceof a.IdentExpr && expr.type instanceof a.FuncType) {
     // function name alias
     ctx.pushAlias(decl.value.name.value, expr.value.value);
+    return null;
   } else {
-    yield* codegenGlobalVar(decl, ctx);
+    return codegenGlobalVar(decl, ctx);
   }
 }
 
-function* codegenFunction(
+function codegenFunction(
   origName: string,
   func: a.FuncExpr,
   ctx: CodegenContext,
-): Iterable<string> {
+): SExp {
   const name = ctx.pushName(origName);
 
-  yield `(func $${name}`;
+  const funcE = exp('func', wat(name));
 
   ctx.enterFunction();
 
   for (const param of func.value.params.items) {
-    yield '(param';
-    yield `$${ctx.pushName(param.name.value)}`;
-    yield* codegenType(param.type, ctx);
-    yield ')';
+    funcE.push(
+      exp(
+        'param',
+        wat(ctx.pushName(param.name.value)),
+        codegenType(param.type, ctx),
+      ),
+    );
   }
 
-  yield '(result';
-  yield* codegenType(func.value.returnType, ctx);
-  yield ')';
+  funcE.push(exp('result', codegenType(func.value.returnType, ctx)));
 
-  yield* codegenBlock(func.value.body, true, ctx);
+  funcE.push(...codegenBlock(func.value.body, true, ctx));
 
   ctx.leaveFunction();
 
-  yield ')';
+  return funcE;
 }
 
-function* codegenType(ty: a.Type<any>, ctx: CodegenContext): Iterable<string> {
+function codegenType(ty: a.Type<any>, ctx: CodegenContext): string {
   if (ty instanceof a.IntType) {
-    yield 'i32';
+    return 'i32';
   } else if (ty instanceof a.FloatType) {
-    yield 'f64';
+    return 'f64';
   } else if (ty instanceof a.StrType) {
-    yield 'i32'; // memory offset
+    return 'i32'; // memory offset
   } else if (ty instanceof a.BoolType) {
-    yield 'i32'; // 0 or 1
+    return 'i32'; // 0 or 1
   } else if (ty instanceof a.CharType) {
-    yield 'i32'; // ascii
+    return 'i32'; // ascii
   } else if (ty instanceof a.VoidType) {
-    yield '';
+    return '';
+  } else {
+    // TODO: complex types
+    return '';
   }
-
-  // FIXME: complex types
 }
 
 function* codegenBlock(
   block: a.Block,
   isFunction: boolean,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   if (isFunction) {
     yield* codegenLocalVarDef(block, ctx);
     ctx.resetScopeID();
@@ -151,35 +166,29 @@ function* codegenBlock(
   }
 
   if (isFunction) {
-    yield '(return)';
+    yield exp('return');
   } else {
     ctx.leaveBlock();
   }
 }
 
-function* codegenBlockType(
-  block: a.Block,
-  ctx: CodegenContext,
-): Iterable<string> {
+function codegenBlockType(block: a.Block, ctx: CodegenContext): string {
   if (block.value.returnVoid) {
-    yield '';
+    return '';
   } else {
     // the last body should be an expr;
     const lastExpr: a.Expr<any> = block.value.bodies[
       block.value.bodies.length - 1
     ] as any;
-    yield* codegenType(lastExpr.type!, ctx);
+    return codegenType(lastExpr.type!, ctx);
   }
 }
 
-function* codegenExpr(
-  expr: a.Expr<any>,
-  ctx: CodegenContext,
-): Iterable<string> {
+function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
   if (expr instanceof a.LitExpr) {
-    yield* codegenLiteral(expr.value, ctx);
+    yield codegenLiteral(expr.value, ctx);
   } else if (expr instanceof a.IdentExpr) {
-    yield* codegenIdent(expr.value, ctx);
+    yield codegenIdent(expr.value, ctx);
   } else if (expr instanceof a.CallExpr) {
     yield* codegenCallExpr(expr, ctx);
   } else if (expr instanceof a.UnaryExpr) {
@@ -188,60 +197,61 @@ function* codegenExpr(
     yield* codegenBinaryExpr(expr, ctx);
   } else if (expr instanceof a.CondExpr) {
     yield* codegenCondExpr(expr, ctx);
+  } else {
+    // TODO: complex exprs
   }
-  // FIXME
 }
 
-function* codegenLiteral(
-  lit: a.Literal<any>,
-  ctx: CodegenContext,
-): Iterable<string> {
+function codegenLiteral(lit: a.Literal<any>, ctx: CodegenContext): SExp {
   if (lit instanceof a.IntLit) {
-    yield `(i32.const ${lit.value})`;
+    return exp('i32.const', String(lit.value));
   } else if (lit instanceof a.FloatLit) {
     const rep = lit.value.startsWith('.') ? '0' + lit.value : lit.value;
-    yield `(f64.const ${rep})`;
+    return exp('f64.const', rep);
   } else if (lit instanceof a.StrLit) {
-    // FIXME: string literal
+    // TODO: string literal
+    return exp('i32.const', '0');
   } else if (lit instanceof a.CharLit) {
-    yield `(i32.const ${lit.parsedValue.codePointAt(0)})`;
+    return exp('i32.const', String(lit.parsedValue.codePointAt(0)));
   } else if (lit instanceof a.BoolLit) {
-    yield `(i32.const ${lit.parsedValue ? 1 : 0})`;
+    return exp('i32.const', lit.parsedValue ? '1' : '0');
+  } else {
+    return unreachable();
   }
 }
 
-function* codegenInitialValForType(
-  lit: a.Type<any>,
-  ctx: CodegenContext,
-): Iterable<string> {
+function codegenInitialValForType(lit: a.Type<any>, ctx: CodegenContext): SExp {
   if (lit instanceof a.IntType) {
-    yield `(i32.const 0)`;
+    return exp('i32.const', '0');
   } else if (lit instanceof a.FloatType) {
-    yield `(f64.const 0)`;
+    return exp('f64.const', '0');
   } else if (lit instanceof a.StrType) {
-    // FIXME: string literal
+    // TODO: string literal
+    return exp('i32.const', '0');
   } else if (lit instanceof a.CharType) {
-    yield `(i32.const 0)`;
+    return exp('i32.const', '0');
   } else if (lit instanceof a.BoolType) {
-    yield `(i32.const 0)`;
+    return exp('i32.const', '0');
+  } else {
+    // TODO: complex types
+    return exp('i32.const', '0');
   }
-  // FIXME: complex types
 }
 
-function* codegenIdent(ident: a.Ident, ctx: CodegenContext): Iterable<string> {
+function codegenIdent(ident: a.Ident, ctx: CodegenContext): SExp {
   let name = ctx.getLocalWATName(ident.value);
   if (name) {
-    yield `(get_local $${name})`;
+    return exp('get_local', wat(name));
   } else {
-    name = ctx.getGlobalWATName(ident.value);
-    yield `(get_global $${name})`;
+    name = ctx.getGlobalWATName(ident.value)!;
+    return exp('get_global', wat(name));
   }
 }
 
 function* codegenCallExpr(
   call: a.CallExpr,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   if (!(call.value.func instanceof a.IdentExpr)) {
     // do not support
     return;
@@ -255,136 +265,136 @@ function* codegenCallExpr(
     yield* codegenExpr(call.value.args, ctx);
   }
 
-  const funcName = ctx.getGlobalWATName(call.value.func.value.value);
-  yield `(call $${funcName})`;
+  const funcName = ctx.getGlobalWATName(call.value.func.value.value)!;
+  yield exp('call', wat(funcName));
 }
 
 function* codegenUnaryExpr(
   unary: a.UnaryExpr,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   const op = unary.value.op;
   const right = unary.value.right;
 
   // used for '-'
-  let prefix = genToStr(codegenType(right.type!, ctx));
+  let ty = codegenType(right.type!, ctx);
 
   if (op.value === '-') {
-    yield `(${prefix}.const 0)`;
+    yield exp(`${ty}.const`, '0');
   }
 
   yield* codegenExpr(right, ctx);
 
   if (op.value === '-') {
-    yield `(${prefix}.sub)`;
+    yield exp(`${ty}.sub`);
   } else if (op.value === '!') {
-    yield '(i32.eqz)';
+    yield exp('i32.eqz');
   }
 
-  // '+' should be removed already in desugarer
+  // '+' should be removed already in desugarer, no need to handle
 }
 
 function* codegenBinaryExpr(
   binary: a.BinaryExpr,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   const op = binary.value.op;
   const left = binary.value.left;
   const right = binary.value.right;
 
-  let prefix = genToStr(codegenType(right.type!, ctx));
-  let signed = prefix === 'i32' ? '_s' : '';
+  const ty = codegenType(right.type!, ctx);
+  const signed = ty === 'i32' ? '_s' : '';
 
   switch (op.value) {
     case '==':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.eq)`;
+      yield exp(`${ty}.eq`);
       break;
     case '!=':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.ne)`;
+      yield exp(`${ty}.ne`);
       break;
     case '<':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.lt${signed})`;
+      yield exp(`${ty}.lt${signed}`);
       break;
     case '<=':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.le${signed})`;
+      yield exp(`${ty}.le${signed}`);
       break;
     case '>':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.gt${signed})`;
+      yield exp(`${ty}.gt${signed}`);
       break;
     case '>=':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.ge${signed})`;
+      yield exp(`${ty}.ge${signed}`);
       break;
     case '+':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.add)`;
+      yield exp(`${ty}.add`);
       break;
     case '-':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.sub)`;
+      yield exp(`${ty}.sub`);
       break;
     case '^':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield '(i32.xor)';
+      yield exp('i32.xor');
       break;
     case '&':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield '(i32.and)';
+      yield exp('i32.and');
       break;
     case '|':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield '(i32.or)';
+      yield exp('i32.or');
       break;
     case '*':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.mul)`;
+      yield exp(`${ty}.mul`);
       break;
     case '/':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield `(${prefix}.div${signed})`;
+      yield exp(`${ty}.div${signed}`);
       break;
     case '%':
       yield* codegenExpr(left, ctx);
       yield* codegenExpr(right, ctx);
-      yield '(i32.rem_s)';
+      yield exp('i32.rem_s');
       break;
     case '&&':
       // for short circuit evaluation
       yield* codegenExpr(left, ctx);
-      yield '(if (result i32)';
-      yield '(then';
-      yield* codegenExpr(right, ctx);
-      yield ')';
-      yield '(else (i32.const 0))';
-      yield ')';
+      yield exp(
+        'if',
+        exp('result', 'i32'),
+        exp('then', ...codegenExpr(right, ctx)),
+        exp('else', exp('i32.const', '0')),
+      );
       break;
     case '||':
       // for short circuit evaluation
       yield* codegenExpr(left, ctx);
-      yield '(if (result i32)';
-      yield '(then (i32.const 1))';
-      yield '(else';
-      yield* codegenExpr(right, ctx);
-      yield ')';
-      yield ')';
+      yield exp(
+        'if',
+        exp('result', 'i32'),
+        exp('then', exp('i32.const', '1')),
+        exp('else', ...codegenExpr(right, ctx)),
+      );
       break;
   }
 }
@@ -392,29 +402,21 @@ function* codegenBinaryExpr(
 function* codegenCondExpr(
   cond: a.CondExpr,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   yield* codegenExpr(cond.value.if, ctx);
-  yield '(if';
 
-  yield '(result';
-  yield* codegenBlockType(cond.value.then, ctx);
-  yield ')';
-
-  yield '(then';
-  yield* codegenBlock(cond.value.then, false, ctx);
-  yield ')';
-
-  yield '(else';
-  yield* codegenBlock(cond.value.else, false, ctx);
-  yield ')';
-
-  yield ')';
+  yield exp(
+    'if',
+    exp('result', codegenBlockType(cond.value.then, ctx)),
+    exp('then', ...codegenBlock(cond.value.then, false, ctx)),
+    exp('else', ...codegenBlock(cond.value.else, false, ctx)),
+  );
 }
 
 function* codegenLocalVarDef(
   block: a.Block,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   for (const body of block.value.bodies) {
     if (body instanceof a.Decl) {
       const origName = body.value.name.value;
@@ -426,9 +428,7 @@ function* codegenLocalVarDef(
       }
 
       const name = ctx.convertLocalName(origName);
-      yield `(local $${name}`;
-      yield* codegenType(expr.type!, ctx);
-      yield ')';
+      yield exp('local', wat(name), codegenType(expr.type!, ctx));
     } else if (body instanceof a.CondExpr) {
       ctx.enterBlock();
       yield* codegenLocalVarDef(body.value.then, ctx);
@@ -447,7 +447,7 @@ function* codegenLocalVarDef(
 function* codegenLocalVarAssign(
   decl: a.Decl,
   ctx: CodegenContext,
-): Iterable<string> {
+): Iterable<SExp> {
   const origName = decl.value.name.value;
   const expr = decl.value.expr;
 
@@ -456,27 +456,23 @@ function* codegenLocalVarAssign(
   } else {
     yield* codegenExpr(expr, ctx);
     const name = ctx.pushName(origName);
-    yield `(set_local $${name})`;
+    yield exp('set_local', wat(name));
   }
 }
 
-function* codegenGlobalVar(
-  decl: a.Decl,
-  ctx: CodegenContext,
-): Iterable<string> {
+function codegenGlobalVar(decl: a.Decl, ctx: CodegenContext): SExp {
   const name = ctx.pushName(decl.value.name.value);
-  yield `(global $${name}`;
+
+  const varE = exp('global', wat(name));
   const expr = decl.value.expr;
   if (expr instanceof a.LitExpr) {
-    yield* codegenType(expr.type!, ctx);
-    yield* codegenLiteral(expr.value, ctx);
+    varE.push(codegenType(expr.type!, ctx));
+    varE.push(...codegenLiteral(expr.value, ctx));
   } else {
-    yield '(mut';
-    yield* codegenType(expr.type!, ctx);
-    yield ')';
-    yield* codegenInitialValForType(expr.type!, ctx);
+    varE.push(exp('mut', codegenType(expr.type!, ctx)));
+    varE.push(codegenInitialValForType(expr.type!, ctx));
     ctx.pushInitializer(name, expr);
   }
 
-  yield ')';
+  return varE;
 }
