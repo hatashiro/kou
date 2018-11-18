@@ -276,7 +276,7 @@ export class IndexExpr extends PrimExpr<{
   index: Expr<any>;
 }> {}
 
-export class FuncExpr extends PrimUnaryExpr<{
+export class FuncExpr extends PrimExpr<{
   params: Tuple<Param>;
   returnType: Type<any>;
   body: Block;
@@ -284,13 +284,13 @@ export class FuncExpr extends PrimUnaryExpr<{
 
 export type Param = { name: Ident; type: Type<any> };
 
-export class CondExpr extends PrimUnaryExpr<{
+export class CondExpr extends PrimExpr<{
   if: Expr<any>;
   then: Block;
   else: Block;
 }> {}
 
-export class LoopExpr extends PrimUnaryExpr<{
+export class LoopExpr extends PrimExpr<{
   for: Ident;
   in: Expr<any>;
   do: Block;
