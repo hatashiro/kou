@@ -739,4 +739,20 @@ let test = fn () [float] {
   array(8),
 );
 
+// new expr
+moduleRunTest(
+  `
+let test = fn () [float] {
+  let y = (1, 2, 3);
+  let x = new float[y[2]];
+  x[0] = 1.5;
+  x[1] = 2.5;
+  x[2] = 3.5;
+  x
+}
+  `,
+  [1.5, 2.5, 3.5],
+  array(8),
+);
+
 console.log(chalk.green.bold('Passed!'));

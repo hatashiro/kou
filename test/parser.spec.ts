@@ -1103,4 +1103,13 @@ fn () (bool, int) {
   }),
 );
 
+// new expr
+exprTest(
+  'new int[10]',
+  exp(a.NewExpr, {
+    type: exp(a.IntType),
+    length: exp(a.LitExpr, exp(a.IntLit, '10')),
+  }),
+);
+
 console.log(chalk.green.bold('Passed!'));

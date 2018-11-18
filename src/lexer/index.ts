@@ -199,6 +199,7 @@ function parseToken(input: LexerInput): Token<any> {
             case 'else':
             case 'for':
             case 'in':
+            case 'new':
               return token(Keyword, rep);
             case 'true':
             case 'false':

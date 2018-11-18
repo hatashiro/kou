@@ -1010,4 +1010,23 @@ let f = fn () void {
   'Type mismatch: expected int, found bool',
 );
 
+// new expr
+exprTypeTest('new int[10]', ctx(), arrayType(a.IntType.instance));
+exprTypeTest(
+  'new int[len]',
+  ctx([{ len: a.IntType.instance }]),
+  arrayType(a.IntType.instance),
+);
+exprTypeTest(
+  'new int[int(f)]',
+  ctx([{ f: a.FloatType.instance }]),
+  arrayType(a.IntType.instance),
+);
+exprTypeTest(
+  'new int[c]',
+  ctx([{ c: a.CharType.instance }]),
+  arrayType(a.IntType.instance),
+  'Length type mismatch: expected int, found char',
+);
+
 console.log(chalk.green.bold('Passed!'));

@@ -125,6 +125,7 @@ tokenizeTest('if', [exp(t.Keyword, 'if', 1, 1)]);
 tokenizeTest('else', [exp(t.Keyword, 'else', 1, 1)]);
 tokenizeTest('for', [exp(t.Keyword, 'for', 1, 1)]);
 tokenizeTest('in', [exp(t.Keyword, 'in', 1, 1)]);
+tokenizeTest('new', [exp(t.Keyword, 'new', 1, 1)]);
 
 tokenizeTest('hello', [exp(t.Ident, 'hello', 1, 1)]);
 tokenizeTest('hello1', [exp(t.Ident, 'hello1', 1, 1)]);

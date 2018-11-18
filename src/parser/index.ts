@@ -51,6 +51,7 @@ import {
   LoopExpr,
   Assign,
   LVal,
+  NewExpr,
 } from './ast';
 import { ParseError } from './error';
 
@@ -401,6 +402,7 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token.is(t.Keyword, 'fn'), () => parseFuncExpr(input)],
       [token => token.is(t.Keyword, 'if'), () => parseCondExpr(input)],
       [token => token.is(t.Keyword, 'for'), () => parseLoopExpr(input)],
+      [token => token.is(t.Keyword, 'new'), () => parseNewExpr(input)],
     ],
     () => {
       throw new ParseError(token.row, token.column, {
@@ -502,6 +504,15 @@ const parseLoopExpr: Parser<LoopExpr> = parseNode(LoopExpr, input => {
   const in_ = parseExpr(input);
   const do_ = parseBlock(input);
   return { for: for_, in: in_, do: do_ };
+});
+
+const parseNewExpr: Parser<NewExpr> = parseNode(NewExpr, input => {
+  consume(input, t.Keyword, 'new');
+  const ty = parseType(input);
+  consume(input, t.Punctuation, '[');
+  const length = parseExpr(input);
+  consume(input, t.Punctuation, ']');
+  return { type: ty, length };
 });
 
 const parseBlock: Parser<Block> = parseNode(Block, input => {

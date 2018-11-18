@@ -229,8 +229,10 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
     yield* codegenArrayExpr(expr, ctx);
   } else if (expr instanceof a.IndexExpr) {
     yield* codegenIndexExpr(expr, ctx);
-  } else {
-    // TODO: complex exprs
+  } else if (expr instanceof a.NewExpr) {
+    yield* codegenNewExpr(expr, ctx);
+  } else if (expr instanceof a.LoopExpr) {
+    // TODO: loop exprs
   }
 }
 
@@ -630,6 +632,26 @@ function* codegenIndexExpr(
     const ty = codegenType(target.type.value.items[idx], ctx);
     yield exp(`${ty}.load`);
   }
+}
+
+function* codegenNewExpr(expr: a.NewExpr, ctx: CodegenContext): Iterable<SExp> {
+  const size = getByteSizeOfType(expr.value.type);
+  yield* codegenExpr(expr.value.length, ctx);
+  yield exp('set_global', sys('reg/i32/1'));
+  yield exp('get_global', sys('reg/i32/1'));
+  yield exp('get_global', sys('reg/i32/1'));
+  yield exp('i32.const', String(size));
+  yield exp('i32.mul');
+  yield exp('i32.const', '4');
+  yield exp('i32.add');
+
+  yield* codegenMemoryAllocation();
+  yield exp('set_global', sys('reg/addr'));
+  yield exp('get_global', sys('reg/addr'));
+  yield* codegenSwapStackTop('i32');
+  yield exp('i32.store');
+
+  yield exp('get_global', sys('reg/addr'));
 }
 
 function* codegenLocalVarDef(

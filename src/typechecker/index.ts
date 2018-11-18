@@ -250,6 +250,17 @@ function checkExprTypeWithoutCache(
         'Loop target should be an array',
       );
     }
+  } else if (expr instanceof a.NewExpr) {
+    const lengthType = checkExprType(expr.value.length, ctx);
+    if (lengthType instanceof a.IntType) {
+      return new a.ArrayType(expr.value.type, expr.row, expr.column);
+    } else {
+      throw new TypeError(
+        lengthType,
+        a.IntType.instance,
+        'Length type mismatch',
+      );
+    }
   } else if (expr instanceof a.UnaryExpr) {
     const opTypes = expr.value.op.getOperandTypes();
     const rightActualTy = checkExprType(expr.value.right, ctx);

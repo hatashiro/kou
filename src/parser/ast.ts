@@ -296,6 +296,11 @@ export class LoopExpr extends PrimExpr<{
   do: Block;
 }> {}
 
+export class NewExpr extends PrimExpr<{
+  type: Type<any>;
+  length: Expr<any>;
+}> {}
+
 export abstract class Type<T> extends Node<T> {
   constructor(value: T, row: number, column: number) {
     super(value, row, column);

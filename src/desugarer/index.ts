@@ -92,6 +92,9 @@ class Desugarer {
       node.value.for = this.desugarIdent(node.value.for);
       node.value.in = this.desugarExpr(node.value.in);
       node.value.do = this.desugarBlock(node.value.do);
+    } else if (node instanceof a.NewExpr) {
+      node.value.type = this.desugarType(node.value.type);
+      node.value.length = this.desugarExpr(node.value.length);
     }
     return this.replacer.replaceExpr(node);
   }
