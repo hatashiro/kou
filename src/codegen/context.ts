@@ -9,6 +9,10 @@ export class CodegenContext {
   private incrScopeID: number = 0;
 
   public globalInitializers: Array<{ watName: string; expr: a.Expr<any> }> = [];
+  public tupleConstructors: Map<
+    string,
+    { types: Array<string>; sizes: Array<number> }
+  > = new Map();
 
   private enterScope() {
     this.localNameMaps.unshift(new Map());
@@ -93,5 +97,15 @@ export class CodegenContext {
       }
     }
     return this.globalNameMap.get(aliasedName || origName) || null;
+  }
+
+  useTupleConstructor(types: Array<string>, sizes: Array<number>): string {
+    const name = `create_tuple/${types.join('/')}`;
+
+    if (!this.tupleConstructors.has(name)) {
+      this.tupleConstructors.set(name, { types, sizes });
+    }
+
+    return name;
   }
 }

@@ -57,6 +57,11 @@ function codegenModule(
 
   modE.push(...codegenStartFunc(ctx));
 
+  // used tuple constructors
+  for (const [name, { types, sizes }] of ctx.tupleConstructors.entries()) {
+    modE.push(codegenTupleConstructor(name, types, sizes));
+  }
+
   for (const exportName of opts.exports) {
     const watName = ctx.getGlobalWATName(exportName)!;
     modE.push(exp('export', str(exportName), exp('func', wat(watName))));
@@ -471,29 +476,51 @@ function* codegenTupleExpr(
     return;
   }
 
-  const tupleType: a.TupleType = tuple.type as any;
-  const sizes = tupleType.value.items.map(getByteSizeOfType);
-  yield* codegenMemoryAllocation(sizes.reduce((x, y) => x + y));
-  yield exp('set_global', sys('reg/addr'));
-
-  yield exp('get_global', sys('reg/addr'));
-  yield exp('set_global', sys('reg/i32/1'));
   for (let i = 0; i < tuple.value.size; i++) {
-    yield exp('get_global', sys('reg/i32/1'));
     const expr = tuple.value.items[i];
     yield* codegenExpr(expr, ctx);
-
-    const ty = codegenType(expr.type!, ctx);
-    yield exp(`${ty}.store`);
-
-    // calculate next offset
-    yield exp('get_global', sys('reg/i32/1'));
-    yield exp('i32.const', String(sizes[i]));
-    yield exp('i32.add');
-    yield exp('set_global', sys('reg/i32/1'));
   }
 
-  yield exp('get_global', sys('reg/addr'));
+  const tupleTy: a.TupleType = tuple.type as any;
+  const types = tupleTy.value.items.map(ty => codegenType(ty, ctx));
+  const sizes = tupleTy.value.items.map(getByteSizeOfType);
+
+  const constName = ctx.useTupleConstructor(types, sizes);
+  yield exp('call', sys(constName));
+}
+
+function codegenTupleConstructor(
+  name: string,
+  types: Array<string>,
+  sizes: Array<number>,
+): SExp {
+  const funcE = exp('func', sys(name));
+
+  for (let i = 0; i < types.length; i++) {
+    funcE.push(exp('param', types[i]));
+  }
+  funcE.push(exp('result', 'i32'));
+
+  const offset = wat('offset');
+  funcE.push(exp('local', wat('offset'), 'i32'));
+
+  funcE.push(...codegenMemoryAllocation(sizes.reduce((x, y) => x + y)));
+  funcE.push(exp('set_local', offset));
+  funcE.push(exp('get_local', offset)); // this becomes return value
+
+  for (let i = 0; i < types.length; i++) {
+    funcE.push(exp('get_local', offset));
+    funcE.push(exp('get_local', String(i)));
+    funcE.push(exp(`${types[i]}.store`));
+
+    // calculate next offset
+    funcE.push(exp('get_local', offset));
+    funcE.push(exp('i32.const', String(sizes[i])));
+    funcE.push(exp('i32.add'));
+    funcE.push(exp('set_local', offset));
+  }
+
+  return funcE;
 }
 
 function* codegenIndexExpr(
