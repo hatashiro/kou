@@ -380,3 +380,8 @@ export class VoidType extends SimpleType {
 
   static instance: VoidType = new VoidType(-1, -1);
 }
+
+// AnyType should be used only when it's really needed, e.g. empty list
+export class AnyType extends SimpleType {
+  static instance: AnyType = new AnyType(-1, -1);
+}

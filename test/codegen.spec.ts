@@ -558,6 +558,15 @@ let test = fn () float {
 moduleRunTest(
   `
 let test = fn () int {
+  int((1, 3.5, true)[1])
+}
+  `,
+  3,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
   let x = (1, (2, (3, 4), 5), 6, (7, 8));
   x[1][1][1]
 }
@@ -568,13 +577,33 @@ let test = fn () int {
 moduleRunTest(
   `
 let test = fn () (float, float) {
-  let x = (1., 1.5, (2.5, false, (), 0.), 3.5);
+  let x = (1, 1.5, (2.5, false, (), 0), 3.5);
   let y = (2.5, false);
-  (x[2][0] - x[0], y[0] + x[2][3])
+  (x[2][0] - float(x[0]), y[0] + float(x[2][3]))
 }
   `,
   [1.5, 2.5],
   tuple(8, 8),
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 1234.;
+  int(x)
+}
+  `,
+  1234,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  let x = 1234;
+  float(x)
+}
+  `,
+  1234,
 );
 
 console.log(chalk.green.bold('Passed!'));

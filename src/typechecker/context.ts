@@ -1,5 +1,6 @@
 import * as a from '../parser/ast';
 import { TypeError } from './error';
+import { StdFunc, defaultStdFuncs } from '../stdlib';
 
 export type IdentTypeDef = {
   ident: a.Ident;
@@ -9,8 +10,12 @@ export type IdentTypeDef = {
 export class TypeContext {
   private scopes: Array<Map<string, a.Type<any>>>;
 
-  constructor() {
-    this.scopes = [new Map()];
+  constructor(public stdFuncs: Array<StdFunc> = defaultStdFuncs()) {
+    this.scopes = [
+      new Map(
+        stdFuncs.map<[string, a.Type<any>]>(({ name, type }) => [name, type]),
+      ),
+    ];
   }
 
   get currentScope() {

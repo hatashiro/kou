@@ -291,8 +291,17 @@ function* codegenCallExpr(
     yield* codegenExpr(call.value.args, ctx);
   }
 
-  const funcName = ctx.getGlobalWATName(call.value.func.value.value)!;
-  yield exp('call', wat(funcName));
+  const funcName = ctx.getGlobalWATName(call.value.func.value.value);
+
+  if (typeof funcName === 'string') {
+    yield exp('call', wat(funcName));
+  } else {
+    // must be stdlib
+    const stdFunc = ctx.getStdFunc(call.value.func.value.value)!;
+    if (stdFunc.expr) {
+      yield* stdFunc.expr;
+    }
+  }
 }
 
 function* codegenUnaryExpr(

@@ -3,9 +3,6 @@ import { orStr } from '../util';
 import { TypeContext, IdentTypeDef } from './context';
 import { TypeError } from './error';
 
-// AnyType should be used only when it's really needed, e.g. empty list
-class AnyType extends a.Type<null> {}
-
 export function typeCheck(mod: a.Module, ctx: TypeContext) {
   ctx.enterScope();
 
@@ -92,7 +89,7 @@ function checkExprTypeWithoutCache(
     );
   } else if (expr instanceof a.ListExpr) {
     if (expr.value.length === 0) {
-      return new a.ListType(new AnyType(null, -1, -1), expr.row, expr.column);
+      return new a.ListType(a.AnyType.instance, expr.row, expr.column);
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
@@ -385,7 +382,7 @@ export function checkBlockType(
 
 export function assertType(actual: a.Type<any>, expected: a.Type<any>) {
   // if it's AnyType, it always succeeds
-  if (actual instanceof AnyType) {
+  if (actual instanceof a.AnyType) {
     return;
   }
 

@@ -1,4 +1,5 @@
 import * as a from '../parser/ast';
+import { StdFunc, defaultStdFuncs } from '../stdlib';
 
 export class CodegenContext {
   private globalNameMap: Map<string, string> = new Map();
@@ -13,6 +14,14 @@ export class CodegenContext {
     string,
     { types: Array<string>; sizes: Array<number> }
   > = new Map();
+
+  private stdFuncMap: Map<string, StdFunc>;
+
+  constructor(stdFuncs: Array<StdFunc> = defaultStdFuncs()) {
+    this.stdFuncMap = new Map(
+      stdFuncs.map<[string, StdFunc]>(func => [func.name, func]),
+    );
+  }
 
   private enterScope() {
     this.localNameMaps.unshift(new Map());
@@ -107,5 +116,9 @@ export class CodegenContext {
     }
 
     return name;
+  }
+
+  public getStdFunc(name: string): StdFunc | null {
+    return this.stdFuncMap.get(name) || null;
   }
 }
