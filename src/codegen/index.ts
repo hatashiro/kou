@@ -469,11 +469,14 @@ function* codegenSwapStackTop(ty1: string, ty2: string = ty1): Iterable<SExp> {
   yield exp('get_global', sys(`reg/${ty2}/2`));
 }
 
-function* codegenMemoryAllocation(size: number): Iterable<SExp> {
+function* codegenMemoryAllocation(size?: number): Iterable<SExp> {
+  if (typeof size === 'number') {
+    yield exp('i32.const', String(size));
+  }
+
   yield* codegenGetCurrentHeapPointer();
   yield exp('set_global', sys('reg/addr'));
   yield exp('get_global', sys('reg/addr'));
-  yield exp('i32.const', String(size));
   yield exp('i32.add');
   yield* codegenSetCurrentHeapPointer();
   yield exp('get_global', sys('reg/addr'));
