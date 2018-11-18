@@ -338,7 +338,7 @@ declDesugarTest(
         items: [
           n(a.StrType, null),
           n(
-            a.ListType,
+            a.ArrayType,
             n(a.TupleType, {
               size: 1,
               items: [
@@ -420,7 +420,7 @@ declDesugarTest(
         size: 3,
         items: [
           n(a.StrType, null),
-          n(a.ListType, n(a.BoolType, null)),
+          n(a.ArrayType, n(a.BoolType, null)),
           n(a.FuncType, {
             param: n(a.CharType, null),
             return: n(a.StrType, null),

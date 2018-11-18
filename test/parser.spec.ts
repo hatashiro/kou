@@ -237,11 +237,11 @@ typeTest('str', exp(a.StrType));
 typeTest('bool', exp(a.BoolType));
 typeTest('char', exp(a.CharType));
 typeTest('void', exp(a.VoidType));
-typeTest('[int]', exp(a.ListType, exp(a.IntType)));
-typeTest('[[str]]', exp(a.ListType, exp(a.ListType, exp(a.StrType))));
+typeTest('[int]', exp(a.ArrayType, exp(a.IntType)));
+typeTest('[[str]]', exp(a.ArrayType, exp(a.ArrayType, exp(a.StrType))));
 typeTest(
   '[[[bool]]]',
-  exp(a.ListType, exp(a.ListType, exp(a.ListType, exp(a.BoolType)))),
+  exp(a.ArrayType, exp(a.ArrayType, exp(a.ArrayType, exp(a.BoolType)))),
 );
 typeTest(
   '(int, float)',
@@ -260,7 +260,7 @@ typeTest(
 typeTest(
   '[(int, str)]',
   exp(
-    a.ListType,
+    a.ArrayType,
     exp(a.TupleType, {
       size: 2,
       items: [exp(a.IntType), exp(a.StrType)],
@@ -273,7 +273,7 @@ typeTest(
     size: 3,
     items: [
       exp(a.IntType),
-      exp(a.ListType, exp(a.FloatType)),
+      exp(a.ArrayType, exp(a.FloatType)),
       exp(a.TupleType, {
         size: 3,
         items: [exp(a.StrType), exp(a.BoolType), exp(a.CharType)],
@@ -309,7 +309,7 @@ typeTest(
   exp(a.FuncType, {
     param: exp(a.BoolType),
     return: exp(a.FuncType, {
-      param: exp(a.ListType, exp(a.StrType)),
+      param: exp(a.ArrayType, exp(a.StrType)),
       return: exp(a.StrType),
     }),
   }),
@@ -544,10 +544,10 @@ exprTest(
   }),
 );
 
-exprTest('[]', exp(a.ListExpr, []));
+exprTest('[]', exp(a.ArrayExpr, []));
 exprTest(
   '[1, 2, 3]',
-  exp(a.ListExpr, [
+  exp(a.ArrayExpr, [
     exp(a.LitExpr, exp(a.IntLit, '1')),
     exp(a.LitExpr, exp(a.IntLit, '2')),
     exp(a.LitExpr, exp(a.IntLit, '3')),
@@ -555,7 +555,7 @@ exprTest(
 );
 exprTest(
   '[a, b, c]',
-  exp(a.ListExpr, [
+  exp(a.ArrayExpr, [
     exp(a.IdentExpr, exp(a.Ident, 'a')),
     exp(a.IdentExpr, exp(a.Ident, 'b')),
     exp(a.IdentExpr, exp(a.Ident, 'c')),
@@ -666,7 +666,7 @@ exprTest(
       items: [
         {
           name: exp(a.Ident, 'ignored'),
-          type: exp(a.ListType, exp(a.BoolType)),
+          type: exp(a.ArrayType, exp(a.BoolType)),
         },
         { name: exp(a.Ident, 'negated'), type: exp(a.IntType) },
       ],
@@ -862,7 +862,7 @@ exprTest(
 exprTest(
   '[1, 2, 3][2]',
   exp(a.IndexExpr, {
-    target: exp(a.ListExpr, [
+    target: exp(a.ArrayExpr, [
       exp(a.LitExpr, exp(a.IntLit, '1')),
       exp(a.LitExpr, exp(a.IntLit, '2')),
       exp(a.LitExpr, exp(a.IntLit, '3')),
@@ -965,7 +965,7 @@ exprTest(
   'for x in [1, 2, 3] { x * 2 }',
   exp(a.LoopExpr, {
     for: exp(a.Ident, 'x'),
-    in: exp(a.ListExpr, [
+    in: exp(a.ArrayExpr, [
       exp(a.LitExpr, exp(a.IntLit, '1')),
       exp(a.LitExpr, exp(a.IntLit, '2')),
       exp(a.LitExpr, exp(a.IntLit, '3')),
@@ -990,7 +990,7 @@ for x in [1, 2, 3] {
 `,
   exp(a.LoopExpr, {
     for: exp(a.Ident, 'x'),
-    in: exp(a.ListExpr, [
+    in: exp(a.ArrayExpr, [
       exp(a.LitExpr, exp(a.IntLit, '1')),
       exp(a.LitExpr, exp(a.IntLit, '2')),
       exp(a.LitExpr, exp(a.IntLit, '3')),

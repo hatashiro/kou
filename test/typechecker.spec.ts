@@ -17,7 +17,7 @@ console.log(chalk.bold('Running typechecker tests...'));
 
 // complex type constructors
 const tupleType = (v: a.Tuple<a.Type<any>>) => new a.TupleType(v, -1, -1);
-const listType = (v: a.Type<any>) => new a.ListType(v, -1, -1);
+const arrayType = (v: a.Type<any>) => new a.ArrayType(v, -1, -1);
 const funcType = (v: { param: a.Type<any>; return: a.Type<any> }) =>
   new a.FuncType(v, -1, -1);
 
@@ -173,30 +173,30 @@ exprTypeTest(
   'Type mismatch: expected (int, char, bool), found (int, str, bool)',
 );
 
-// list
-exprTypeTest('[1, 2, 3, 4]', ctx(), listType(a.IntType.instance));
-exprTypeTest('[]', ctx(), listType(a.IntType.instance));
-exprTypeTest('[]', ctx(), listType(a.StrType.instance));
+// array
+exprTypeTest('[1, 2, 3, 4]', ctx(), arrayType(a.IntType.instance));
+exprTypeTest('[]', ctx(), arrayType(a.IntType.instance));
+exprTypeTest('[]', ctx(), arrayType(a.StrType.instance));
 exprTypeTest(
   '[[1], [2, 3, 4], []]',
   ctx(),
-  listType(listType(a.IntType.instance)),
+  arrayType(arrayType(a.IntType.instance)),
 );
 exprTypeTest(
   '[some_ident, 4]',
   ctx([{ some_ident: a.IntType.instance }]),
-  listType(a.IntType.instance),
+  arrayType(a.IntType.instance),
 );
 exprTypeTest(
   '[some_ident, 4]',
   ctx([{ some_ident: a.IntType.instance }]),
-  listType(a.StrType.instance),
+  arrayType(a.StrType.instance),
   'Type mismatch: expected [str], found [int]',
 );
 exprTypeTest(
   '[some_ident, "str", 4]',
   ctx([{ some_ident: a.IntType.instance }]),
-  listType(a.IntType.instance),
+  arrayType(a.IntType.instance),
   'Type mismatch: expected int, found str',
 );
 
@@ -466,8 +466,8 @@ blockTypeTest(
 
 // index expr
 exprTypeTest(
-  'list[3]',
-  ctx([{ list: listType(a.IntType.instance) }]),
+  'arr[3]',
+  ctx([{ arr: arrayType(a.IntType.instance) }]),
   a.IntType.instance,
 );
 exprTypeTest('"hello"[3]', ctx(), a.CharType.instance);
@@ -481,10 +481,10 @@ exprTypeTest(
   'Tuple index out of range: expected int < 3, found 3',
 );
 exprTypeTest(
-  'list[no_int]',
+  'arr[no_int]',
   ctx([
     {
-      list: listType(a.IntType.instance),
+      arr: arrayType(a.IntType.instance),
       no_int: a.CharType.instance,
     },
   ]),
@@ -513,7 +513,7 @@ exprTypeTest(
   '3[0]',
   ctx(),
   a.VoidType.instance,
-  'Indexable type mismatch: expected list, str or tuple, found int',
+  'Indexable type mismatch: expected array, str or tuple, found int',
 );
 
 // cond expr
@@ -563,7 +563,7 @@ exprTypeTest(
       f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
     },
   ]),
-  listType(a.BoolType.instance),
+  arrayType(a.BoolType.instance),
 );
 exprTypeTest(
   'for x in [1, 2, 3] { f(x); }',
@@ -572,7 +572,7 @@ exprTypeTest(
       f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
     },
   ]),
-  listType(a.VoidType.instance),
+  arrayType(a.VoidType.instance),
 );
 exprTypeTest(
   'for x in [1, 2, 3] { f(x) }',
@@ -581,7 +581,7 @@ exprTypeTest(
       f: funcType({ param: a.CharType.instance, return: a.BoolType.instance }),
     },
   ]),
-  listType(a.BoolType.instance),
+  arrayType(a.BoolType.instance),
   'Function parameter type mismatch: expected char, found int',
 );
 exprTypeTest(
@@ -591,8 +591,8 @@ exprTypeTest(
       f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
     },
   ]),
-  listType(a.BoolType.instance),
-  'Loop target should be a list: found int',
+  arrayType(a.BoolType.instance),
+  'Loop target should be an array: found int',
 );
 
 // unary expr

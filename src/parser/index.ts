@@ -25,7 +25,7 @@ import {
   VoidType,
   Expr,
   LitExpr,
-  ListType,
+  ArrayType,
   TupleType,
   FuncType,
   PrimUnaryExpr,
@@ -34,7 +34,7 @@ import {
   UnaryExpr,
   IdentExpr,
   TupleExpr,
-  ListExpr,
+  ArrayExpr,
   FuncExpr,
   Param,
   Block,
@@ -185,7 +185,7 @@ function parseType(input: ParserInput): Type<any> {
 
   const token = nextToken(input);
   if (token.is(t.Punctuation, '[')) {
-    type_ = parseListType(input);
+    type_ = parseArrayType(input);
   } else if (token.is(t.Punctuation, '(')) {
     type_ = parseTupleType(input);
   } else if (token.is(t.Ident)) {
@@ -211,7 +211,7 @@ function parseType(input: ParserInput): Type<any> {
   }
 }
 
-const parseListType: Parser<ListType> = parseNode(ListType, input => {
+const parseArrayType: Parser<ArrayType> = parseNode(ArrayType, input => {
   consume(input, t.Punctuation, '[');
   const elementType = parseType(input);
   consume(input, t.Punctuation, ']');
@@ -397,7 +397,7 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token instanceof t.Literal, () => parseLitExpr(input)],
       [token => token.is(t.Ident), () => parseIdentExpr(input)],
       [token => token.is(t.Punctuation, '('), () => parseTupleExpr(input)],
-      [token => token.is(t.Punctuation, '['), () => parseListExpr(input)],
+      [token => token.is(t.Punctuation, '['), () => parseArrayExpr(input)],
       [token => token.is(t.Keyword, 'fn'), () => parseFuncExpr(input)],
       [token => token.is(t.Keyword, 'if'), () => parseCondExpr(input)],
       [token => token.is(t.Keyword, 'for'), () => parseLoopExpr(input)],
@@ -437,7 +437,7 @@ const parseTupleExpr: Parser<TupleExpr> = parseNode(TupleExpr, input => {
   return { size: items.length, items };
 });
 
-const parseListExpr: Parser<ListExpr> = parseNode(ListExpr, input => {
+const parseArrayExpr: Parser<ArrayExpr> = parseNode(ArrayExpr, input => {
   consume(input, t.Punctuation, '[');
   let elems: Array<Expr<any>> = [];
   if (!nextToken(input).is(t.Punctuation, ']')) {

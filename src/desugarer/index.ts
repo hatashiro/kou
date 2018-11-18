@@ -66,7 +66,7 @@ class Desugarer {
       node.value = this.desugarIdent(node.value);
     } else if (node instanceof a.TupleExpr) {
       node.value.items = node.value.items.map(item => this.desugarExpr(item));
-    } else if (node instanceof a.ListExpr) {
+    } else if (node instanceof a.ArrayExpr) {
       node.value = node.value.map(item => this.desugarExpr(item));
     } else if (node instanceof a.CallExpr) {
       node.value.func = this.desugarExpr(node.value.func);
@@ -129,7 +129,7 @@ class Desugarer {
       node.value.return = this.desugarType(node.value.return);
     } else if (node instanceof a.TupleType) {
       node.value.items = node.value.items.map(item => this.desugarType(item));
-    } else if (node instanceof a.ListType) {
+    } else if (node instanceof a.ArrayType) {
       node.value = this.desugarType(node.value);
     }
     return this.replacer.replaceType(node);

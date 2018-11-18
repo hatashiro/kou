@@ -225,8 +225,8 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
     yield* codegenCondExpr(expr, ctx);
   } else if (expr instanceof a.TupleExpr) {
     yield* codegenTupleExpr(expr, ctx);
-  } else if (expr instanceof a.ListExpr) {
-    // TODO: list expr
+  } else if (expr instanceof a.ArrayExpr) {
+    // TODO: array expr
   } else if (expr instanceof a.IndexExpr) {
     yield* codegenIndexExpr(expr, ctx);
   } else {
@@ -563,8 +563,8 @@ function* codegenIndexExpr(
   ctx: CodegenContext,
 ): Iterable<SExp> {
   const target = expr.value.target;
-  if (target.type instanceof a.ListType) {
-    // TODO: index expr for list expr target
+  if (target.type instanceof a.ArrayType) {
+    // TODO: index expr for array expr target
   } else if (target.type instanceof a.TupleType) {
     const idx = getTupleIdx(expr);
     yield* codegenTupleAddr(target, idx, ctx);
@@ -653,8 +653,8 @@ function* codegenAssign(assign: a.Assign, ctx: CodegenContext): Iterable<SExp> {
   } else {
     // index expr
     const target = lVal.value.target;
-    if (target.type instanceof a.ListType) {
-      // TODO: index expr for list expr target
+    if (target.type instanceof a.ArrayType) {
+      // TODO: index expr for array expr target
     } else if (target.type instanceof a.TupleType) {
       const idx = getTupleIdx(lVal);
       yield* codegenTupleAddr(target, idx, ctx);

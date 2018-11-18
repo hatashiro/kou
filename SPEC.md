@@ -12,7 +12,7 @@
   + [Primary types](#primary-types)
   + [Function type](#function-type)
   + [Tuple type](#tuple-type)
-  + [List type](#list-type)
+  + [Array type](#array-type)
   + [Void type](#void-type)
 * [Module](#module)
   + [Import](#import)
@@ -21,7 +21,7 @@
   + [LitExpr](#litexpr)
   + [IdentExpr](#identexpr)
   + [TupleExpr](#tupleexpr)
-  + [ListExpr](#listexpr)
+  + [ArrayExpr](#arrayexpr)
   + [CallExpr](#callexpr)
   + [IndexExpr](#indexexpr)
   + [FuncExpr](#funcexpr)
@@ -129,7 +129,7 @@ ident = letter { letter | decimal_digit } .
 ## Types
 
 ```
-Type = PrimType | FuncType | TupleType | ListType | VoidType .
+Type = PrimType | FuncType | TupleType | ArrayType | VoidType .
 ```
 
 ### Primary types
@@ -155,13 +155,13 @@ into its inner type.
 
 Related: [TupleExpr](#tupleexpr)
 
-### List type
+### Array type
 
 ```
-ListType = "[" Type "]" .
+ArrayType = "[" Type "]" .
 ```
 
-Related: [ListExpr](#listexpr)
+Related: [ArrayExpr](#arrayexpr)
 
 ### Void type
 
@@ -205,7 +205,7 @@ UnaryExpr = unary_op PrimUnaryExpr
 PrimExpr = LitExpr
          | IdentExpr
          | TupleExpr
-         | ListExpr
+         | ArrayExpr
          | CallExpr
          | FuncExpr
          | CondExpr
@@ -241,13 +241,13 @@ into its inner value.
 
 Related: [Tuple type](#tuple-type)
 
-### ListExpr
+### ArrayExpr
 
 ```
-ListExpr = "[" Expr { "," Expr } "]"
+ArrayExpr = "[" Expr { "," Expr } "]"
 ```
 
-Related: [List type](#list-type)
+Related: [Array type](#array-type)
 
 ### CallExpr
 
@@ -263,7 +263,7 @@ Related: [TupleExpr](#tupleexpr)
 IndexExpr = PrimExpr "[" Expr "]" .
 ```
 
-It can be used to retrieve an element from a list or a tuple.
+It can be used to retrieve an element from an array or a tuple.
 
 For the tuple case, the index should be a `LitExpr` having `int_lit`, with a
 value in the tuple's size range.

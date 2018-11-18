@@ -87,15 +87,15 @@ function checkExprTypeWithoutCache(
       expr.row,
       expr.column,
     );
-  } else if (expr instanceof a.ListExpr) {
+  } else if (expr instanceof a.ArrayExpr) {
     if (expr.value.length === 0) {
-      return new a.ListType(a.AnyType.instance, expr.row, expr.column);
+      return new a.ArrayType(a.AnyType.instance, expr.row, expr.column);
     }
     const ty = checkExprType(expr.value[0], ctx);
     for (let i = 1; i < expr.value.length; i++) {
       assertType(checkExprType(expr.value[i], ctx), ty);
     }
-    return new a.ListType(ty, expr.row, expr.column);
+    return new a.ArrayType(ty, expr.row, expr.column);
   } else if (expr instanceof a.FuncExpr) {
     let param: a.Type<any>;
     if (expr.value.params.size === 1) {
@@ -165,7 +165,7 @@ function checkExprTypeWithoutCache(
     return cloneType(funcType.value.return, expr);
   } else if (expr instanceof a.IndexExpr) {
     const targetType = checkExprType(expr.value.target, ctx);
-    if (targetType instanceof a.ListType) {
+    if (targetType instanceof a.ArrayType) {
       const indexType = checkExprType(expr.value.index, ctx);
       if (indexType instanceof a.IntType) {
         return cloneType(targetType.value, expr);
@@ -210,7 +210,7 @@ function checkExprTypeWithoutCache(
     } else {
       throw new TypeError(
         targetType,
-        { name: 'list, str or tuple' },
+        { name: 'array, str or tuple' },
         'Indexable type mismatch',
       );
     }
@@ -238,16 +238,16 @@ function checkExprTypeWithoutCache(
   } else if (expr instanceof a.LoopExpr) {
     const targetType = checkExprType(expr.value.in, ctx);
 
-    if (targetType instanceof a.ListType) {
+    if (targetType instanceof a.ArrayType) {
       const doBlockType = checkBlockType(expr.value.do, ctx, [
         { ident: expr.value.for, type: targetType.value },
       ]);
-      return new a.ListType(doBlockType, doBlockType.row, doBlockType.column);
+      return new a.ArrayType(doBlockType, doBlockType.row, doBlockType.column);
     } else {
       throw new TypeError(
         targetType,
         undefined,
-        'Loop target should be a list',
+        'Loop target should be an array',
       );
     }
   } else if (expr instanceof a.UnaryExpr) {
@@ -353,7 +353,7 @@ function containsVoidType(ty: a.Type<any>): boolean {
     return true;
   } else if (ty instanceof a.TupleType) {
     return ty.value.items.some(containsVoidType);
-  } else if (ty instanceof a.ListType) {
+  } else if (ty instanceof a.ArrayType) {
     return containsVoidType(ty.value);
   } else {
     return false;
@@ -435,8 +435,8 @@ export function assertType(actual: a.Type<any>, expected: a.Type<any>) {
     return;
   }
 
-  // list type
-  if (actual instanceof a.ListType && expected instanceof a.ListType) {
+  // array type
+  if (actual instanceof a.ArrayType && expected instanceof a.ArrayType) {
     try {
       assertType(actual.value, expected.value);
     } catch {

@@ -264,7 +264,7 @@ export type Tuple<T> = { size: number; items: Array<T> };
 
 export class TupleExpr extends PrimExpr<Tuple<Expr<any>>> {}
 
-export class ListExpr extends PrimExpr<Array<Expr<any>>> {}
+export class ArrayExpr extends PrimExpr<Array<Expr<any>>> {}
 
 export class CallExpr extends PrimExpr<{
   func: Expr<any>; // Syntactically PrimExpr, but Expr for desugar
@@ -374,7 +374,7 @@ export class TupleType extends Type<Tuple<Type<any>>> {
   }
 }
 
-export class ListType extends Type<Type<any>> {
+export class ArrayType extends Type<Type<any>> {
   get name() {
     return `[${this.value.name}]`;
   }
@@ -388,7 +388,7 @@ export class VoidType extends SimpleType {
   static instance: VoidType = new VoidType(-1, -1);
 }
 
-// AnyType should be used only when it's really needed, e.g. empty list
+// AnyType should be used only when it's really needed, e.g. empty array
 export class AnyType extends SimpleType {
   static instance: AnyType = new AnyType(-1, -1);
 }
