@@ -225,8 +225,15 @@ export class Decl extends Node<{
   expr: Expr<any>;
 }> {}
 
+export class Assign extends Node<{
+  lVal: LVal;
+  expr: Expr<any>;
+}> {}
+
+export type LVal = IdentExpr | IndexExpr;
+
 export class Block extends Node<{
-  bodies: Array<Expr<any> | Decl>;
+  bodies: Array<Expr<any> | Decl | Assign>;
   returnVoid: boolean;
 }> {}
 

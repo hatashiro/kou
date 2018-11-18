@@ -27,6 +27,7 @@
   + [FuncExpr](#funcexpr)
   + [CondExpr](#condexpr)
   + [LoopExpr](#loopexpr)
+* [Assignment](#assignment)
 * [Block](#block)
 
 ## Introduction
@@ -282,7 +283,7 @@ Related: [Block](#block)
 ### CondExpr
 
 ```
-CondExpr = "if" Expr Block "else" Block
+CondExpr = "if" Expr Block "else" Block .
 ```
 
 Related: [Block](#block)
@@ -290,15 +291,33 @@ Related: [Block](#block)
 ### LoopExpr
 
 ```
-LoopExpr = "for" ident "in" Expr Block
+LoopExpr = "for" ident "in" Expr Block .
 ```
 
 Related: [Block](#block)
 
+## Assignment
+
+```
+Assign = LVal "=" Expr .
+```
+
+### LVal
+
+```
+LVal = IdentExpr
+     | IndexExpr .
+```
+
+Related:
+
+- [IdentExpr](#identexpr)
+- [IndexExpr](#indexexpr)
+
 ## Block
 
 ```
-Block = "{" { ( Expr | Decl ) ";" } [ Expr ] "}" .
+Block = "{" { ( Expr | Decl | Assign ) ";" } [ Expr ] "}" .
 ```
 
 A block ending without `Expr` (no `";"`) has its return type as `void`, and it

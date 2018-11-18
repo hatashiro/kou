@@ -49,6 +49,8 @@ import {
   IndexExpr,
   CondExpr,
   LoopExpr,
+  Assign,
+  LVal,
 } from './ast';
 import { ParseError } from './error';
 
@@ -505,14 +507,25 @@ const parseLoopExpr: Parser<LoopExpr> = parseNode(LoopExpr, input => {
 const parseBlock: Parser<Block> = parseNode(Block, input => {
   consume(input, t.Punctuation, '{');
 
-  let bodies: Array<Expr<any> | Decl> = [];
+  let bodies: Array<Expr<any> | Decl | Assign> = [];
   let returnVoid = true;
 
   while (!nextToken(input).is(t.Punctuation, '}')) {
     if (nextToken(input).is(t.Keyword, 'let')) {
       bodies.push(parseDecl(input));
     } else {
-      bodies.push(parseExpr(input));
+      const expr = parseExpr(input);
+      if (nextToken(input).is(t.Punctuation, '=')) {
+        if (expr instanceof IdentExpr || expr instanceof IndexExpr) {
+          bodies.push(parseAssign(input, expr));
+        } else {
+          throw new ParseError(expr.row, expr.column, expr, {
+            name: 'LVal (IdentExpr or IndexExpr)',
+          });
+        }
+      } else {
+        bodies.push(expr);
+      }
     }
 
     if (nextToken(input).is(t.Punctuation, ';')) {
@@ -528,3 +541,9 @@ const parseBlock: Parser<Block> = parseNode(Block, input => {
 
   return { bodies, returnVoid };
 });
+
+function parseAssign(input: ParserInput, lVal: LVal): Assign {
+  consume(input, t.Punctuation, '=');
+  const expr = parseExpr(input);
+  return new Assign({ lVal, expr }, lVal.row, lVal.column);
+}

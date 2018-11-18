@@ -341,6 +341,13 @@ function checkDeclType(decl: a.Decl, ctx: TypeContext) {
   assertType(checkExprType(decl.value.expr, ctx), decl.value.type);
 }
 
+function checkAssignType(assign: a.Assign, ctx: TypeContext) {
+  assertType(
+    checkExprType(assign.value.expr, ctx),
+    checkExprType(assign.value.lVal, ctx),
+  );
+}
+
 function containsVoidType(ty: a.Type<any>): boolean {
   if (ty instanceof a.VoidType) {
     return true;
@@ -366,8 +373,10 @@ export function checkBlockType(
     if (body instanceof a.Decl) {
       registerDeclType(body, ctx);
       checkDeclType(body, ctx);
-    } else {
+    } else if (body instanceof a.Expr) {
       exprType = checkExprType(body, ctx);
+    } else {
+      checkAssignType(body, ctx);
     }
   });
 

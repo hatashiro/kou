@@ -182,9 +182,12 @@ function* codegenBlock(
     if (body instanceof a.Expr) {
       // expr
       yield* codegenExpr(body, ctx);
-    } else {
+    } else if (body instanceof a.Decl) {
       // local decl
-      yield* codegenLocalVarAssign(body, ctx);
+      yield* codegenLocalVarDecl(body, ctx);
+    } else {
+      // assignment
+      yield* codegenAssign(body, ctx);
     }
   }
 
@@ -532,28 +535,40 @@ function codegenTupleConstructor(
   return funcE;
 }
 
+function getTupleIdx(expr: a.IndexExpr): number {
+  // The index of a tuple expr should be an int literal
+  const idxLit: a.IntLit = expr.value.index.value as any;
+  return idxLit.parsedValue;
+}
+
+function* codegenTupleAddr(
+  target: a.Expr<any>,
+  idx: number,
+  ctx: CodegenContext,
+): Iterable<SExp> {
+  yield* codegenExpr(target, ctx);
+
+  const tupleTy = target.type! as a.TupleType;
+
+  let offset = 0;
+  for (let i = 0; i < idx; i++) {
+    offset += getByteSizeOfType(tupleTy.value.items[i]);
+  }
+  yield exp('i32.const', String(offset));
+  yield exp('i32.add');
+}
+
 function* codegenIndexExpr(
   expr: a.IndexExpr,
   ctx: CodegenContext,
 ): Iterable<SExp> {
-  yield* codegenExpr(expr.value.target, ctx);
-
-  const targetTy = expr.value.target.type!;
-  if (targetTy instanceof a.ListType) {
+  const target = expr.value.target;
+  if (target.type instanceof a.ListType) {
     // TODO: index expr for list expr target
-  } else if (targetTy instanceof a.TupleType) {
-    // The index of a tuple expr should be an int literal
-    const idxLit: a.IntLit = expr.value.index.value as any;
-    const idx = idxLit.parsedValue;
-
-    let offset = 0;
-    for (let i = 0; i < idx; i++) {
-      offset += getByteSizeOfType(targetTy.value.items[i]);
-    }
-    yield exp('i32.const', String(offset));
-    yield exp('i32.add');
-
-    const ty = codegenType(targetTy.value.items[idx], ctx);
+  } else if (target.type instanceof a.TupleType) {
+    const idx = getTupleIdx(expr);
+    yield* codegenTupleAddr(target, idx, ctx);
+    const ty = codegenType(target.type.value.items[idx], ctx);
     yield exp(`${ty}.load`);
   }
 }
@@ -589,7 +604,7 @@ function* codegenLocalVarDef(
   }
 }
 
-function* codegenLocalVarAssign(
+function* codegenLocalVarDecl(
   decl: a.Decl,
   ctx: CodegenContext,
 ): Iterable<SExp> {
@@ -610,14 +625,42 @@ function codegenGlobalVar(decl: a.Decl, ctx: CodegenContext): SExp {
 
   const varE = exp('global', wat(name));
   const expr = decl.value.expr;
+  varE.push(exp('mut', codegenType(expr.type!, ctx)));
   if (expr instanceof a.LitExpr) {
-    varE.push(codegenType(expr.type!, ctx));
     varE.push(...codegenLiteral(expr.value, ctx));
   } else {
-    varE.push(exp('mut', codegenType(expr.type!, ctx)));
     varE.push(codegenInitialValForType(expr.type!, ctx));
     ctx.pushInitializer(name, expr);
   }
 
   return varE;
+}
+
+function* codegenAssign(assign: a.Assign, ctx: CodegenContext): Iterable<SExp> {
+  yield* codegenExpr(assign.value.expr, ctx);
+
+  const lVal = assign.value.lVal;
+  if (lVal instanceof a.IdentExpr) {
+    // ident
+    const ident = lVal.value;
+    let name = ctx.getLocalWATName(ident.value);
+    if (name) {
+      yield exp('set_local', wat(name));
+    } else {
+      name = ctx.getGlobalWATName(ident.value)!;
+      yield exp('set_global', wat(name));
+    }
+  } else {
+    // index expr
+    const target = lVal.value.target;
+    if (target.type instanceof a.ListType) {
+      // TODO: index expr for list expr target
+    } else if (target.type instanceof a.TupleType) {
+      const idx = getTupleIdx(lVal);
+      yield* codegenTupleAddr(target, idx, ctx);
+      const ty = codegenType(target.type.value.items[idx], ctx);
+      yield* codegenSwapStackTop('i32', ty);
+      yield exp(`${ty}.store`);
+    }
+  }
 }

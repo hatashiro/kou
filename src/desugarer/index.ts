@@ -10,6 +10,7 @@ class Desugarer {
       replaceLiteral: Arity1<a.Literal<any>>;
       replaceExpr: Arity1<a.Expr<any>>;
       replaceDecl: Arity1<a.Decl>;
+      replaceAssign: Arity1<a.Assign>;
       replaceIdent: Arity1<a.Ident>;
       replaceBinaryOp: Arity1<a.BinaryOp<any>>;
       replaceUnaryOp: Arity1<a.UnaryOp>;
@@ -38,8 +39,10 @@ class Desugarer {
     node.value.bodies = node.value.bodies.map(body => {
       if (body instanceof a.Expr) {
         return this.desugarExpr(body);
-      } else {
+      } else if (body instanceof a.Decl) {
         return this.desugarDecl(body);
+      } else {
+        return this.desugarAssign(body);
       }
     });
     return this.replacer.replaceBlock(node);
@@ -102,6 +105,12 @@ class Desugarer {
     return this.replacer.replaceDecl(node);
   }
 
+  desugarAssign(node: a.Assign): a.Assign {
+    node.value.lVal = this.desugarExpr(node.value.lVal);
+    node.value.expr = this.desugarExpr(node.value.expr);
+    return this.replacer.replaceAssign(node);
+  }
+
   desugarIdent(node: a.Ident): a.Ident {
     return this.replacer.replaceIdent(node);
   }
@@ -137,6 +146,7 @@ export function desugarBefore(mod: a.Module): a.Module {
     replaceLiteral: id,
     replaceExpr: unwrap1TupleExpr,
     replaceDecl: id,
+    replaceAssign: id,
     replaceIdent: id,
     replaceBinaryOp: id,
     replaceUnaryOp: id,
@@ -154,6 +164,7 @@ export function desugarAfter(mod: a.Module): a.Module {
     replaceLiteral: id,
     replaceExpr: removeUnaryPlus,
     replaceDecl: id,
+    replaceAssign: id,
     replaceIdent: id,
     replaceBinaryOp: id,
     replaceUnaryOp: id,

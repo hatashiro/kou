@@ -606,4 +606,46 @@ let test = fn () float {
   1234,
 );
 
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 1;
+  x = x + 10;
+  let y = 2;
+  x = x + 2 * y;
+  x
+}
+  `,
+  15,
+);
+
+moduleRunTest(
+  `
+let g = 10
+
+let test = fn () int {
+  let x = 1;
+  x = x + 10;
+  let y = 2;
+  x = x + 2 * y;
+  g = x + g;
+  g
+}
+  `,
+  25,
+);
+
+moduleRunTest(
+  `
+let g = (10, 20., 30)
+
+let test = fn () int {
+  g[0] = 0;
+  g[1] = float(g[0]) + float(g[2]);
+  int(g[1]) + g[2]
+}
+  `,
+  60,
+);
+
 console.log(chalk.green.bold('Passed!'));

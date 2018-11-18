@@ -940,4 +940,74 @@ let f = fn () void {
   'A decl type cannot contain void: found [void] at 3:3',
 );
 
+// Assignments
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = 10;
+  x = 2;
+}
+  `,
+  ctx(),
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = 10;
+  x = 1.0;
+}
+  `,
+  ctx(),
+  'Type mismatch: expected int, found float',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = (10, true);
+  x[1] = false;
+}
+  `,
+  ctx(),
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = (10, true);
+  x[1] = "hi";
+}
+  `,
+  ctx(),
+  'Type mismatch: expected bool, found str',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = (10, true);
+  let y = 1;
+  x[y] = "hi";
+}
+  `,
+  ctx(),
+  'Invalid tuple index: only int literal is allowed for tuple index: found expr',
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = [1, 2, 3];
+  x[1] = 1234;
+}
+  `,
+  ctx(),
+);
+typeCheckTest(
+  `
+let f = fn () void {
+  let x = [1, 2, 3];
+  x[1] = true;
+}
+  `,
+  ctx(),
+  'Type mismatch: expected int, found bool',
+);
+
 console.log(chalk.green.bold('Passed!'));

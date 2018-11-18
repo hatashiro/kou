@@ -1016,4 +1016,91 @@ for x in [1, 2, 3] {
   }),
 );
 
+exprTest(
+  `
+fn (x int, y int) int {
+  let result = x + y;
+  result = result + 3;
+  result
+}
+`,
+  exp(a.FuncExpr, {
+    params: {
+      size: 2,
+      items: [
+        { name: exp(a.Ident, 'x'), type: exp(a.IntType) },
+        { name: exp(a.Ident, 'y'), type: exp(a.IntType) },
+      ],
+    },
+    returnType: exp(a.IntType),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.Decl, {
+          name: exp(a.Ident, 'result'),
+          type: null,
+          expr: exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+            right: exp(a.IdentExpr, exp(a.Ident, 'y')),
+          }),
+        }),
+        exp(a.Assign, {
+          lVal: exp(a.IdentExpr, exp(a.Ident, 'result')),
+          expr: exp(a.BinaryExpr, {
+            op: exp(a.AddOp, '+'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'result')),
+            right: exp(a.LitExpr, exp(a.IntLit, '3')),
+          }),
+        }),
+        exp(a.IdentExpr, exp(a.Ident, 'result')),
+      ],
+      returnVoid: false,
+    }),
+  }),
+);
+
+exprTest(
+  `
+fn () (bool, int) {
+  let result = (true, 1);
+  result[1] = 1234;
+  result
+}
+`,
+  exp(a.FuncExpr, {
+    params: {
+      size: 0,
+      items: [],
+    },
+    returnType: exp(a.TupleType, {
+      size: 2,
+      items: [exp(a.BoolType), exp(a.IntType)],
+    }),
+    body: exp(a.Block, {
+      bodies: [
+        exp(a.Decl, {
+          name: exp(a.Ident, 'result'),
+          type: null,
+          expr: exp(a.TupleExpr, {
+            size: 2,
+            items: [
+              exp(a.LitExpr, exp(a.BoolLit, 'true')),
+              exp(a.LitExpr, exp(a.IntLit, '1')),
+            ],
+          }),
+        }),
+        exp(a.Assign, {
+          lVal: exp(a.IndexExpr, {
+            target: exp(a.IdentExpr, exp(a.Ident, 'result')),
+            index: exp(a.LitExpr, exp(a.IntLit, '1')),
+          }),
+          expr: exp(a.LitExpr, exp(a.IntLit, '1234')),
+        }),
+        exp(a.IdentExpr, exp(a.Ident, 'result')),
+      ],
+      returnVoid: false,
+    }),
+  }),
+);
+
 console.log(chalk.green.bold('Passed!'));
