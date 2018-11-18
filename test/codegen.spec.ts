@@ -698,4 +698,45 @@ let test = fn () [float] {
   array(8),
 );
 
+moduleRunTest(
+  `
+let test = fn () float {
+  [1.5, 2.4, 3.3, 4.2, 5.1][2]
+}
+  `,
+  3.3,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  [[1.5, 2.4], [3.3, 4.2, 5.1]][1][2]
+}
+  `,
+  5.1,
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  let x = [1.5, 2.4, 3.3, 4.2, 5.1];
+  x[2] = x[1] + x[3];
+  x[2]
+}
+  `,
+  6.6,
+);
+
+moduleRunTest(
+  `
+let test = fn () [float] {
+  let x = [[1.5, 2.4], [3.3, 4.2, 5.1]];
+  x[1] = x[0];
+  x[1]
+}
+  `,
+  [1.5, 2.4],
+  array(8),
+);
+
 console.log(chalk.green.bold('Passed!'));

@@ -599,13 +599,31 @@ function* codegenTupleAddr(
   yield exp('i32.add');
 }
 
+function* codegenArrayAddr(
+  target: a.Expr<any>,
+  index: a.Expr<any>,
+  byteSize: number,
+  ctx: CodegenContext,
+): Iterable<SExp> {
+  yield* codegenExpr(target, ctx);
+  yield exp('i32.const', '4');
+  yield exp('i32.add');
+  yield* codegenExpr(index, ctx);
+  yield exp('i32.const', String(byteSize));
+  yield exp('i32.mul');
+  yield exp('i32.add');
+}
+
 function* codegenIndexExpr(
   expr: a.IndexExpr,
   ctx: CodegenContext,
 ): Iterable<SExp> {
   const target = expr.value.target;
   if (target.type instanceof a.ArrayType) {
-    // TODO: index expr for array expr target
+    const byteSize = getByteSizeOfType(target.type.value);
+    yield* codegenArrayAddr(target, expr.value.index, byteSize, ctx);
+    const ty = codegenType(target.type.value, ctx);
+    yield exp(`${ty}.load`);
   } else if (target.type instanceof a.TupleType) {
     const idx = getTupleIdx(expr);
     yield* codegenTupleAddr(target, idx, ctx);
@@ -695,7 +713,11 @@ function* codegenAssign(assign: a.Assign, ctx: CodegenContext): Iterable<SExp> {
     // index expr
     const target = lVal.value.target;
     if (target.type instanceof a.ArrayType) {
-      // TODO: index expr for array expr target
+      const byteSize = getByteSizeOfType(target.type.value);
+      yield* codegenArrayAddr(target, lVal.value.index, byteSize, ctx);
+      const ty = codegenType(target.type.value, ctx);
+      yield* codegenSwapStackTop('i32', ty);
+      yield exp(`${ty}.store`);
     } else if (target.type instanceof a.TupleType) {
       const idx = getTupleIdx(lVal);
       yield* codegenTupleAddr(target, idx, ctx);
