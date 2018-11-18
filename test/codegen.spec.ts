@@ -489,6 +489,9 @@ let test = fn () int {
   3628800,
 );
 
+const s2i = (slice: ArrayBuffer) => new Int32Array(slice)[0];
+const s2f = (slice: ArrayBuffer) => new Float64Array(slice)[0];
+
 const tuple = (...sizes: Array<number>) => ({ value, memory }: WASMResult) => {
   let offset = value;
   return sizes.map(size => {
@@ -496,10 +499,10 @@ const tuple = (...sizes: Array<number>) => ({ value, memory }: WASMResult) => {
     let value;
     if (size === 8) {
       // must be float
-      value = new Float64Array(slice)[0];
+      value = s2f(slice);
     } else {
       // must be 4, read as int32
-      value = new Int32Array(slice)[0];
+      value = s2i(slice);
     }
     offset += size;
     return value;
@@ -646,6 +649,53 @@ let test = fn () int {
 }
   `,
   60,
+);
+
+const array = (size: number) => ({ value, memory }: WASMResult) => {
+  let offset = value;
+
+  const len = s2i(memory.buffer.slice(offset, offset + 4));
+  if (size === 8) {
+    // must be float
+    return Array.from(
+      new Float64Array(memory.buffer.slice(offset + 4, offset + 4 + 8 * len)),
+    );
+  } else {
+    // must be 4, read as int32
+    return Array.from(
+      new Int32Array(memory.buffer.slice(offset + 4, offset + 4 + 4 * len)),
+    );
+  }
+};
+
+moduleRunTest(
+  `
+let test = fn () [int] {
+  [1, 2, 3]
+}
+  `,
+  [1, 2, 3],
+  array(4),
+);
+
+moduleRunTest(
+  `
+let test = fn () [bool] {
+  [true, false, true, true]
+}
+  `,
+  [1, 0, 1, 1],
+  array(4),
+);
+
+moduleRunTest(
+  `
+let test = fn () [float] {
+  [1.5, 2.4, 3.3, 4.2, 5.1]
+}
+  `,
+  [1.5, 2.4, 3.3, 4.2, 5.1],
+  array(8),
 );
 
 console.log(chalk.green.bold('Passed!'));

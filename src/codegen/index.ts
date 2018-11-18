@@ -226,7 +226,7 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
   } else if (expr instanceof a.TupleExpr) {
     yield* codegenTupleExpr(expr, ctx);
   } else if (expr instanceof a.ArrayExpr) {
-    // TODO: array expr
+    yield* codegenArrayExpr(expr, ctx);
   } else if (expr instanceof a.IndexExpr) {
     yield* codegenIndexExpr(expr, ctx);
   } else {
@@ -499,6 +499,44 @@ function* codegenTupleExpr(
 
   const constName = ctx.useTupleConstructor(types, sizes);
   yield exp('call', sys(constName));
+}
+
+function* codegenArrayExpr(
+  array: a.ArrayExpr,
+  ctx: CodegenContext,
+): Iterable<SExp> {
+  const arrTy = array.type! as a.ArrayType;
+
+  const ty = codegenType(arrTy.value, ctx);
+  const size = getByteSizeOfType(arrTy.value);
+  const len = array.value.length;
+  yield* codegenMemoryAllocation(4 + size * len);
+
+  yield exp('set_global', sys('reg/i32/1'));
+  for (let i = 0; i < len + 2; i++) {
+    // prepare for set
+    // +2: +1 to store length, +1 to return
+    yield exp('get_global', sys('reg/i32/1'));
+  }
+
+  // store length
+  let offset = 4;
+  yield exp('i32.const', String(len));
+  yield exp('i32.store');
+  yield exp('i32.const', String(offset));
+  yield exp('i32.add');
+
+  // store values
+  for (let i = 0; i < len; i++) {
+    yield* codegenExpr(array.value[i], ctx);
+    yield exp(`${ty}.store`);
+
+    if (i < len - 1) {
+      offset += size;
+      yield exp('i32.const', String(offset));
+      yield exp('i32.add');
+    }
+  }
 }
 
 function codegenTupleConstructor(
