@@ -1013,8 +1013,8 @@ let f = fn () void {
 // new expr
 exprTypeTest('new int[10]', ctx(), arrayType(a.IntType.instance));
 exprTypeTest(
-  'new int[len]',
-  ctx([{ len: a.IntType.instance }]),
+  'new int[l]',
+  ctx([{ l: a.IntType.instance }]),
   arrayType(a.IntType.instance),
 );
 exprTypeTest(

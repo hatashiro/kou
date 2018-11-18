@@ -401,8 +401,8 @@ export function checkBlockType(
 }
 
 export function assertType(actual: a.Type<any>, expected: a.Type<any>) {
-  // if it's AnyType, it always succeeds
-  if (actual instanceof a.AnyType) {
+  // if any of them is AnyType, it always succeeds
+  if (actual instanceof a.AnyType || expected instanceof a.AnyType) {
     return;
   }
 

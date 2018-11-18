@@ -8,10 +8,11 @@ export type StdFunc = {
   expr?: Array<SExp>;
 };
 
-export const defaultStdFuncs = (): Array<StdFunc> => [stdInt, stdFloat];
+export const defaultStdFuncs = (): Array<StdFunc> => [stdInt, stdFloat, stdLen];
 
 const funcTy = (val: { param: a.Type<any>; return: a.Type<any> }) =>
   new a.FuncType(val, -1, -1);
+const arrTy = (val: a.Type<any>) => new a.ArrayType(val, -1, -1);
 
 export const stdInt: StdFunc = {
   name: 'int',
@@ -23,4 +24,13 @@ export const stdFloat: StdFunc = {
   name: 'float',
   type: funcTy({ param: a.IntType.instance, return: a.FloatType.instance }),
   expr: [['f64.convert_s/i32']],
+};
+
+export const stdLen: StdFunc = {
+  name: 'len',
+  type: funcTy({
+    param: arrTy(a.AnyType.instance),
+    return: a.IntType.instance,
+  }),
+  expr: [['i32.load']],
 };

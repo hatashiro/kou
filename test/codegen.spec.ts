@@ -755,4 +755,25 @@ let test = fn () [float] {
   array(8),
 );
 
+// len
+moduleRunTest(
+  `
+let test = fn () int {
+  len([true, false, true, false, false])
+}
+  `,
+  5,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  let y = (1, 2, 3);
+  let x = new float[y[2]];
+  len(x)
+}
+  `,
+  3,
+);
+
 console.log(chalk.green.bold('Passed!'));
