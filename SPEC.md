@@ -27,6 +27,7 @@
   + [FuncExpr](#funcexpr)
   + [CondExpr](#condexpr)
   + [LoopExpr](#loopexpr)
+  + [NewExpr](#newexpr)
 * [Assignment](#assignment)
 * [Block](#block)
 
@@ -78,7 +79,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let fn if else for in
+import as let fn if else for in new
 ```
 
 ### Literals
@@ -209,7 +210,8 @@ PrimExpr = LitExpr
          | CallExpr
          | FuncExpr
          | CondExpr
-         | LoopExpr .
+         | LoopExpr
+         | NewExpr.
 ```
 
 `Expr` stands for *Expression*.
@@ -295,6 +297,19 @@ LoopExpr = "for" ident "in" Expr Block .
 ```
 
 Related: [Block](#block)
+
+### NewExpr
+
+```
+NewExpr = "new" Type "[" Expr "]" .
+```
+
+It creates an array with a specified size.
+
+Related:
+
+- [Array type](#array-type)
+- [ArrayExpr](#arrayexpr)
 
 ## Assignment
 
