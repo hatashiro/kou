@@ -217,6 +217,10 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
     yield* codegenCondExpr(expr, ctx);
   } else if (expr instanceof a.TupleExpr) {
     yield* codegenTupleExpr(expr, ctx);
+  } else if (expr instanceof a.ListExpr) {
+    // TODO: list expr
+  } else if (expr instanceof a.IndexExpr) {
+    yield* codegenIndexExpr(expr, ctx);
   } else {
     // TODO: complex exprs
   }
@@ -490,6 +494,32 @@ function* codegenTupleExpr(
   }
 
   yield exp('get_global', sys('reg/addr'));
+}
+
+function* codegenIndexExpr(
+  expr: a.IndexExpr,
+  ctx: CodegenContext,
+): Iterable<SExp> {
+  yield* codegenExpr(expr.value.target, ctx);
+
+  const targetTy = expr.value.target.type!;
+  if (targetTy instanceof a.ListType) {
+    // TODO: index expr for list expr target
+  } else if (targetTy instanceof a.TupleType) {
+    // The index of a tuple expr should be an int literal
+    const idxLit: a.IntLit = expr.value.index.value as any;
+    const idx = idxLit.parsedValue;
+
+    let offset = 0;
+    for (let i = 0; i < idx; i++) {
+      offset += getByteSizeOfType(targetTy.value.items[i]);
+    }
+    yield exp('i32.const', String(offset));
+    yield exp('i32.add');
+
+    const ty = codegenType(targetTy.value.items[idx], ctx);
+    yield exp(`${ty}.load`);
+  }
 }
 
 function* codegenLocalVarDef(

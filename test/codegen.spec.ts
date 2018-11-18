@@ -489,7 +489,7 @@ let test = fn () int {
   3628800,
 );
 
-const tuple = (sizes: Array<number>) => ({ value, memory }: WASMResult) => {
+const tuple = (...sizes: Array<number>) => ({ value, memory }: WASMResult) => {
   let offset = value;
   return sizes.map(size => {
     const slice = memory.buffer.slice(offset, offset + size);
@@ -513,7 +513,7 @@ let test = fn () (int, float, bool) {
 }
   `,
   [1, 1.5, 1],
-  tuple([4, 8, 4]),
+  tuple(4, 8, 4),
 );
 
 moduleRunTest(
@@ -543,7 +543,38 @@ let test = fn () ((), bool) {
 }
   `,
   [0, 1],
-  tuple([4, 4]),
+  tuple(4, 4),
+);
+
+moduleRunTest(
+  `
+let test = fn () float {
+  (1, 1.5, true)[1]
+}
+  `,
+  1.5,
+);
+
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = (1, (2, (3, 4), 5), 6, (7, 8));
+  x[1][1][1]
+}
+  `,
+  4,
+);
+
+moduleRunTest(
+  `
+let test = fn () (float, float) {
+  let x = (1., 1.5, (2.5, false, (), 0.), 3.5);
+  let y = (2.5, false);
+  (x[2][0] - x[0], y[0] + x[2][3])
+}
+  `,
+  [1.5, 2.5],
+  tuple(8, 8),
 );
 
 console.log(chalk.green.bold('Passed!'));
