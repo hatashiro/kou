@@ -41,7 +41,17 @@ export class Operator extends Token<
 > {}
 
 export class Keyword extends Token<
-  'import' | 'as' | 'let' | 'fn' | 'if' | 'else' | 'for' | 'in' | 'new'
+  | 'import'
+  | 'as'
+  | 'let'
+  | 'fn'
+  | 'if'
+  | 'else'
+  | 'for'
+  | 'in'
+  | 'new'
+  | 'while'
+  | 'break'
 > {}
 
 export abstract class Literal<T> extends Token<T> {}

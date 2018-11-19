@@ -52,6 +52,7 @@ import {
   Assign,
   LVal,
   NewExpr,
+  Break,
 } from './ast';
 import { ParseError } from './error';
 
@@ -401,7 +402,7 @@ function parsePrimExpr(input: ParserInput): PrimExpr<any> {
       [token => token.is(t.Punctuation, '['), () => parseArrayExpr(input)],
       [token => token.is(t.Keyword, 'fn'), () => parseFuncExpr(input)],
       [token => token.is(t.Keyword, 'if'), () => parseCondExpr(input)],
-      [token => token.is(t.Keyword, 'for'), () => parseLoopExpr(input)],
+      [token => token.is(t.Keyword, 'while'), () => parseLoopExpr(input)],
       [token => token.is(t.Keyword, 'new'), () => parseNewExpr(input)],
     ],
     () => {
@@ -498,12 +499,10 @@ const parseCondExpr: Parser<CondExpr> = parseNode(CondExpr, input => {
 });
 
 const parseLoopExpr: Parser<LoopExpr> = parseNode(LoopExpr, input => {
-  consume(input, t.Keyword, 'for');
-  const for_ = parseIdent(input);
-  consume(input, t.Keyword, 'in');
-  const in_ = parseExpr(input);
-  const do_ = parseBlock(input);
-  return { for: for_, in: in_, do: do_ };
+  consume(input, t.Keyword, 'while');
+  const while_ = parseExpr(input);
+  const body = parseBlock(input);
+  return { while: while_, body };
 });
 
 const parseNewExpr: Parser<NewExpr> = parseNode(NewExpr, input => {
@@ -518,12 +517,14 @@ const parseNewExpr: Parser<NewExpr> = parseNode(NewExpr, input => {
 const parseBlock: Parser<Block> = parseNode(Block, input => {
   consume(input, t.Punctuation, '{');
 
-  let bodies: Array<Expr<any> | Decl | Assign> = [];
+  let bodies: Block['value']['bodies'] = [];
   let returnVoid = true;
 
   while (!nextToken(input).is(t.Punctuation, '}')) {
     if (nextToken(input).is(t.Keyword, 'let')) {
       bodies.push(parseDecl(input));
+    } else if (nextToken(input).is(t.Keyword, 'break')) {
+      bodies.push(parseBreak(input));
     } else {
       const expr = parseExpr(input);
       if (nextToken(input).is(t.Punctuation, '=')) {
@@ -558,3 +559,8 @@ function parseAssign(input: ParserInput, lVal: LVal): Assign {
   const expr = parseExpr(input);
   return new Assign({ lVal, expr }, lVal.row, lVal.column);
 }
+
+const parseBreak: Parser<Break> = parseNode(Break, input => {
+  consume(input, t.Keyword, 'break');
+  return null;
+});

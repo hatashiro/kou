@@ -29,6 +29,7 @@
   + [LoopExpr](#loopexpr)
   + [NewExpr](#newexpr)
 * [Assignment](#assignment)
+* [Break](#break)
 * [Block](#block)
 
 ## Introduction
@@ -79,7 +80,7 @@ bool_op = "||" | "&&" .
 ### Keywords
 
 ```
-import as let fn if else for in new
+import as let fn if else for in new while break
 ```
 
 ### Literals
@@ -293,10 +294,13 @@ Related: [Block](#block)
 ### LoopExpr
 
 ```
-LoopExpr = "for" ident "in" Expr Block .
+LoopExpr = "while" Expr Block .
 ```
 
-Related: [Block](#block)
+Related:
+
+- [Block](#block)
+- [Break](#break)
 
 ### NewExpr
 
@@ -329,10 +333,20 @@ Related:
 - [IdentExpr](#identexpr)
 - [IndexExpr](#indexexpr)
 
+## Break
+
+```
+Break = "break" .
+```
+
+Break only works in LoopExpr.
+
+Related: [LoopExpr](#loopexpr)
+
 ## Block
 
 ```
-Block = "{" { ( Expr | Decl | Assign ) ";" } [ Expr ] "}" .
+Block = "{" { ( Expr | Decl | Assign | Break ) ";" } [ Expr ] "}" .
 ```
 
 A block ending without `Expr` (no `";"`) has its return type as `void`, and it

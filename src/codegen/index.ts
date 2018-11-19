@@ -185,9 +185,12 @@ function* codegenBlock(
     } else if (body instanceof a.Decl) {
       // local decl
       yield* codegenLocalVarDecl(body, ctx);
-    } else {
+    } else if (body instanceof a.Assign) {
       // assignment
       yield* codegenAssign(body, ctx);
+    } else {
+      // break
+      yield codegenBreak(body, ctx);
     }
   }
 
@@ -232,7 +235,7 @@ function* codegenExpr(expr: a.Expr<any>, ctx: CodegenContext): Iterable<SExp> {
   } else if (expr instanceof a.NewExpr) {
     yield* codegenNewExpr(expr, ctx);
   } else if (expr instanceof a.LoopExpr) {
-    // TODO: loop exprs
+    yield codegenLoopExpr(expr, ctx);
   }
 }
 
@@ -654,6 +657,28 @@ function* codegenNewExpr(expr: a.NewExpr, ctx: CodegenContext): Iterable<SExp> {
   yield exp('get_global', sys('reg/addr'));
 }
 
+function codegenLoopExpr(expr: a.LoopExpr, ctx: CodegenContext): SExp {
+  const { loop, block } = ctx.enterLoop();
+
+  return exp(
+    'block',
+    wat(block),
+    exp(
+      'loop',
+      wat(loop),
+      ...codegenExpr(expr.value.while, ctx),
+      exp(
+        'if',
+        exp(
+          'then',
+          ...codegenBlock(expr.value.body, false, ctx),
+          exp('br', wat(loop)),
+        ),
+      ),
+    ),
+  );
+}
+
 function* codegenLocalVarDef(
   block: a.Block,
   ctx: CodegenContext,
@@ -679,7 +704,7 @@ function* codegenLocalVarDef(
       ctx.leaveBlock();
     } else if (body instanceof a.LoopExpr) {
       ctx.enterBlock();
-      yield* codegenLocalVarDef(body.value.do, ctx);
+      yield* codegenLocalVarDef(body.value.body, ctx);
       ctx.leaveBlock();
     }
   }
@@ -748,4 +773,9 @@ function* codegenAssign(assign: a.Assign, ctx: CodegenContext): Iterable<SExp> {
       yield exp(`${ty}.store`);
     }
   }
+}
+
+function codegenBreak(break_: a.Break, ctx: CodegenContext): SExp {
+  const { block } = ctx.currentLoopLabel;
+  return exp('br', wat(block));
 }

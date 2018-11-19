@@ -9,6 +9,8 @@ export class CodegenContext {
   private scopeIDStack: Array<number> = [];
   private incrScopeID: number = 0;
 
+  private incrLoopID: number = 0;
+
   public globalInitializers: Array<{ watName: string; expr: a.Expr<any> }> = [];
   public tupleConstructors: Map<
     string,
@@ -56,6 +58,17 @@ export class CodegenContext {
   resetScopeID() {
     this.scopeIDStack = [];
     this.incrScopeID = 0;
+  }
+
+  enterLoop(): { loop: string; block: string } {
+    this.incrLoopID += 1;
+    return this.currentLoopLabel;
+  }
+
+  get currentLoopLabel(): { loop: string; block: string } {
+    const loop = `LOOP/${this.incrLoopID}`;
+    const block = `BLOCK/${loop}`;
+    return { loop, block };
   }
 
   private withScopeID(name: string): string {

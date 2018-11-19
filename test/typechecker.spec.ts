@@ -557,42 +557,48 @@ exprTypeTest(
 
 // loop expr
 exprTypeTest(
-  'for x in [1, 2, 3] { f(x) }',
+  'while true { f(123) }',
   ctx([
     {
       f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
     },
   ]),
-  arrayType(a.BoolType.instance),
+  a.VoidType.instance,
 );
 exprTypeTest(
-  'for x in [1, 2, 3] { f(x); }',
+  'while cond { f(123); }',
   ctx([
     {
+      cond: a.BoolType.instance,
       f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
     },
   ]),
-  arrayType(a.VoidType.instance),
+  a.VoidType.instance,
 );
 exprTypeTest(
-  'for x in [1, 2, 3] { f(x) }',
+  'while true { if i > 10 { break } else { i = i + 1 } }',
   ctx([
     {
-      f: funcType({ param: a.CharType.instance, return: a.BoolType.instance }),
+      i: a.IntType.instance,
     },
   ]),
-  arrayType(a.BoolType.instance),
-  'Function parameter type mismatch: expected char, found int',
+  a.VoidType.instance,
 );
 exprTypeTest(
-  'for x in 123 { f(x) }',
+  'while i { if i > 10 { break } else { i = i + 1 } }',
   ctx([
     {
-      f: funcType({ param: a.IntType.instance, return: a.BoolType.instance }),
+      i: a.IntType.instance,
     },
   ]),
-  arrayType(a.BoolType.instance),
-  'Loop target should be an array: found int',
+  a.VoidType.instance,
+  'Loop condition should be a boolean: found int',
+);
+exprTypeTest(
+  'if true { break } else { }',
+  ctx([]),
+  a.VoidType.instance,
+  'break can be only used in a loop: found unexpected break',
 );
 
 // unary expr

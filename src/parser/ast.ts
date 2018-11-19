@@ -232,8 +232,10 @@ export class Assign extends Node<{
 
 export type LVal = IdentExpr | IndexExpr;
 
+export class Break extends Node<null> {}
+
 export class Block extends Node<{
-  bodies: Array<Expr<any> | Decl | Assign>;
+  bodies: Array<Expr<any> | Decl | Assign | Break>;
   returnVoid: boolean;
 }> {}
 
@@ -291,9 +293,8 @@ export class CondExpr extends PrimExpr<{
 }> {}
 
 export class LoopExpr extends PrimExpr<{
-  for: Ident;
-  in: Expr<any>;
-  do: Block;
+  while: Expr<any>;
+  body: Block;
 }> {}
 
 export class NewExpr extends PrimExpr<{

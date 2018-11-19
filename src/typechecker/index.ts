@@ -236,18 +236,18 @@ function checkExprTypeWithoutCache(
 
     return ifBlockType;
   } else if (expr instanceof a.LoopExpr) {
-    const targetType = checkExprType(expr.value.in, ctx);
+    const condType = checkExprType(expr.value.while, ctx);
 
-    if (targetType instanceof a.ArrayType) {
-      const doBlockType = checkBlockType(expr.value.do, ctx, [
-        { ident: expr.value.for, type: targetType.value },
-      ]);
-      return new a.ArrayType(doBlockType, doBlockType.row, doBlockType.column);
+    if (condType instanceof a.BoolType) {
+      ctx.enterLoop(expr);
+      checkBlockType(expr.value.body, ctx);
+      ctx.leaveLoop();
+      return a.VoidType.instance;
     } else {
       throw new TypeError(
-        targetType,
+        condType,
         undefined,
-        'Loop target should be an array',
+        'Loop condition should be a boolean',
       );
     }
   } else if (expr instanceof a.NewExpr) {
@@ -359,6 +359,17 @@ function checkAssignType(assign: a.Assign, ctx: TypeContext) {
   );
 }
 
+function checkBreakType(break_: a.Break, ctx: TypeContext) {
+  if (!ctx.currentLoop) {
+    throw new TypeError(
+      { name: 'unexpected break', row: break_.row, column: break_.column },
+      undefined,
+      'break can be only used in a loop',
+      'SemanticError',
+    );
+  }
+}
+
 function containsVoidType(ty: a.Type<any>): boolean {
   if (ty instanceof a.VoidType) {
     return true;
@@ -386,8 +397,10 @@ export function checkBlockType(
       checkDeclType(body, ctx);
     } else if (body instanceof a.Expr) {
       exprType = checkExprType(body, ctx);
-    } else {
+    } else if (body instanceof a.Assign) {
       checkAssignType(body, ctx);
+    } else {
+      checkBreakType(body, ctx);
     }
   });
 

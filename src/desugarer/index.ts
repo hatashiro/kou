@@ -11,6 +11,7 @@ class Desugarer {
       replaceExpr: Arity1<a.Expr<any>>;
       replaceDecl: Arity1<a.Decl>;
       replaceAssign: Arity1<a.Assign>;
+      replaceBreak: Arity1<a.Break>;
       replaceIdent: Arity1<a.Ident>;
       replaceBinaryOp: Arity1<a.BinaryOp<any>>;
       replaceUnaryOp: Arity1<a.UnaryOp>;
@@ -41,8 +42,10 @@ class Desugarer {
         return this.desugarExpr(body);
       } else if (body instanceof a.Decl) {
         return this.desugarDecl(body);
-      } else {
+      } else if (body instanceof a.Assign) {
         return this.desugarAssign(body);
+      } else {
+        return this.desugarBreak(body);
       }
     });
     return this.replacer.replaceBlock(node);
@@ -89,9 +92,8 @@ class Desugarer {
       node.value.then = this.desugarBlock(node.value.then);
       node.value.else = this.desugarBlock(node.value.else);
     } else if (node instanceof a.LoopExpr) {
-      node.value.for = this.desugarIdent(node.value.for);
-      node.value.in = this.desugarExpr(node.value.in);
-      node.value.do = this.desugarBlock(node.value.do);
+      node.value.while = this.desugarExpr(node.value.while);
+      node.value.body = this.desugarBlock(node.value.body);
     } else if (node instanceof a.NewExpr) {
       node.value.type = this.desugarType(node.value.type);
       node.value.length = this.desugarExpr(node.value.length);
@@ -112,6 +114,10 @@ class Desugarer {
     node.value.lVal = this.desugarExpr(node.value.lVal);
     node.value.expr = this.desugarExpr(node.value.expr);
     return this.replacer.replaceAssign(node);
+  }
+
+  desugarBreak(node: a.Break): a.Break {
+    return this.replacer.replaceBreak(node);
   }
 
   desugarIdent(node: a.Ident): a.Ident {
@@ -150,6 +156,7 @@ export function desugarBefore(mod: a.Module): a.Module {
     replaceExpr: unwrap1TupleExpr,
     replaceDecl: id,
     replaceAssign: id,
+    replaceBreak: id,
     replaceIdent: id,
     replaceBinaryOp: id,
     replaceUnaryOp: id,
@@ -168,6 +175,7 @@ export function desugarAfter(mod: a.Module): a.Module {
     replaceExpr: removeUnaryPlus,
     replaceDecl: id,
     replaceAssign: id,
+    replaceBreak: id,
     replaceIdent: id,
     replaceBinaryOp: id,
     replaceUnaryOp: id,

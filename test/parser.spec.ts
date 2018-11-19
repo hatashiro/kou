@@ -962,15 +962,10 @@ if 1 + 2 > 3 {
 );
 
 exprTest(
-  'for x in [1, 2, 3] { x * 2 }',
+  'while x { x * 2 }',
   exp(a.LoopExpr, {
-    for: exp(a.Ident, 'x'),
-    in: exp(a.ArrayExpr, [
-      exp(a.LitExpr, exp(a.IntLit, '1')),
-      exp(a.LitExpr, exp(a.IntLit, '2')),
-      exp(a.LitExpr, exp(a.IntLit, '3')),
-    ]),
-    do: exp(a.Block, {
+    while: exp(a.IdentExpr, exp(a.Ident, 'x')),
+    body: exp(a.Block, {
       bodies: [
         exp(a.BinaryExpr, {
           op: exp(a.MulOp, '*'),
@@ -984,34 +979,44 @@ exprTest(
 );
 exprTest(
   `
-for x in [1, 2, 3] {
-  print(x * 2);
+while true {
+  if x > 100 {
+    break;
+  } else {
+    x = x + 1;
+  }
 }
 `,
   exp(a.LoopExpr, {
-    for: exp(a.Ident, 'x'),
-    in: exp(a.ArrayExpr, [
-      exp(a.LitExpr, exp(a.IntLit, '1')),
-      exp(a.LitExpr, exp(a.IntLit, '2')),
-      exp(a.LitExpr, exp(a.IntLit, '3')),
-    ]),
-    do: exp(a.Block, {
+    while: exp(a.LitExpr, exp(a.BoolLit, 'true')),
+    body: exp(a.Block, {
       bodies: [
-        exp(a.CallExpr, {
-          func: exp(a.IdentExpr, exp(a.Ident, 'print')),
-          args: exp(a.TupleExpr, {
-            size: 1,
-            items: [
-              exp(a.BinaryExpr, {
-                op: exp(a.MulOp, '*'),
-                left: exp(a.IdentExpr, exp(a.Ident, 'x')),
-                right: exp(a.LitExpr, exp(a.IntLit, '2')),
+        exp(a.CondExpr, {
+          if: exp(a.BinaryExpr, {
+            op: exp(a.CompOp, '>'),
+            left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+            right: exp(a.LitExpr, exp(a.IntLit, '100')),
+          }),
+          then: exp(a.Block, {
+            bodies: [exp(a.Break)],
+            returnVoid: true,
+          }),
+          else: exp(a.Block, {
+            bodies: [
+              exp(a.Assign, {
+                lVal: exp(a.IdentExpr, exp(a.Ident, 'x')),
+                expr: exp(a.BinaryExpr, {
+                  op: exp(a.AddOp, '+'),
+                  left: exp(a.IdentExpr, exp(a.Ident, 'x')),
+                  right: exp(a.LitExpr, exp(a.IntLit, '1')),
+                }),
               }),
             ],
+            returnVoid: true,
           }),
         }),
       ],
-      returnVoid: true,
+      returnVoid: false,
     }),
   }),
 );

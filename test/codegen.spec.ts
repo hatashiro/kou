@@ -776,4 +776,71 @@ let test = fn () int {
   3,
 );
 
+// loop
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 0;
+  while x < 100 {
+    x = x + 1;
+  };
+  x
+}
+  `,
+  100,
+);
+moduleRunTest(
+  `
+let test = fn () int {
+  let x = 0;
+  while x < 100 {
+    if (x >= 80) {
+      break;
+    } else {
+      x = x + 1;
+    }
+  };
+  x
+}
+  `,
+  80,
+);
+moduleRunTest(
+  `
+let test = fn () [float] {
+  let y = (1, 2, 3);
+  let x = new float[y[2]];
+  let i = 0;
+  while i < len(x) {
+    x[i] = float(i) + 0.5;
+    i = i + 1;
+  };
+  x
+}
+  `,
+  [0.5, 1.5, 2.5],
+  array(8),
+);
+moduleRunTest(
+  `
+let test = fn () [int] {
+  let res = new int[5];
+  let i = 1;
+  while i <= len(res) {
+    let j = 1;
+    let sum = 0;
+    while (j <= i) {
+      sum = sum + j;
+      j = j + 1;
+    };
+    res[i - 1] = sum;
+    i = i + 1;
+  };
+  res
+}
+  `,
+  [1, 3, 6, 10, 15],
+  array(4),
+);
+
 console.log(chalk.green.bold('Passed!'));

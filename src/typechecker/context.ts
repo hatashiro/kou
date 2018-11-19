@@ -9,6 +9,7 @@ export type IdentTypeDef = {
 
 export class TypeContext {
   private scopes: Array<Map<string, a.Type<any>>>;
+  private loops: Array<a.LoopExpr> = [];
 
   constructor(public stdFuncs: Array<StdFunc> = defaultStdFuncs()) {
     this.scopes = [
@@ -22,12 +23,24 @@ export class TypeContext {
     return this.scopes[0];
   }
 
+  get currentLoop(): a.LoopExpr | null {
+    return this.loops[0] || null;
+  }
+
   enterScope() {
     this.scopes.unshift(new Map());
   }
 
   leaveScope() {
     this.scopes.shift();
+  }
+
+  enterLoop(loop: a.LoopExpr) {
+    this.loops.unshift(loop);
+  }
+
+  leaveLoop() {
+    this.loops.shift();
   }
 
   push({ ident, type: ty }: IdentTypeDef) {
