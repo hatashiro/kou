@@ -55,6 +55,12 @@ kou hello.wasm
 kou --help
 ```
 
+## Reference
+
+- [WebAssembly Specification](https://webassembly.github.io/spec/core/index.html)
+- [WebAssembly Reference Manual](https://github.com/sunfishcode/wasm-reference-manual/blob/master/WebAssembly.md)
+- [The Go Programming Language Specification](https://golang.org/ref/spec)
+
 ## License
 
 [MIT](LICENSE)
