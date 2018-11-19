@@ -16,15 +16,14 @@ Please refer to [SPEC.md](SPEC.md).
 
 ## Milestones
 
-:construction: :construction: :construction:
-
 - [x] Tokenizer
 - [x] Parser
 - [x] Desugarer
 - [x] Type checker
 - [x] Code generator for wasm
   - [x] Basic codegen
-  - [ ] [Complex types and expressions](https://github.com/utatti/kou/issues/1)
+  - [x] Complex types and expressions
+  - [ ] [Codegen for string](https://github.com/utatti/kou/issues/1)
 - [ ] Module system
 - [ ] JS interop
 - [ ] IO
