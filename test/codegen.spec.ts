@@ -843,4 +843,17 @@ let test = fn () [int] {
   array(4),
 );
 
+moduleRunTest(
+  `
+let test = fn () int {
+  other()
+}
+
+let other = fn () int {
+  1234
+}
+  `,
+  1234,
+);
+
 console.log(chalk.green.bold('Passed!'));

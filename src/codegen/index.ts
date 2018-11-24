@@ -51,6 +51,12 @@ function codegenModule(
   modE.push(...codegenRegistry(ctx));
 
   for (const decl of mod.value.decls) {
+    // register global names first
+    ctx.pushName(decl.value.name.value);
+  }
+
+  for (const decl of mod.value.decls) {
+    // actual codegen for global decls
     const declE = codegenGlobalDecl(decl, ctx);
     if (declE) modE.push(declE);
   }
@@ -727,7 +733,7 @@ function* codegenLocalVarDecl(
 }
 
 function codegenGlobalVar(decl: a.Decl, ctx: CodegenContext): SExp {
-  const name = ctx.pushName(decl.value.name.value);
+  const name = ctx.getGlobalWATName(decl.value.name.value)!;
 
   const varE = exp('global', wat(name));
   const expr = decl.value.expr;
