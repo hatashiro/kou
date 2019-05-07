@@ -14,7 +14,7 @@
     "format:dry": "npm run prettier -- -l",
     "test": "ts-node --no-cache --type-check test",
     "release": "npm run build && npm publish",
-    "postinstall": "./scripts/build-wabt.sh"
+    "postinstall": "./scripts/wabt.sh"
   },
   "husky": {
     "hooks": {
