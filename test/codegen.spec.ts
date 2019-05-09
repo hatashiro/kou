@@ -859,6 +859,6 @@ let other = fn () int {
   `,
     1234,
   );
-})();
 
-console.log(chalk.green.bold('Passed!'));
+  console.log(chalk.green.bold('Passed!'));
+})();
