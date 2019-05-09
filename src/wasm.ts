@@ -1,18 +1,18 @@
-import { writeFileSync, readFileSync } from 'fs';
-import { execSync } from 'child_process';
-import { resolve } from 'path';
-import { tempFile } from './util';
+const wabt = require('wabt');
 
-const bin = {
-  wat2wasm: resolve(__dirname, '../wabt/bin/wat2wasm'),
-};
+const { parseWat } = wabt();
 
-export function wat2wasm(watStr: string): Buffer {
-  const watFile = tempFile('wat');
-  const wasmFile = tempFile('wasm');
-  writeFileSync(watFile, watStr);
-  execSync(`${bin.wat2wasm} ${watFile} -o ${wasmFile}`);
-  return readFileSync(wasmFile);
+const FILENAME = 'main.wat';
+
+export function wat2wasm(wat: string): Buffer {
+  const module = parseWat(FILENAME, wat);
+  const binary = module.toBinary({
+    log: false,
+    canonicalize_lebs: false,
+    relocatable: false,
+    write_debug_names: false,
+  });
+  return Buffer.from(binary.buffer);
 }
 
 export const magicNumber = Buffer.from([0x00, 0x61, 0x73, 0x6d]);

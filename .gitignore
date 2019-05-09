@@ -59,6 +59,3 @@ typings/
 
 # Built result
 dist
-
-# WABT
-/wabt

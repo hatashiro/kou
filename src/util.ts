@@ -1,5 +1,3 @@
-import { fileSync } from 'tmp';
-
 type Condition<T> = T | ((val: T) => boolean);
 
 function predicate<T>(val: T, cond: Condition<T>): boolean {
@@ -49,10 +47,6 @@ export function orStr(words: Array<string>): string {
   const last = words.slice(-1)[0];
   const rests = words.slice(0, -1).join(', ');
   return rests ? `${rests} or ${last}` : last;
-}
-
-export function tempFile(ext: string): string {
-  return fileSync({ mode: 0o644, postfix: `.${ext}` }).name;
 }
 
 export type Arity1<T, U = T> = (x: T) => U;
