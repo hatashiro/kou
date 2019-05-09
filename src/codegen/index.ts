@@ -664,21 +664,17 @@ function* codegenNewExpr(expr: a.NewExpr, ctx: CodegenContext): Iterable<SExp> {
 }
 
 function codegenLoopExpr(expr: a.LoopExpr, ctx: CodegenContext): SExp {
-  const { loop, block } = ctx.enterLoop();
-
   return exp(
     'block',
-    wat(block),
     exp(
       'loop',
-      wat(loop),
       ...codegenExpr(expr.value.while, ctx),
       exp(
         'if',
         exp(
           'then',
           ...codegenBlock(expr.value.body, false, ctx),
-          exp('br', wat(loop)),
+          exp('br', '1'),
         ),
       ),
     ),
@@ -782,6 +778,5 @@ function* codegenAssign(assign: a.Assign, ctx: CodegenContext): Iterable<SExp> {
 }
 
 function codegenBreak(break_: a.Break, ctx: CodegenContext): SExp {
-  const { block } = ctx.currentLoopLabel;
-  return exp('br', wat(block));
+  return exp('br', '1');
 }
